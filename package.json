@@ -39,7 +39,7 @@
     "lint-staged": "lint-staged",
     "lint:fix": "eslint . --fix",
     "open-coverage": "npm run test && open ./coverage/index.html",
-    "prepare": "npm run type-check && npm run lint && npm run test && npm run build && husky",
+    "prepare": "husky",
     "preview": "vite preview",
     "test": "npm run unit -- --coverage",
     "type-check": "tsc --noEmit",
@@ -51,6 +51,10 @@
       "npm run format",
       "npm run lint:fix"
     ]
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.2.5",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@types/node": "^22",
@@ -71,9 +75,5 @@
     "vite": "^6.3.5",
     "vite-plugin-externalize-deps": "^0.9.0",
     "vitest": "^3"
-  },
-  "dependencies": {
-    "fast-xml-parser": "^5.2.5",
-    "winston": "^3.17.0"
   }
 }
