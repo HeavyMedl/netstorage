@@ -1,0 +1,79 @@
+{
+  "name": "netstorage-api-esm",
+  "version": "1.0.0",
+  "description": "A modern, ESM-native TypeScript client for the Akamai NetStorage REST API",
+  "keywords": [
+    "akamai",
+    "netstorage",
+    "akamai netstorage",
+    "netstorageapi",
+    "esm",
+    "typescript",
+    "api",
+    "rest",
+    "sdk",
+    "http"
+  ],
+  "repository": {
+    "type": "git"
+  },
+  "license": "UNLICENSED",
+  "author": "Kurt Medley <kurtdmedley@gmail.com>",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/main.js",
+      "types": "./dist/main.d.ts"
+    }
+  },
+  "module": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run type-check && vite build && tsc",
+    "dev": "vite --open",
+    "format": "prettier --write .",
+    "lint": "eslint .",
+    "lint-staged": "lint-staged",
+    "lint:fix": "eslint . --fix",
+    "open-coverage": "npm run test && open ./coverage/index.html",
+    "prepare": "npm run type-check && npm run lint && npm run test && npm run build && husky",
+    "preview": "vite preview",
+    "test": "npm run unit -- --coverage",
+    "type-check": "tsc --noEmit",
+    "unit": "vitest run"
+  },
+  "lint-staged": {
+    "package.json": "npx sort-package-json@latest",
+    "*.{ts,mts,json,md,yml,mjs}": [
+      "npm run format",
+      "npm run lint:fix"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@vitest/coverage-v8": "^3",
+    "@vue/test-utils": "^2",
+    "eslint": "^9",
+    "eslint-config-prettier": "^10",
+    "eslint-plugin-prettier": "^5",
+    "eslint-plugin-vue": "^10",
+    "globals": "^16",
+    "husky": "^9",
+    "jsdom": "^26",
+    "lint-staged": "^15",
+    "prettier": "^3",
+    "prettier-eslint": "^16",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8",
+    "vite": "^6.3.5",
+    "vite-plugin-externalize-deps": "^0.9.0",
+    "vitest": "^3"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.2.5",
+    "winston": "^3.17.0"
+  }
+}
