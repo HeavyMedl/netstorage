@@ -37,15 +37,20 @@ export type XmlApiResponse = Record<string, Record<string, unknown>>;
 export type HeadersMap = Record<string, string>;
 
 /** Subset of Config keys that are required to initialize the API client. */
-export type RequiredConfig = Pick<Config, 'key' | 'keyName' | 'host'>;
+export type RequiredConfig = Pick<
+  NetStorageAPIConfig,
+  'key' | 'keyName' | 'host'
+>;
 /** Optional configuration values that may override the default behavior. */
-export type OptionalConfig = Partial<Omit<Config, 'key' | 'keyName' | 'host'>>;
+export type OptionalConfig = Partial<
+  Omit<NetStorageAPIConfig, 'key' | 'keyName' | 'host'>
+>;
 
 /**
  * Configuration options for the NetStorageAPI client.
  * This governs authentication, connection behavior, and logging.
  *
- * @typedef {Object} Config
+ * @typedef {Object} NetStorageAPIConfig
  * @property {string} key - The shared secret key used to sign requests.
  * @property {string} keyName - The identifier for the secret key, provided by Akamai.
  * @property {string} host - The hostname for the NetStorage endpoint (e.g., `example-nsu.akamaihd.net`).
@@ -53,7 +58,7 @@ export type OptionalConfig = Partial<Omit<Config, 'key' | 'keyName' | 'host'>>;
  * @property {WinstonLogLevel} logLevel - The logging level for diagnostics output.
  * @property {{ timeout: number }} request - Additional HTTP request settings (e.g., request timeout).
  */
-export interface Config {
+export interface NetStorageAPIConfig {
   key: string;
   keyName: string;
   host: string;

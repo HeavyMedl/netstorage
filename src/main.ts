@@ -10,7 +10,7 @@ import { name as packageName } from '../package.json';
 
 import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 import type {
-  Config,
+  NetStorageAPIConfig,
   RequiredConfig,
   OptionalConfig,
   HeadersMap,
@@ -74,7 +74,7 @@ class HttpError extends Error {
  * console.log(metadata);
  */
 export default class NetStorageAPI {
-  private config: Config;
+  private config: NetStorageAPIConfig;
   private logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
@@ -118,14 +118,14 @@ export default class NetStorageAPI {
 
   /**
    * Updates the configuration of the API client.
-   * @param {Partial<Config>} conf - Partial configuration to merge with existing config.
+   * @param {Partial<NetStorageAPIConfig>} conf - Partial configuration to merge with existing config.
    * @returns {this} The updated instance of NetStorageAPI.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
    * api.setConfig({ logLevel: 'debug' });
    */
-  public setConfig(conf: Partial<Config>): this {
+  public setConfig(conf: Partial<NetStorageAPIConfig>): this {
     this.logger.info('[setConfig] Updating configuration');
     this.config = { ...this.config, ...conf };
     this.logger.level = this.config.logLevel;
@@ -134,13 +134,13 @@ export default class NetStorageAPI {
 
   /**
    * Retrieves the current configuration.
-   * @returns {Config} The current configuration object.
+   * @returns {NetStorageAPIConfig} The current configuration object.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
    * const config = api.getConfig();
    */
-  public getConfig(): Config {
+  public getConfig(): NetStorageAPIConfig {
     this.logger.info('[getConfig] Returning current configuration');
     return structuredClone(this.config);
   }
