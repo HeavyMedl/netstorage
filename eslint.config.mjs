@@ -1,9 +1,7 @@
 import eslintPlugin from '@eslint/js';
 import typescriptEslint from 'typescript-eslint';
-import eslintPluginVue from 'eslint-plugin-vue';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import globals from 'globals';
-import vueParser from 'vue-eslint-parser';
 
 export default [
   {
@@ -29,29 +27,6 @@ export default [
     },
     rules: {
       // Add shared JS/TS rules here
-    },
-  },
-  // Vue-specific files
-  {
-    files: ['**/*.vue'],
-    languageOptions: {
-      parser: vueParser,
-      parserOptions: {
-        parser: typescriptEslint.parser,
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-        extraFileExtensions: ['.vue'],
-      },
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-      },
-    },
-    plugins: {
-      vue: eslintPluginVue,
-    },
-    rules: {
-      ...eslintPluginVue.configs['flat/recommended'].rules,
     },
   },
 ];
