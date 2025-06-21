@@ -1,10 +1,14 @@
 import crypto from 'node:crypto';
-import { XMLParser } from 'fast-xml-parser';
 import { pipeline, Readable, type Writable } from 'node:stream';
-import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 import { promisify } from 'node:util';
-import { name as packageName } from '../package.json';
+
+import { XMLParser } from 'fast-xml-parser';
 import winston from 'winston';
+
+import { createRateLimiters } from './lib/rateLimiter';
+import { name as packageName } from '../package.json';
+
+import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 import type {
   Config,
   RequiredConfig,
@@ -83,6 +87,9 @@ export default class NetStorageAPI {
     ),
     transports: [new winston.transports.Console()],
   });
+  private readLimiter;
+  private writeLimiter;
+  private dirLimiter;
 
   /**
    * Creates an instance of NetStorageAPI.
@@ -101,6 +108,12 @@ export default class NetStorageAPI {
     assertNonEmpty(keyName, 'keyName');
     assertNonEmpty(host, 'host');
     this.logger.level = this.config.logLevel;
+    const { readLimiter, writeLimiter, dirLimiter } = createRateLimiters(
+      this.config.rateLimit,
+    );
+    this.readLimiter = readLimiter;
+    this.writeLimiter = writeLimiter;
+    this.dirLimiter = dirLimiter;
   }
 
   /**
@@ -241,6 +254,7 @@ export default class NetStorageAPI {
    * const statInfo = await api.stat('/path/to/file');
    */
   public async stat(path: string): Promise<XmlApiResponse> {
+    await this.readLimiter.removeTokens(1);
     this.logger.info(`[stat] path: ${path}`);
     return this.sendRequest(path, {
       request: { method: 'GET' },
@@ -258,6 +272,7 @@ export default class NetStorageAPI {
    * const usage = await api.du('/path/to/directory');
    */
   public async du(path: string): Promise<XmlApiResponse> {
+    await this.readLimiter.removeTokens(1);
     this.logger.info(`[du] path: ${path}`);
     return this.sendRequest(path, {
       request: { method: 'GET' },
@@ -275,6 +290,7 @@ export default class NetStorageAPI {
    * const contents = await api.dir('/path/to/directory');
    */
   public async dir(path: string): Promise<XmlApiResponse> {
+    await this.dirLimiter.removeTokens(1);
     this.logger.info(`[dir] path: ${path}`);
     return this.sendRequest(path, {
       request: { method: 'GET' },
@@ -292,6 +308,7 @@ export default class NetStorageAPI {
    * await api.mkdir('/path/to/newdir');
    */
   public async mkdir(path: string): Promise<XmlApiResponse> {
+    await this.writeLimiter.removeTokens(1);
     this.logger.info(`[mkdir] path: ${path}`);
     return this.sendRequest(path, {
       request: { method: 'PUT' },
@@ -309,6 +326,7 @@ export default class NetStorageAPI {
    * await api.rmdir('/path/to/dir');
    */
   public async rmdir(path: string): Promise<XmlApiResponse> {
+    await this.writeLimiter.removeTokens(1);
     this.logger.info(`[rmdir] path: ${path}`);
     return this.sendRequest(path, {
       request: { method: 'PUT' },
@@ -326,6 +344,7 @@ export default class NetStorageAPI {
    * await api.delete('/path/to/file');
    */
   public async delete(path: string): Promise<XmlApiResponse> {
+    await this.writeLimiter.removeTokens(1);
     this.logger.info(`[delete] path: ${path}`);
     return this.sendRequest(path, {
       request: { method: 'PUT' },
@@ -347,6 +366,7 @@ export default class NetStorageAPI {
     pathFrom: string,
     pathTo: string,
   ): Promise<XmlApiResponse> {
+    await this.writeLimiter.removeTokens(1);
     this.logger.info(`[rename] from: ${pathFrom}, to: ${pathTo}`);
     return this.sendRequest(pathFrom, {
       request: { method: 'PUT' },
@@ -368,6 +388,7 @@ export default class NetStorageAPI {
     pathFileTo: string,
     pathSymlink: string,
   ): Promise<XmlApiResponse> {
+    await this.writeLimiter.removeTokens(1);
     this.logger.info(
       `[symlink] fileTo: ${pathFileTo}, symlink: ${pathSymlink}`,
     );
@@ -392,6 +413,7 @@ export default class NetStorageAPI {
     if (!(date instanceof Date)) {
       throw new TypeError('The date has to be an instance of Date');
     }
+    await this.writeLimiter.removeTokens(1);
     this.logger.info(`[mtime] path: ${path}, date: ${date.toISOString()}`);
     const actionObj = {
       action: 'mtime',
@@ -440,6 +462,7 @@ export default class NetStorageAPI {
    * await api.upload(stream, '/upload/path/file.bin');
    */
   public async upload(stream: Readable, path: string): Promise<XmlApiResponse> {
+    await this.writeLimiter.removeTokens(1);
     const url = this.getUri(path);
     const headers = this.getHeaders(path, {
       action: 'upload',
@@ -492,6 +515,7 @@ export default class NetStorageAPI {
     path: string,
     stream: Writable,
   ): Promise<{ status: { code: number } }> {
+    await this.readLimiter.removeTokens(1);
     const url = this.getUri(path);
     const headers = this.getHeaders(path, { action: 'download' });
 

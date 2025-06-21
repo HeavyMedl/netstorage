@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { Readable } from 'node:stream';
 import NetStorageAPI from '../src/main';
 
 describe('NetStorageAPI - Config Methods', () => {
@@ -59,5 +60,46 @@ describe('NetStorageAPI - Required Fields and Internal Behavior', () => {
     const config = api.getConfig();
     config.ssl = true;
     expect(api.getConfig().ssl).toBe(false); // unchanged internally
+  });
+});
+
+describe('NetStorageAPI - Rate Limiting', () => {
+  const baseConfig = {
+    key: 'abc',
+    keyName: 'def',
+    host: 'host.com',
+  };
+
+  let api: NetStorageAPI;
+
+  beforeEach(() => {
+    api = new NetStorageAPI(baseConfig);
+    vi.spyOn(api as never, 'sendRequest').mockResolvedValue({
+      status: { code: 200 },
+    });
+  });
+
+  it('calls readLimiter on stat()', async () => {
+    const spy = vi.spyOn(api['readLimiter'], 'removeTokens');
+    await api.stat('/path');
+    expect(spy).toHaveBeenCalledWith(1);
+  });
+
+  it('calls writeLimiter on mkdir()', async () => {
+    const spy = vi.spyOn(api['writeLimiter'], 'removeTokens');
+    await api.mkdir('/some/new/dir');
+    expect(spy).toHaveBeenCalledWith(1);
+  });
+
+  it('calls dirLimiter on dir()', async () => {
+    const dirSpy = vi.spyOn(api['dirLimiter'], 'removeTokens');
+    await api.dir('/some/dir');
+    expect(dirSpy).toHaveBeenCalledWith(1);
+  });
+
+  it('calls writeLimiter on upload()', async () => {
+    const spy = vi.spyOn(api['writeLimiter'], 'removeTokens');
+    await api.upload(Readable.from(['data']), '/upload/path').catch(() => {});
+    expect(spy).toHaveBeenCalledWith(1);
   });
 });
