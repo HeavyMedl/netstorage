@@ -15,20 +15,23 @@ export type WinstonLogLevel =
   | 'silly';
 
 /**
- * Represents the parsed structure of an XML API response.
+ * Represents the parsed object structure of a NetStorage XML API response.
  *
- * Each top-level key corresponds to an XML tag (e.g., `stat`, `du`, `dir`, etc.).
- * Values are nested records that represent the tag's attributes or children.
+ * After parsing XML responses from Akamai NetStorage using `fast-xml-parser`,
+ * this type reflects the normalized JavaScript object shape.
+ *
+ * Each top-level key corresponds to the original XML tag (e.g., `stat`, `du`, `dir`, `upload`, etc.),
+ * and the associated value contains its parsed attributes or children.
  *
  * Example:
  * ```ts
  * {
  *   stat: { code: "200", message: "OK" },
- *   du: { directory: "foo/bar" }
+ *   du: { directory: "foo/bar", size: "12345" }
  * }
  * ```
  */
-export type XmlApiResponse = Record<string, Record<string, unknown>>;
+export type ParsedNetStorageResponse = Record<string, Record<string, unknown>>;
 
 /**
  * Represents a map of HTTP headers used in NetStorage requests or responses.
@@ -107,4 +110,19 @@ export interface WithRetriesOptions {
   shouldRetry: (error: unknown) => boolean;
   beforeAttempt?: () => Promise<void>;
   onRetry?: (error: unknown, attempt: number, delay: number) => void;
+}
+
+/**
+ * Optional per-request configuration that enables fine-grained control over
+ * timeouts and cancellation using AbortController or AbortSignal.
+ *
+ * This can be passed to any public method (e.g., stat, upload, download) to
+ * override the global timeout or inject a custom AbortSignal for cancellation.
+ *
+ * @property timeout - Optional override (in milliseconds) for request timeout. If not set, falls back to `config.request.timeout`.
+ * @property signal - Optional AbortSignal instance to allow external cancellation.
+ */
+export interface RequestOptions {
+  timeout?: number;
+  signal?: AbortSignal;
 }

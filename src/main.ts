@@ -6,17 +6,19 @@ import { XMLParser } from 'fast-xml-parser';
 import winston from 'winston';
 
 import { createRateLimiters } from './lib/rateLimiter';
+import { resolveAbortSignal } from './lib/resolveAbortSignal';
 import { HttpError } from './errors';
 import { createRetryConfig, withRetries } from './lib/withRetries';
 import { name as packageName } from '../package.json';
 
+import type { RequestOptions } from './types';
 import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 import type {
   NetStorageAPIConfig,
   RequiredConfig,
   OptionalConfig,
   HeadersMap,
-  XmlApiResponse,
+  ParsedNetStorageResponse,
 } from './types';
 
 /**
@@ -221,9 +223,12 @@ export default class NetStorageAPI {
    * @private
    * @param {string} body - The XML response body.
    * @param {number} status - The HTTP status code.
-   * @returns {XmlApiResponse} Parsed response object.
+   * @returns {ParsedNetStorageResponse} Parsed response object.
    */
-  private parseXmlResponse(body: string, status: number): XmlApiResponse {
+  private parseXmlResponse(
+    body: string,
+    status: number,
+  ): ParsedNetStorageResponse {
     if (!body.trimStart().startsWith('<?xml')) {
       return { status: { code: status } };
     }
@@ -231,25 +236,34 @@ export default class NetStorageAPI {
       ignoreAttributes: false,
       attributeNamePrefix: '',
     });
-    return parser.parse(body) as XmlApiResponse;
+    return parser.parse(body) as ParsedNetStorageResponse;
   }
 
   /**
    * Retrieves file or directory metadata at the specified path.
    * @param {string} path - The target path.
-   * @returns {Promise<XmlApiResponse>} The XML API response.
+   * @param {RequestOptions} [options] - Optional request configuration.
+   *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
    * const statInfo = await api.stat('/path/to/file');
    */
-  public async stat(path: string): Promise<XmlApiResponse> {
+  public async stat(
+    path: string,
+    options?: RequestOptions,
+  ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
         this.logger.info(`[stat] path: ${path}`);
         return this.sendRequest(path, {
           request: { method: 'GET' },
           headers: { action: 'stat' },
+          options: {
+            ...options,
+            signal: resolveAbortSignal(options, this.config),
+          },
         });
       },
       createRetryConfig('stat', this.readLimiter),
@@ -259,19 +273,28 @@ export default class NetStorageAPI {
   /**
    * Retrieves disk usage information at the specified path.
    * @param {string} path - The target path.
-   * @returns {Promise<XmlApiResponse>} The XML API response.
+   * @param {RequestOptions} [options] - Optional request configuration.
+   *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
    * const usage = await api.du('/path/to/directory');
    */
-  public async du(path: string): Promise<XmlApiResponse> {
+  public async du(
+    path: string,
+    options?: RequestOptions,
+  ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
         this.logger.info(`[du] path: ${path}`);
         return this.sendRequest(path, {
           request: { method: 'GET' },
           headers: { action: 'du' },
+          options: {
+            ...options,
+            signal: resolveAbortSignal(options, this.config),
+          },
         });
       },
       createRetryConfig('du', this.readLimiter),
@@ -281,19 +304,28 @@ export default class NetStorageAPI {
   /**
    * Lists the contents of a directory at the specified path.
    * @param {string} path - The target path.
-   * @returns {Promise<XmlApiResponse>} The XML API response.
+   * @param {RequestOptions} [options] - Optional request configuration.
+   *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
    * const contents = await api.dir('/path/to/directory');
    */
-  public async dir(path: string): Promise<XmlApiResponse> {
+  public async dir(
+    path: string,
+    options?: RequestOptions,
+  ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
         this.logger.info(`[dir] path: ${path}`);
         return this.sendRequest(path, {
           request: { method: 'GET' },
           headers: { action: 'dir' },
+          options: {
+            ...options,
+            signal: resolveAbortSignal(options, this.config),
+          },
         });
       },
       createRetryConfig('dir', this.dirLimiter),
@@ -303,19 +335,28 @@ export default class NetStorageAPI {
   /**
    * Creates a new directory at the specified path.
    * @param {string} path - The target path.
-   * @returns {Promise<XmlApiResponse>} The XML API response.
+   * @param {RequestOptions} [options] - Optional request configuration.
+   *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
    * await api.mkdir('/path/to/newdir');
    */
-  public async mkdir(path: string): Promise<XmlApiResponse> {
+  public async mkdir(
+    path: string,
+    options?: RequestOptions,
+  ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
         this.logger.info(`[mkdir] path: ${path}`);
         return this.sendRequest(path, {
           request: { method: 'PUT' },
           headers: { action: 'mkdir' },
+          options: {
+            ...options,
+            signal: resolveAbortSignal(options, this.config),
+          },
         });
       },
       createRetryConfig('mkdir', this.writeLimiter),
@@ -325,19 +366,28 @@ export default class NetStorageAPI {
   /**
    * Removes a directory at the specified path.
    * @param {string} path - The target path.
-   * @returns {Promise<XmlApiResponse>} The XML API response.
+   * @param {RequestOptions} [options] - Optional request configuration.
+   *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
    * await api.rmdir('/path/to/dir');
    */
-  public async rmdir(path: string): Promise<XmlApiResponse> {
+  public async rmdir(
+    path: string,
+    options?: RequestOptions,
+  ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
         this.logger.info(`[rmdir] path: ${path}`);
         return this.sendRequest(path, {
           request: { method: 'PUT' },
           headers: { action: 'rmdir' },
+          options: {
+            ...options,
+            signal: resolveAbortSignal(options, this.config),
+          },
         });
       },
       createRetryConfig('rmdir', this.writeLimiter),
@@ -347,19 +397,28 @@ export default class NetStorageAPI {
   /**
    * Deletes a file or directory at the specified path.
    * @param {string} path - The target path.
-   * @returns {Promise<XmlApiResponse>} The XML API response.
+   * @param {RequestOptions} [options] - Optional request configuration.
+   *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
    * await api.delete('/path/to/file');
    */
-  public async delete(path: string): Promise<XmlApiResponse> {
+  public async delete(
+    path: string,
+    options?: RequestOptions,
+  ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
         this.logger.info(`[delete] path: ${path}`);
         return this.sendRequest(path, {
           request: { method: 'PUT' },
           headers: { action: 'delete' },
+          options: {
+            ...options,
+            signal: resolveAbortSignal(options, this.config),
+          },
         });
       },
       createRetryConfig('delete', this.writeLimiter),
@@ -370,7 +429,9 @@ export default class NetStorageAPI {
    * Renames a file or directory.
    * @param {string} pathFrom - Current path.
    * @param {string} pathTo - New path.
-   * @returns {Promise<XmlApiResponse>} The XML API response.
+   * @param {RequestOptions} [options] - Optional request configuration.
+   *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
@@ -379,13 +440,18 @@ export default class NetStorageAPI {
   public async rename(
     pathFrom: string,
     pathTo: string,
-  ): Promise<XmlApiResponse> {
+    options?: RequestOptions,
+  ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
         this.logger.info(`[rename] from: ${pathFrom}, to: ${pathTo}`);
         return this.sendRequest(pathFrom, {
           request: { method: 'PUT' },
           headers: { action: 'rename', destination: pathTo },
+          options: {
+            ...options,
+            signal: resolveAbortSignal(options, this.config),
+          },
         });
       },
       createRetryConfig('rename', this.writeLimiter),
@@ -396,7 +462,9 @@ export default class NetStorageAPI {
    * Creates a symbolic link.
    * @param {string} pathFileTo - Target file path.
    * @param {string} pathSymlink - Path to create the symbolic link.
-   * @returns {Promise<XmlApiResponse>} The XML API response.
+   * @param {RequestOptions} [options] - Optional request configuration.
+   *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
@@ -405,7 +473,8 @@ export default class NetStorageAPI {
   public async symlink(
     pathFileTo: string,
     pathSymlink: string,
-  ): Promise<XmlApiResponse> {
+    options?: RequestOptions,
+  ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
         this.logger.info(
@@ -414,6 +483,10 @@ export default class NetStorageAPI {
         return this.sendRequest(pathSymlink, {
           request: { method: 'PUT' },
           headers: { action: 'symlink', target: pathFileTo },
+          options: {
+            ...options,
+            signal: resolveAbortSignal(options, this.config),
+          },
         });
       },
       createRetryConfig('symlink', this.writeLimiter),
@@ -424,14 +497,20 @@ export default class NetStorageAPI {
    * Updates the modification time of a file or directory.
    * @param {string} path - Target path.
    * @param {Date} date - New modification date.
-   * @returns {Promise<XmlApiResponse>} The XML API response.
+   * @param {RequestOptions} [options] - Optional request configuration.
+   *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
    * @throws {TypeError} If the date is not a valid Date instance.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
    * await api.mtime('/path/to/file', new Date());
    */
-  public async mtime(path: string, date: Date): Promise<XmlApiResponse> {
+  public async mtime(
+    path: string,
+    date: Date,
+    options?: RequestOptions,
+  ): Promise<ParsedNetStorageResponse> {
     if (!(date instanceof Date)) {
       throw new TypeError('The date has to be an instance of Date');
     }
@@ -445,6 +524,10 @@ export default class NetStorageAPI {
         return this.sendRequest(path, {
           request: { method: 'PUT' },
           headers: actionObj,
+          options: {
+            ...options,
+            signal: resolveAbortSignal(options, this.config),
+          },
         });
       },
       createRetryConfig('mtime', this.writeLimiter),
@@ -478,7 +561,9 @@ export default class NetStorageAPI {
    * Uploads a stream to the specified NetStorage path.
    * @param {Readable} stream - Stream of the file data.
    * @param {string} path - Destination path for upload.
-   * @returns {Promise<XmlApiResponse>} The XML API response.
+   * @param {RequestOptions} [options] - Optional request configuration.
+   *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
    * @throws {HttpError} If the upload fails.
    * @example
    * import { createReadStream } from 'node:fs';
@@ -487,7 +572,11 @@ export default class NetStorageAPI {
    * const stream = createReadStream('file.bin');
    * await api.upload(stream, '/upload/path/file.bin');
    */
-  public async upload(stream: Readable, path: string): Promise<XmlApiResponse> {
+  public async upload(
+    stream: Readable,
+    path: string,
+    options?: RequestOptions,
+  ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
         const url = this.getUri(path);
@@ -502,12 +591,15 @@ export default class NetStorageAPI {
           `[upload] meta: ${JSON.stringify({ path, url, headers })}`,
         );
 
-        const res = await fetch(url, {
+        const fetchOptions: RequestInit = {
           method: 'PUT',
           headers,
           body: webStream,
           ...({ duplex: 'half' } as RequestInit), // TypeScript workaround
-        });
+          signal: resolveAbortSignal(options, this.config),
+        };
+
+        const res = await fetch(url, fetchOptions);
 
         const body = await res.text();
 
@@ -531,6 +623,8 @@ export default class NetStorageAPI {
    * Downloads data to the provided stream.
    * @param {string} path - Path to the resource.
    * @param {Writable} stream - Writable stream to pipe the data.
+   * @param {RequestOptions} [options] - Optional request configuration.
+   *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
    * @returns {Promise<{ status: { code: number } }>} Download status code.
    * @throws {HttpError} If the download fails.
    * @throws {Error} If the response body is null.
@@ -544,6 +638,7 @@ export default class NetStorageAPI {
   public async download(
     path: string,
     stream: Writable,
+    options?: RequestOptions,
   ): Promise<{ status: { code: number } }> {
     return withRetries(
       async () => {
@@ -558,7 +653,7 @@ export default class NetStorageAPI {
 
         const res = await fetch(url, {
           headers,
-          signal: AbortSignal.timeout(this.config.request.timeout),
+          signal: resolveAbortSignal(options, this.config),
         });
 
         if (!res.ok) {
@@ -602,7 +697,7 @@ export default class NetStorageAPI {
    * @param {Object} [params.request] - Request method and options.
    * @param {Record<string, string>} [params.headers] - Request headers.
    * @param {BodyInit | null} [params.body] - Request body.
-   * @returns {Promise<XmlApiResponse>} Parsed XML API response.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed XML API response.
    * @throws {HttpError} If the request fails.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
@@ -615,11 +710,11 @@ export default class NetStorageAPI {
       request?: { method?: string };
       headers?: Record<string, string>;
       body?: BodyInit | null;
+      options?: RequestOptions;
     } = {},
-  ): Promise<XmlApiResponse> {
+  ): Promise<ParsedNetStorageResponse> {
     const url = this.getUri(path);
     const headers = this.getHeaders(path, params.headers || {});
-    const timeout = this.config.request.timeout;
 
     this.logger.debug(
       `[sendRequest] Requesting: ${url} (path: ${path}) meta: ` +
@@ -634,7 +729,7 @@ export default class NetStorageAPI {
       method: params.request?.method || 'GET',
       headers,
       body: params.body,
-      signal: AbortSignal.timeout(timeout),
+      signal: resolveAbortSignal(params.options, this.config),
     });
 
     const body = await response.text();

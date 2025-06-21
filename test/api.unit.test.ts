@@ -1,19 +1,61 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { NetStorageAPIConfig } from '../src/types';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  vi,
+  afterEach,
+  MockInstance,
+} from 'vitest';
 import { withRetries } from '../src/lib/withRetries';
 import { Readable } from 'node:stream';
 import NetStorageAPI from '../src/main';
 
-describe('NetStorageAPI - Config Methods', () => {
-  const baseConfig = {
-    key: process.env.NETSTORAGE_API_KEY ?? '',
-    keyName: process.env.NETSTORAGE_API_KEYNAME ?? '',
-    host: process.env.NETSTORAGE_HOST ?? '',
-  };
+const defaultConfig = {
+  key: 'abc',
+  keyName: 'def',
+  host: 'host.com',
+};
 
+function createAPI(configOverrides: Partial<NetStorageAPIConfig> = {}) {
+  return new NetStorageAPI({
+    ...defaultConfig,
+    ...configOverrides,
+  });
+}
+
+function spyOnLimiter(
+  api: NetStorageAPI,
+  limiterType: 'read' | 'write' | 'dir',
+) {
+  const limiterMap = {
+    read: api['readLimiter'],
+    write: api['writeLimiter'],
+    dir: api['dirLimiter'],
+  };
+  return vi.spyOn(limiterMap[limiterType], 'removeTokens');
+}
+
+async function expectAbort(promise: Promise<unknown>) {
+  await expect(promise).rejects.toThrow(/aborted/i);
+}
+
+function mockAbortableFetch() {
+  return vi.spyOn(global, 'fetch').mockImplementation((_, init) => {
+    return new Promise((_, reject) => {
+      init?.signal?.addEventListener('abort', () =>
+        reject(new DOMException('aborted', 'AbortError')),
+      );
+    });
+  });
+}
+
+describe('NetStorageAPI - Config Methods', () => {
   let api: NetStorageAPI;
 
   beforeEach(() => {
-    api = new NetStorageAPI(baseConfig);
+    api = new NetStorageAPI(defaultConfig);
   });
 
   it('applies default config values on construction', () => {
@@ -53,11 +95,7 @@ describe('NetStorageAPI - Required Fields and Internal Behavior', () => {
   });
 
   it('getConfig returns a copy to prevent mutation', () => {
-    const api = new NetStorageAPI({
-      key: 'abc',
-      keyName: 'def',
-      host: 'host.com',
-    });
+    const api = createAPI();
     const config = api.getConfig();
     config.ssl = true;
     expect(api.getConfig().ssl).toBe(false); // unchanged internally
@@ -65,41 +103,35 @@ describe('NetStorageAPI - Required Fields and Internal Behavior', () => {
 });
 
 describe('NetStorageAPI - Rate Limiting', () => {
-  const baseConfig = {
-    key: 'abc',
-    keyName: 'def',
-    host: 'host.com',
-  };
-
   let api: NetStorageAPI;
 
   beforeEach(() => {
-    api = new NetStorageAPI(baseConfig);
+    api = createAPI();
     vi.spyOn(api as never, 'sendRequest').mockResolvedValue({
       status: { code: 200 },
     });
   });
 
   it('calls readLimiter on stat()', async () => {
-    const spy = vi.spyOn(api['readLimiter'], 'removeTokens');
+    const spy = spyOnLimiter(api, 'read');
     await api.stat('/path');
     expect(spy).toHaveBeenCalledWith(1);
   });
 
   it('calls writeLimiter on mkdir()', async () => {
-    const spy = vi.spyOn(api['writeLimiter'], 'removeTokens');
+    const spy = spyOnLimiter(api, 'write');
     await api.mkdir('/some/new/dir');
     expect(spy).toHaveBeenCalledWith(1);
   });
 
   it('calls dirLimiter on dir()', async () => {
-    const dirSpy = vi.spyOn(api['dirLimiter'], 'removeTokens');
+    const spy = spyOnLimiter(api, 'dir');
     await api.dir('/some/dir');
-    expect(dirSpy).toHaveBeenCalledWith(1);
+    expect(spy).toHaveBeenCalledWith(1);
   });
 
   it('calls writeLimiter on upload()', async () => {
-    const spy = vi.spyOn(api['writeLimiter'], 'removeTokens');
+    const spy = spyOnLimiter(api, 'write');
     await api.upload(Readable.from(['data']), '/upload/path').catch(() => {});
     expect(spy).toHaveBeenCalledWith(1);
   });
@@ -166,7 +198,7 @@ describe('withRetries', () => {
     );
   });
 
-  it('calls beforeAttempt before each try', async () => {
+  it('invokes beforeAttempt hook before retries', async () => {
     const before = vi.fn();
     const task = vi
       .fn()
@@ -227,5 +259,34 @@ describe('withRetries', () => {
     ).rejects.toThrow('fail');
 
     expect(task).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('NetStorageAPI - Timeout and Abort Signal', () => {
+  let slowFetch: MockInstance;
+
+  beforeEach(() => {
+    slowFetch = mockAbortableFetch();
+  });
+
+  afterEach(() => {
+    slowFetch.mockRestore();
+  });
+
+  it('respects per-request timeout', async () => {
+    const api = createAPI();
+    await expectAbort(api.stat('/slow', { timeout: 10 }));
+  });
+
+  it('respects global config timeout', async () => {
+    const api = createAPI({ request: { timeout: 10 } });
+    await expectAbort(api.stat('/slow'));
+  });
+
+  it('aborts when external signal is triggered', async () => {
+    const api = createAPI();
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 5);
+    await expectAbort(api.stat('/foo', { signal: controller.signal }));
   });
 });
