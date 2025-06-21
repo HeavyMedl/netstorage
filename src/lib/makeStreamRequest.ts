@@ -118,7 +118,7 @@ function createStreamRequestError(
   body?: string,
 ): HttpError {
   const message = [
-    `streamRequest failed: ${method} ${url}`,
+    `makeStreamRequest failed: ${method} ${url}`,
     statusCode ? ` - HTTP ${statusCode}` : '',
     body ? `\n${body}` : '',
     (err as Error)?.message && !statusCode ? `\n${(err as Error).message}` : '',

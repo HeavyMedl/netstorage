@@ -20,15 +20,16 @@ export function shouldRetrySystemError(
   err: Error,
   methodName = 'unknown',
 ): boolean {
-  const nonRetryableCodes = ['ENOENT', 'EACCES', 'EPERM'];
-  if (nonRetryableCodes.some((code) => err.message.includes(code))) {
-    logger.error(`Non-retryable system error encountered: ${err.message}`, {
+  const retryableCodes = ['ECONNRESET', 'ETIMEDOUT', 'EAI_AGAIN', 'ENOTFOUND'];
+  const shouldRetry = retryableCodes.some((code) => err.message.includes(code));
+
+  if (!shouldRetry) {
+    logger.warn(`Non-retryable system error encountered: ${err.message}`, {
       method: methodName,
     });
-    return false;
   }
 
-  return ['ECONNRESET', 'ETIMEDOUT'].some((code) => err.message.includes(code));
+  return shouldRetry;
 }
 
 /**
