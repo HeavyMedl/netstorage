@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { withRetries } from '../src/lib/withRetries';
 import { Readable } from 'node:stream';
 import NetStorageAPI from '../src/main';
 
@@ -101,5 +102,130 @@ describe('NetStorageAPI - Rate Limiting', () => {
     const spy = vi.spyOn(api['writeLimiter'], 'removeTokens');
     await api.upload(Readable.from(['data']), '/upload/path').catch(() => {});
     expect(spy).toHaveBeenCalledWith(1);
+  });
+});
+
+describe('withRetries', () => {
+  it('resolves on first try when no error is thrown', async () => {
+    const task = vi.fn().mockResolvedValue('success');
+    const result = await withRetries(task, { retries: 2, baseDelayMs: 0 });
+    expect(result).toBe('success');
+    expect(task).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries up to max retries when error is retryable', async () => {
+    const task = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('fail 1'))
+      .mockRejectedValueOnce(new Error('fail 2'))
+      .mockResolvedValue('success');
+
+    const result = await withRetries(task, {
+      retries: 3,
+      baseDelayMs: 0,
+      shouldRetry: () => true,
+    });
+
+    expect(result).toBe('success');
+    expect(task).toHaveBeenCalledTimes(3);
+  });
+
+  it('stops retrying if shouldRetry returns false', async () => {
+    const task = vi.fn().mockRejectedValue(new Error('do not retry'));
+
+    await expect(
+      withRetries(task, {
+        retries: 3,
+        baseDelayMs: 0,
+        shouldRetry: () => false,
+      }),
+    ).rejects.toThrow('do not retry');
+
+    expect(task).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onRetry for each retry attempt', async () => {
+    const onRetry = vi.fn();
+    const task = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('fail 1'))
+      .mockResolvedValue('done');
+
+    const result = await withRetries(task, {
+      retries: 2,
+      baseDelayMs: 0,
+      shouldRetry: () => true,
+      onRetry,
+    });
+
+    expect(result).toBe('done');
+    expect(onRetry).toHaveBeenCalledWith(
+      expect.any(Error),
+      1,
+      expect.any(Number),
+    );
+  });
+
+  it('calls beforeAttempt before each try', async () => {
+    const before = vi.fn();
+    const task = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('fail'))
+      .mockResolvedValue('ok');
+
+    const result = await withRetries(task, {
+      retries: 2,
+      baseDelayMs: 0,
+      shouldRetry: () => true,
+      beforeAttempt: before,
+    });
+
+    expect(result).toBe('ok');
+    expect(before).toHaveBeenCalledTimes(2);
+  });
+
+  it('fails after exceeding max retries', async () => {
+    const task = vi.fn().mockRejectedValue(new Error('retry limit'));
+
+    await expect(
+      withRetries(task, {
+        retries: 2,
+        baseDelayMs: 0,
+        shouldRetry: () => true,
+      }),
+    ).rejects.toThrow('retry limit');
+
+    expect(task).toHaveBeenCalledTimes(3); // initial + 2 retries
+  });
+
+  it('applies jitter without errors', async () => {
+    const task = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('fail'))
+      .mockResolvedValue('ok');
+
+    const result = await withRetries(task, {
+      retries: 1,
+      baseDelayMs: 10,
+      maxDelayMs: 100,
+      jitter: true,
+      shouldRetry: () => true,
+    });
+
+    expect(result).toBe('ok');
+  });
+
+  it('does not retry if retries is 0', async () => {
+    const task = vi.fn().mockRejectedValue(new Error('fail'));
+
+    await expect(
+      withRetries(task, {
+        retries: 0,
+        baseDelayMs: 0,
+        shouldRetry: () => true,
+      }),
+    ).rejects.toThrow('fail');
+
+    expect(task).toHaveBeenCalledTimes(1);
   });
 });

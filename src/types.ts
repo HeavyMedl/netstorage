@@ -85,3 +85,26 @@ export interface RateLimitConfig {
   dir?: number;
   time?: number;
 }
+
+/**
+ * Configuration options for retrying asynchronous operations using exponential backoff.
+ *
+ * This interface supports flexible and safe retries with optional jitter and retry hooks.
+ *
+ * @property retries - The maximum number of retry attempts (default: 3).
+ * @property baseDelayMs - The initial delay in milliseconds before retrying (default: 300ms).
+ * @property maxDelayMs - The maximum allowed delay between retries in milliseconds (default: 2000ms).
+ * @property jitter - Whether to apply random jitter to the delay (default: true).
+ * @property shouldRetry - A function that determines whether a given error warrants a retry.
+ * @property beforeAttempt - An optional async hook to run before each retry attempt (e.g., rate limiter).
+ * @property onRetry - An optional callback invoked after a failed attempt, before delay.
+ */
+export interface WithRetriesOptions {
+  retries: number;
+  baseDelayMs: number;
+  maxDelayMs: number;
+  jitter: boolean;
+  shouldRetry: (error: unknown) => boolean;
+  beforeAttempt?: () => Promise<void>;
+  onRetry?: (error: unknown, attempt: number, delay: number) => void;
+}

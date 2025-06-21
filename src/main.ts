@@ -6,6 +6,8 @@ import { XMLParser } from 'fast-xml-parser';
 import winston from 'winston';
 
 import { createRateLimiters } from './lib/rateLimiter';
+import { HttpError } from './errors';
+import { createRetryConfig, withRetries } from './lib/withRetries';
 import { name as packageName } from '../package.json';
 
 import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
@@ -28,18 +30,6 @@ function assertNonEmpty(value: string, name: string): void {
     throw new TypeError(
       `[${packageName}]: Missing or invalid \`${name}\` in configuration`,
     );
-  }
-}
-
-/**
- * Custom error class used for HTTP error handling.
- * Includes the HTTP status code for more detailed error reporting.
- */
-class HttpError extends Error {
-  code: number;
-  constructor(message: string, code: number) {
-    super(message);
-    this.code = code;
   }
 }
 
@@ -254,12 +244,16 @@ export default class NetStorageAPI {
    * const statInfo = await api.stat('/path/to/file');
    */
   public async stat(path: string): Promise<XmlApiResponse> {
-    await this.readLimiter.removeTokens(1);
-    this.logger.info(`[stat] path: ${path}`);
-    return this.sendRequest(path, {
-      request: { method: 'GET' },
-      headers: { action: 'stat' },
-    });
+    return withRetries(
+      async () => {
+        this.logger.info(`[stat] path: ${path}`);
+        return this.sendRequest(path, {
+          request: { method: 'GET' },
+          headers: { action: 'stat' },
+        });
+      },
+      createRetryConfig('stat', this.readLimiter),
+    );
   }
 
   /**
@@ -272,12 +266,16 @@ export default class NetStorageAPI {
    * const usage = await api.du('/path/to/directory');
    */
   public async du(path: string): Promise<XmlApiResponse> {
-    await this.readLimiter.removeTokens(1);
-    this.logger.info(`[du] path: ${path}`);
-    return this.sendRequest(path, {
-      request: { method: 'GET' },
-      headers: { action: 'du' },
-    });
+    return withRetries(
+      async () => {
+        this.logger.info(`[du] path: ${path}`);
+        return this.sendRequest(path, {
+          request: { method: 'GET' },
+          headers: { action: 'du' },
+        });
+      },
+      createRetryConfig('du', this.readLimiter),
+    );
   }
 
   /**
@@ -290,12 +288,16 @@ export default class NetStorageAPI {
    * const contents = await api.dir('/path/to/directory');
    */
   public async dir(path: string): Promise<XmlApiResponse> {
-    await this.dirLimiter.removeTokens(1);
-    this.logger.info(`[dir] path: ${path}`);
-    return this.sendRequest(path, {
-      request: { method: 'GET' },
-      headers: { action: 'dir' },
-    });
+    return withRetries(
+      async () => {
+        this.logger.info(`[dir] path: ${path}`);
+        return this.sendRequest(path, {
+          request: { method: 'GET' },
+          headers: { action: 'dir' },
+        });
+      },
+      createRetryConfig('dir', this.dirLimiter),
+    );
   }
 
   /**
@@ -308,12 +310,16 @@ export default class NetStorageAPI {
    * await api.mkdir('/path/to/newdir');
    */
   public async mkdir(path: string): Promise<XmlApiResponse> {
-    await this.writeLimiter.removeTokens(1);
-    this.logger.info(`[mkdir] path: ${path}`);
-    return this.sendRequest(path, {
-      request: { method: 'PUT' },
-      headers: { action: 'mkdir' },
-    });
+    return withRetries(
+      async () => {
+        this.logger.info(`[mkdir] path: ${path}`);
+        return this.sendRequest(path, {
+          request: { method: 'PUT' },
+          headers: { action: 'mkdir' },
+        });
+      },
+      createRetryConfig('mkdir', this.writeLimiter),
+    );
   }
 
   /**
@@ -326,12 +332,16 @@ export default class NetStorageAPI {
    * await api.rmdir('/path/to/dir');
    */
   public async rmdir(path: string): Promise<XmlApiResponse> {
-    await this.writeLimiter.removeTokens(1);
-    this.logger.info(`[rmdir] path: ${path}`);
-    return this.sendRequest(path, {
-      request: { method: 'PUT' },
-      headers: { action: 'rmdir' },
-    });
+    return withRetries(
+      async () => {
+        this.logger.info(`[rmdir] path: ${path}`);
+        return this.sendRequest(path, {
+          request: { method: 'PUT' },
+          headers: { action: 'rmdir' },
+        });
+      },
+      createRetryConfig('rmdir', this.writeLimiter),
+    );
   }
 
   /**
@@ -344,12 +354,16 @@ export default class NetStorageAPI {
    * await api.delete('/path/to/file');
    */
   public async delete(path: string): Promise<XmlApiResponse> {
-    await this.writeLimiter.removeTokens(1);
-    this.logger.info(`[delete] path: ${path}`);
-    return this.sendRequest(path, {
-      request: { method: 'PUT' },
-      headers: { action: 'delete' },
-    });
+    return withRetries(
+      async () => {
+        this.logger.info(`[delete] path: ${path}`);
+        return this.sendRequest(path, {
+          request: { method: 'PUT' },
+          headers: { action: 'delete' },
+        });
+      },
+      createRetryConfig('delete', this.writeLimiter),
+    );
   }
 
   /**
@@ -366,12 +380,16 @@ export default class NetStorageAPI {
     pathFrom: string,
     pathTo: string,
   ): Promise<XmlApiResponse> {
-    await this.writeLimiter.removeTokens(1);
-    this.logger.info(`[rename] from: ${pathFrom}, to: ${pathTo}`);
-    return this.sendRequest(pathFrom, {
-      request: { method: 'PUT' },
-      headers: { action: 'rename', destination: pathTo },
-    });
+    return withRetries(
+      async () => {
+        this.logger.info(`[rename] from: ${pathFrom}, to: ${pathTo}`);
+        return this.sendRequest(pathFrom, {
+          request: { method: 'PUT' },
+          headers: { action: 'rename', destination: pathTo },
+        });
+      },
+      createRetryConfig('rename', this.writeLimiter),
+    );
   }
 
   /**
@@ -388,14 +406,18 @@ export default class NetStorageAPI {
     pathFileTo: string,
     pathSymlink: string,
   ): Promise<XmlApiResponse> {
-    await this.writeLimiter.removeTokens(1);
-    this.logger.info(
-      `[symlink] fileTo: ${pathFileTo}, symlink: ${pathSymlink}`,
+    return withRetries(
+      async () => {
+        this.logger.info(
+          `[symlink] fileTo: ${pathFileTo}, symlink: ${pathSymlink}`,
+        );
+        return this.sendRequest(pathSymlink, {
+          request: { method: 'PUT' },
+          headers: { action: 'symlink', target: pathFileTo },
+        });
+      },
+      createRetryConfig('symlink', this.writeLimiter),
     );
-    return this.sendRequest(pathSymlink, {
-      request: { method: 'PUT' },
-      headers: { action: 'symlink', target: pathFileTo },
-    });
   }
 
   /**
@@ -413,16 +435,20 @@ export default class NetStorageAPI {
     if (!(date instanceof Date)) {
       throw new TypeError('The date has to be an instance of Date');
     }
-    await this.writeLimiter.removeTokens(1);
-    this.logger.info(`[mtime] path: ${path}, date: ${date.toISOString()}`);
-    const actionObj = {
-      action: 'mtime',
-      mtime: Math.floor(date.getTime() / 1000).toString(),
-    };
-    return this.sendRequest(path, {
-      request: { method: 'PUT' },
-      headers: actionObj,
-    });
+    return withRetries(
+      async () => {
+        this.logger.info(`[mtime] path: ${path}, date: ${date.toISOString()}`);
+        const actionObj = {
+          action: 'mtime',
+          mtime: Math.floor(date.getTime() / 1000).toString(),
+        };
+        return this.sendRequest(path, {
+          request: { method: 'PUT' },
+          headers: actionObj,
+        });
+      },
+      createRetryConfig('mtime', this.writeLimiter),
+    );
   }
 
   /**
@@ -462,39 +488,43 @@ export default class NetStorageAPI {
    * await api.upload(stream, '/upload/path/file.bin');
    */
   public async upload(stream: Readable, path: string): Promise<XmlApiResponse> {
-    await this.writeLimiter.removeTokens(1);
-    const url = this.getUri(path);
-    const headers = this.getHeaders(path, {
-      action: 'upload',
-      'upload-type': 'binary',
-    });
-    const webStream = Readable.toWeb(stream) as ReadableStream;
+    return withRetries(
+      async () => {
+        const url = this.getUri(path);
+        const headers = this.getHeaders(path, {
+          action: 'upload',
+          'upload-type': 'binary',
+        });
+        const webStream = Readable.toWeb(stream) as ReadableStream;
 
-    this.logger.info(`[upload] path: ${path}`);
-    this.logger.debug(
-      `[upload] meta: ${JSON.stringify({ path, url, headers })}`,
+        this.logger.info(`[upload] path: ${path}`);
+        this.logger.debug(
+          `[upload] meta: ${JSON.stringify({ path, url, headers })}`,
+        );
+
+        const res = await fetch(url, {
+          method: 'PUT',
+          headers,
+          body: webStream,
+          ...({ duplex: 'half' } as RequestInit), // TypeScript workaround
+        });
+
+        const body = await res.text();
+
+        if (!res.ok) {
+          let msg = `Upload failed with code ${res.status} for path: ${path}`;
+          msg += `. Body: ${body}`;
+          throw new HttpError(msg, res.status);
+        }
+
+        this.logger.debug(
+          `[upload] Response meta: ${JSON.stringify({ path, status: res.status, body })}`,
+        );
+
+        return this.parseXmlResponse(body, res.status);
+      },
+      createRetryConfig('upload', this.writeLimiter),
     );
-
-    const res = await fetch(url, {
-      method: 'PUT',
-      headers,
-      body: webStream,
-      ...({ duplex: 'half' } as RequestInit), // TypeScript workaround
-    });
-
-    const body = await res.text();
-
-    if (!res.ok) {
-      let msg = `Upload failed with code ${res.status} for path: ${path}`;
-      msg += `. Body: ${body}`;
-      throw new HttpError(msg, res.status);
-    }
-
-    this.logger.debug(
-      `[upload] Response meta: ${JSON.stringify({ path, status: res.status, body })}`,
-    );
-
-    return this.parseXmlResponse(body, res.status);
   }
 
   /**
@@ -515,49 +545,54 @@ export default class NetStorageAPI {
     path: string,
     stream: Writable,
   ): Promise<{ status: { code: number } }> {
-    await this.readLimiter.removeTokens(1);
-    const url = this.getUri(path);
-    const headers = this.getHeaders(path, { action: 'download' });
+    return withRetries(
+      async () => {
+        await this.readLimiter.removeTokens(1);
+        const url = this.getUri(path);
+        const headers = this.getHeaders(path, { action: 'download' });
 
-    this.logger.info(`[download] path: ${path}`);
-    this.logger.debug(`[download] meta: ${JSON.stringify({ url, headers })}`);
+        this.logger.info(`[download] path: ${path}`);
+        this.logger.debug(
+          `[download] meta: ${JSON.stringify({ url, headers })}`,
+        );
 
-    const res = await fetch(url, {
-      headers,
-      signal: AbortSignal.timeout(this.config.request.timeout),
-    });
+        const res = await fetch(url, {
+          headers,
+          signal: AbortSignal.timeout(this.config.request.timeout),
+        });
 
-    if (!res.ok) {
-      let msg = `Download failed with code ${res.status} for path: ${path}`;
-      let body: string | undefined;
-      try {
-        body = await res.text();
-      } catch {
-        body = undefined;
-      }
-      if (body !== undefined) {
-        msg += `. Body: ${body}`;
-      }
-      throw new HttpError(msg, res.status);
-    }
+        if (!res.ok) {
+          let msg = `Download failed with code ${res.status} for path: ${path}`;
+          let body: string | undefined;
+          try {
+            body = await res.text();
+          } catch {
+            body = undefined;
+          }
+          if (body !== undefined) {
+            msg += `. Body: ${body}`;
+          }
+          throw new HttpError(msg, res.status);
+        }
 
-    if (!res.body) {
-      throw new Error('Response body is null');
-    }
+        if (!res.body) {
+          throw new Error('Response body is null');
+        }
 
-    await promisify(pipeline)(
-      Readable.fromWeb(res.body as NodeReadableStream),
-      stream,
+        await promisify(pipeline)(
+          Readable.fromWeb(res.body as NodeReadableStream),
+          stream,
+        );
+
+        this.logger.debug(
+          `[download] Completed stream for path: ${path} meta: ` +
+            JSON.stringify({ status: res.status }),
+        );
+
+        return { status: { code: res.status } };
+      },
+      createRetryConfig('download', this.readLimiter),
     );
-
-    this.logger.debug(
-      `[download] Completed stream for path: ${path} meta: ` +
-        JSON.stringify({ status: res.status }),
-    );
-
-    // The NetStorage download action returns an XML response only in the headers, not in the body.
-    // We can return a simple object indicating success.
-    return { status: { code: res.status } };
   }
 
   /**
