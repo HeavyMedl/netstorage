@@ -2,6 +2,9 @@ import type { RateLimiter } from 'limiter';
 
 import type { WithRetriesOptions } from '../types';
 import { HttpError } from '../errors';
+import { createLogger } from './logger';
+
+const logger = createLogger('warn', 'withRetries');
 
 /**
  * Executes a given asynchronous function with automatic retries using exponential backoff.
@@ -108,8 +111,9 @@ export function createRetryConfig(
       overrides.onRetry ??
       ((err, attempt, delay) => {
         const message = err instanceof Error ? err.message : 'Unknown error';
-        console.warn(
-          `[${methodName}] Retry ${attempt} due to error: ${message}. Retrying in ${delay}ms.`,
+        logger.warn(
+          `Retry ${attempt} due to error: ${message}. Retrying in ${delay}ms.`,
+          { method: methodName },
         );
       }),
   };

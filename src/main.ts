@@ -3,7 +3,6 @@ import { pipeline, Readable, type Writable } from 'node:stream';
 import { promisify } from 'node:util';
 
 import { XMLParser } from 'fast-xml-parser';
-import winston from 'winston';
 
 import { createRateLimiters } from './lib/rateLimiter';
 import { resolveAbortSignal } from './lib/resolveAbortSignal';
@@ -20,6 +19,7 @@ import type {
   HeadersMap,
   ParsedNetStorageResponse,
 } from './types';
+import { createLogger } from './lib/logger';
 
 /**
  * Asserts that a given string is non-empty and not just whitespace.
@@ -67,18 +67,7 @@ function assertNonEmpty(value: string, name: string): void {
  */
 export default class NetStorageAPI {
   private config: NetStorageAPIConfig;
-  private logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.label({ label: packageName }),
-      winston.format.timestamp(),
-      winston.format.printf(({ timestamp, level, message, label }) => {
-        return `${timestamp} [${label}] ${level}: ${message}`;
-      }),
-    ),
-    transports: [new winston.transports.Console()],
-  });
+  private logger;
   private readLimiter;
   private writeLimiter;
   private dirLimiter;
@@ -94,7 +83,7 @@ export default class NetStorageAPI {
       request: { timeout: 20000 },
       ...conf,
     };
-    // Validate required config fields
+    this.logger = createLogger(this.config.logLevel, 'NetStorageAPI');
     const { key, keyName, host } = this.config;
     assertNonEmpty(key, 'key');
     assertNonEmpty(keyName, 'keyName');
@@ -118,7 +107,7 @@ export default class NetStorageAPI {
    * api.setConfig({ logLevel: 'debug' });
    */
   public setConfig(conf: Partial<NetStorageAPIConfig>): this {
-    this.logger.info('[setConfig] Updating configuration');
+    this.logger.info('Updating configuration', { method: 'setConfig' });
     this.config = { ...this.config, ...conf };
     this.logger.level = this.config.logLevel;
     return this;
@@ -133,7 +122,9 @@ export default class NetStorageAPI {
    * const config = api.getConfig();
    */
   public getConfig(): NetStorageAPIConfig {
-    this.logger.info('[getConfig] Returning current configuration');
+    this.logger.info('Returning current configuration', {
+      method: 'getConfig',
+    });
     return structuredClone(this.config);
   }
 
@@ -256,7 +247,7 @@ export default class NetStorageAPI {
   ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
-        this.logger.info(`[stat] path: ${path}`);
+        this.logger.info(path, { method: 'stat' });
         return this.sendRequest(path, {
           request: { method: 'GET' },
           headers: { action: 'stat' },
@@ -287,7 +278,7 @@ export default class NetStorageAPI {
   ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
-        this.logger.info(`[du] path: ${path}`);
+        this.logger.info(path, { method: 'du' });
         return this.sendRequest(path, {
           request: { method: 'GET' },
           headers: { action: 'du' },
@@ -318,7 +309,7 @@ export default class NetStorageAPI {
   ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
-        this.logger.info(`[dir] path: ${path}`);
+        this.logger.info(path, { method: 'dir' });
         return this.sendRequest(path, {
           request: { method: 'GET' },
           headers: { action: 'dir' },
@@ -349,7 +340,7 @@ export default class NetStorageAPI {
   ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
-        this.logger.info(`[mkdir] path: ${path}`);
+        this.logger.info(path, { method: 'mkdir' });
         return this.sendRequest(path, {
           request: { method: 'PUT' },
           headers: { action: 'mkdir' },
@@ -380,7 +371,7 @@ export default class NetStorageAPI {
   ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
-        this.logger.info(`[rmdir] path: ${path}`);
+        this.logger.info(path, { method: 'rmdir' });
         return this.sendRequest(path, {
           request: { method: 'PUT' },
           headers: { action: 'rmdir' },
@@ -411,7 +402,7 @@ export default class NetStorageAPI {
   ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
-        this.logger.info(`[delete] path: ${path}`);
+        this.logger.info(path, { method: 'delete' });
         return this.sendRequest(path, {
           request: { method: 'PUT' },
           headers: { action: 'delete' },
@@ -444,7 +435,9 @@ export default class NetStorageAPI {
   ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
-        this.logger.info(`[rename] from: ${pathFrom}, to: ${pathTo}`);
+        this.logger.info(`from: ${pathFrom}, to: ${pathTo}`, {
+          method: 'rename',
+        });
         return this.sendRequest(pathFrom, {
           request: { method: 'PUT' },
           headers: { action: 'rename', destination: pathTo },
@@ -477,9 +470,9 @@ export default class NetStorageAPI {
   ): Promise<ParsedNetStorageResponse> {
     return withRetries(
       async () => {
-        this.logger.info(
-          `[symlink] fileTo: ${pathFileTo}, symlink: ${pathSymlink}`,
-        );
+        this.logger.info(`fileTo: ${pathFileTo}, symlink: ${pathSymlink}`, {
+          method: 'symlink',
+        });
         return this.sendRequest(pathSymlink, {
           request: { method: 'PUT' },
           headers: { action: 'symlink', target: pathFileTo },
@@ -516,7 +509,9 @@ export default class NetStorageAPI {
     }
     return withRetries(
       async () => {
-        this.logger.info(`[mtime] path: ${path}, date: ${date.toISOString()}`);
+        this.logger.info(`${path}, date: ${date.toISOString()}`, {
+          method: 'mtime',
+        });
         const actionObj = {
           action: 'mtime',
           mtime: Math.floor(date.getTime() / 1000).toString(),
@@ -545,7 +540,7 @@ export default class NetStorageAPI {
    * const exists = await api.fileExists('/path/to/file');
    */
   public async fileExists(path: string): Promise<boolean> {
-    this.logger.info(`[fileExists] path: ${path}`);
+    this.logger.info(path, { method: 'fileExists' });
     try {
       const data = await this.stat(path);
       return Boolean(data?.stat?.file);
@@ -586,10 +581,10 @@ export default class NetStorageAPI {
         });
         const webStream = Readable.toWeb(stream) as ReadableStream;
 
-        this.logger.info(`[upload] path: ${path}`);
-        this.logger.debug(
-          `[upload] meta: ${JSON.stringify({ path, url, headers })}`,
-        );
+        this.logger.info(path, { method: 'upload' });
+        this.logger.debug(JSON.stringify({ path, url, headers }), {
+          method: 'upload',
+        });
 
         const fetchOptions: RequestInit = {
           method: 'PUT',
@@ -610,7 +605,8 @@ export default class NetStorageAPI {
         }
 
         this.logger.debug(
-          `[upload] Response meta: ${JSON.stringify({ path, status: res.status, body })}`,
+          `Response meta: ${JSON.stringify({ path, status: res.status, body })}`,
+          { method: 'upload' },
         );
 
         return this.parseXmlResponse(body, res.status);
@@ -646,10 +642,10 @@ export default class NetStorageAPI {
         const url = this.getUri(path);
         const headers = this.getHeaders(path, { action: 'download' });
 
-        this.logger.info(`[download] path: ${path}`);
-        this.logger.debug(
-          `[download] meta: ${JSON.stringify({ url, headers })}`,
-        );
+        this.logger.info(path, { method: 'download' });
+        this.logger.debug(JSON.stringify({ url, headers }), {
+          method: 'download',
+        });
 
         const res = await fetch(url, {
           headers,
@@ -680,8 +676,8 @@ export default class NetStorageAPI {
         );
 
         this.logger.debug(
-          `[download] Completed stream for path: ${path} meta: ` +
-            JSON.stringify({ status: res.status }),
+          `Completed stream for path: ${path} meta: ${JSON.stringify({ status: res.status })}`,
+          { method: 'download' },
         );
 
         return { status: { code: res.status } };
@@ -717,12 +713,12 @@ export default class NetStorageAPI {
     const headers = this.getHeaders(path, params.headers || {});
 
     this.logger.debug(
-      `[sendRequest] Requesting: ${url} (path: ${path}) meta: ` +
-        JSON.stringify({
-          method: params.request?.method || 'GET',
-          headers,
-          body: params.body,
-        }),
+      `Requesting: ${url} (path: ${path}) meta: ${JSON.stringify({
+        method: params.request?.method || 'GET',
+        headers,
+        body: params.body,
+      })}`,
+      { method: 'sendRequest' },
     );
 
     const response = await fetch(url, {
@@ -741,8 +737,8 @@ export default class NetStorageAPI {
     }
 
     this.logger.debug(
-      `[sendRequest] Response for path: ${path} meta: ` +
-        JSON.stringify({ status: response.status, body }),
+      `Response for path: ${path} meta: ${JSON.stringify({ status: response.status, body })}`,
+      { method: 'sendRequest' },
     );
 
     return this.parseXmlResponse(body, response.status);
