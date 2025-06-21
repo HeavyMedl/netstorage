@@ -9,7 +9,6 @@ import {
   MockInstance,
 } from 'vitest';
 import { withRetries } from '../src/lib/withRetries';
-import { Readable } from 'node:stream';
 import NetStorageAPI from '../src/main';
 
 const defaultConfig = {
@@ -132,7 +131,9 @@ describe('NetStorageAPI - Rate Limiting', () => {
 
   it('calls writeLimiter on upload()', async () => {
     const spy = spyOnLimiter(api, 'write');
-    await api.upload(Readable.from(['data']), '/upload/path').catch(() => {});
+    await api
+      .upload({ fromLocal: 'test/fixtures/fake.txt', toRemote: '/upload/path' })
+      .catch(() => {});
     expect(spy).toHaveBeenCalledWith(1);
   });
 });

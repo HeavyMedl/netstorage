@@ -1,3 +1,5 @@
+import type { Readable, Writable } from 'node:stream';
+
 /****
  * Available logging levels supported by Winston using the `npm` levels preset.
  *
@@ -125,4 +127,35 @@ export interface WithRetriesOptions {
 export interface RequestOptions {
   timeout?: number;
   signal?: AbortSignal;
+}
+
+/**
+ * Options for configuring the streamRequest function.
+ *
+ * @property {string} [url] - Optional full URL to use instead of protocol + host + path.
+ * @property {'http' | 'https'} [protocol] - Protocol to use for the request. Optional if `url` is specified.
+ * @property {string} [host] - Hostname of the server. Optional if `url` is specified.
+ * @property {string} [path] - Path of the request URL. Optional if `url` is specified.
+ * @property {'PUT' | 'POST' | 'PATCH' | 'GET'} [method] - HTTP method to use (default is 'GET').
+ * @property {Record<string, string>} [headers] - Headers to include with the request.
+ * @property {Readable} [inputStream] - Optional readable stream to send as the request body.
+ * @property {Writable} [outputStream] - Optional writable stream to pipe the response body into.
+ * @property {AbortSignal} [signal] - Optional AbortSignal to cancel the request.
+ * @property {number} [timeout] - Optional timeout in milliseconds for the request.
+ * @property {(bytes: number) => void} [onProgress] - Optional callback to track progress of data transfer.
+ * @property {Record<string, string | number>} [query] - Optional query parameters to append to the URL.
+ */
+export interface StreamRequestOptions {
+  url?: string;
+  protocol?: 'http' | 'https';
+  host?: string;
+  path?: string;
+  method?: 'PUT' | 'POST' | 'PATCH' | 'GET';
+  headers?: Record<string, string>;
+  inputStream?: Readable;
+  outputStream?: Writable;
+  signal?: AbortSignal;
+  timeout?: number;
+  onProgress?: (bytes: number) => void;
+  query?: Record<string, string | number>;
 }

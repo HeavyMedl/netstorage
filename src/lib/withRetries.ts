@@ -4,7 +4,32 @@ import type { WithRetriesOptions } from '../types';
 import { HttpError } from '../errors';
 import { createLogger } from './logger';
 
-const logger = createLogger('warn', 'withRetries');
+const logger = createLogger('info', 'withRetries');
+
+/**
+ * Determines whether a system-level error should trigger a retry.
+ *
+ * Logs and returns false for non-retryable errors like file not found or permission denied.
+ * Returns true for transient errors like connection resets or timeouts.
+ *
+ * @param err - The error instance to evaluate.
+ * @param methodName - Optional method name for logging context.
+ * @returns True if the error is transient and eligible for retry; false otherwise.
+ */
+export function shouldRetrySystemError(
+  err: Error,
+  methodName = 'unknown',
+): boolean {
+  const nonRetryableCodes = ['ENOENT', 'EACCES', 'EPERM'];
+  if (nonRetryableCodes.some((code) => err.message.includes(code))) {
+    logger.error(`Non-retryable system error encountered: ${err.message}`, {
+      method: methodName,
+    });
+    return false;
+  }
+
+  return ['ECONNRESET', 'ETIMEDOUT'].some((code) => err.message.includes(code));
+}
 
 /**
  * Executes a given asynchronous function with automatic retries using exponential backoff.
@@ -101,9 +126,15 @@ export function createRetryConfig(
     jitter: true,
     shouldRetry:
       overrides.shouldRetry ??
-      ((err) =>
-        err instanceof HttpError &&
-        [429, 500, 502, 503, 504].includes(err.code)),
+      ((err) => {
+        if (err instanceof Error) {
+          return shouldRetrySystemError(err, methodName);
+        }
+        if (err instanceof HttpError) {
+          return [429, 500, 502, 503, 504].includes(err.code);
+        }
+        return false;
+      }),
     beforeAttempt: async () => {
       await limiter.removeTokens(1);
     },

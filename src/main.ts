@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
-import { pipeline, Readable, type Writable } from 'node:stream';
-import { promisify } from 'node:util';
+import { createReadStream, createWriteStream } from 'node:fs';
 
 import { XMLParser } from 'fast-xml-parser';
 
@@ -11,7 +10,6 @@ import { createRetryConfig, withRetries } from './lib/withRetries';
 import { name as packageName } from '../package.json';
 
 import type { RequestOptions } from './types';
-import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 import type {
   NetStorageAPIConfig,
   RequiredConfig,
@@ -20,6 +18,7 @@ import type {
   ParsedNetStorageResponse,
 } from './types';
 import { createLogger } from './lib/logger';
+import { makeStreamRequest } from './lib/makeStreamRequest';
 
 /**
  * Asserts that a given string is non-empty and not just whitespace.
@@ -553,134 +552,93 @@ export default class NetStorageAPI {
   }
 
   /**
-   * Uploads a stream to the specified NetStorage path.
-   * @param {Readable} stream - Stream of the file data.
-   * @param {string} path - Destination path for upload.
-   * @param {RequestOptions} [options] - Optional request configuration.
+   * Uploads a file to the specified NetStorage path.
+   * @param {Object} params - Upload parameters.
+   * @param {string} params.localPath - Local path to the file.
+   * @param {string} params.remotePath - Destination path for upload.
+   * @param {RequestOptions} [params.options] - Optional request configuration.
    *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
    * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
    * @throws {HttpError} If the upload fails.
    * @example
-   * import { createReadStream } from 'node:fs';
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
-   * const stream = createReadStream('file.bin');
-   * await api.upload(stream, '/upload/path/file.bin');
+   * await api.upload({ localPath: 'file.bin', remotePath: '/upload/path/file.bin' });
    */
-  public async upload(
-    stream: Readable,
-    path: string,
-    options?: RequestOptions,
-  ): Promise<ParsedNetStorageResponse> {
+  public async upload({
+    fromLocal,
+    toRemote,
+    options,
+  }: {
+    fromLocal: string;
+    toRemote: string;
+    options?: RequestOptions;
+  }): Promise<ParsedNetStorageResponse> {
+    this.logger.info(toRemote, { method: 'upload' });
+
     return withRetries(
       async () => {
-        const url = this.getUri(path);
-        const headers = this.getHeaders(path, {
+        const inputStream = createReadStream(fromLocal);
+        const url = this.getUri(toRemote);
+        const headers = this.getHeaders(toRemote, {
           action: 'upload',
           'upload-type': 'binary',
         });
-        const webStream = Readable.toWeb(stream) as ReadableStream;
 
-        this.logger.info(path, { method: 'upload' });
-        this.logger.debug(JSON.stringify({ path, url, headers }), {
-          method: 'upload',
-        });
-
-        const fetchOptions: RequestInit = {
+        const res = await makeStreamRequest({
+          url,
           method: 'PUT',
           headers,
-          body: webStream,
-          ...({ duplex: 'half' } as RequestInit), // TypeScript workaround
+          inputStream,
           signal: resolveAbortSignal(options, this.config),
-        };
+        });
 
-        const res = await fetch(url, fetchOptions);
-
-        const body = await res.text();
-
-        if (!res.ok) {
-          let msg = `Upload failed with code ${res.status} for path: ${path}`;
-          msg += `. Body: ${body}`;
-          throw new HttpError(msg, res.status);
-        }
-
-        this.logger.debug(
-          `Response meta: ${JSON.stringify({ path, status: res.status, body })}`,
-          { method: 'upload' },
-        );
-
-        return this.parseXmlResponse(body, res.status);
+        return this.parseXmlResponse(res.body ?? '', res.statusCode);
       },
       createRetryConfig('upload', this.writeLimiter),
     );
   }
 
   /**
-   * Downloads data to the provided stream.
-   * @param {string} path - Path to the resource.
-   * @param {Writable} stream - Writable stream to pipe the data.
-   * @param {RequestOptions} [options] - Optional request configuration.
+   * Downloads a file from NetStorage to the specified local file path.
+   * @param {Object} params - Download parameters.
+   * @param {string} params.remotePath - Remote NetStorage path to download from.
+   * @param {string} params.localPath - Local filesystem path to write the file to.
+   * @param {RequestOptions} [params.options] - Optional request configuration.
    *   Supports `signal` for external cancellation or `timeout` (in ms) for automatic abort.
-   * @returns {Promise<{ status: { code: number } }>} Download status code.
+   * @returns {Promise<{ status: { code: number } }>} Download status object.
    * @throws {HttpError} If the download fails.
    * @throws {Error} If the response body is null.
    * @example
-   * import { createWriteStream } from 'node:fs';
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
-   * const writeStream = createWriteStream('downloaded.file');
-   * await api.download('/remote/path/file', writeStream);
+   * await api.download({ remotePath: '/remote/path/file', localPath: 'downloaded.file' });
    */
-  public async download(
-    path: string,
-    stream: Writable,
-    options?: RequestOptions,
-  ): Promise<{ status: { code: number } }> {
+  public async download({
+    fromRemote,
+    toLocal,
+    options,
+  }: {
+    fromRemote: string;
+    toLocal: string;
+    options?: RequestOptions;
+  }): Promise<{ status: { code: number } }> {
+    this.logger.info(fromRemote, { method: 'download' });
+
     return withRetries(
       async () => {
         await this.readLimiter.removeTokens(1);
-        const url = this.getUri(path);
-        const headers = this.getHeaders(path, { action: 'download' });
-
-        this.logger.info(path, { method: 'download' });
-        this.logger.debug(JSON.stringify({ url, headers }), {
-          method: 'download',
-        });
-
-        const res = await fetch(url, {
+        const outputStream = createWriteStream(toLocal);
+        const url = this.getUri(fromRemote);
+        const headers = this.getHeaders(fromRemote, { action: 'download' });
+        const res = await makeStreamRequest({
+          url,
+          method: 'GET',
           headers,
+          outputStream,
           signal: resolveAbortSignal(options, this.config),
         });
-
-        if (!res.ok) {
-          let msg = `Download failed with code ${res.status} for path: ${path}`;
-          let body: string | undefined;
-          try {
-            body = await res.text();
-          } catch {
-            body = undefined;
-          }
-          if (body !== undefined) {
-            msg += `. Body: ${body}`;
-          }
-          throw new HttpError(msg, res.status);
-        }
-
-        if (!res.body) {
-          throw new Error('Response body is null');
-        }
-
-        await promisify(pipeline)(
-          Readable.fromWeb(res.body as NodeReadableStream),
-          stream,
-        );
-
-        this.logger.debug(
-          `Completed stream for path: ${path} meta: ${JSON.stringify({ status: res.status })}`,
-          { method: 'download' },
-        );
-
-        return { status: { code: res.status } };
+        return { status: { code: res.statusCode } };
       },
       createRetryConfig('download', this.readLimiter),
     );

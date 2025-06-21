@@ -1,11 +1,5 @@
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
-import {
-  createWriteStream,
-  unlinkSync,
-  createReadStream,
-  writeFileSync,
-  readFileSync,
-} from 'node:fs';
+import { unlinkSync, writeFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import NetStorageAPI from '../src/main';
@@ -62,23 +56,29 @@ describe('NetStorageAPI integration tests', () => {
 
   // Upload test
   it('uploads a file to NetStorage', async () => {
-    const stream = createReadStream(TEMP_LOCAL_FILE);
-    await api.upload(stream, TEST_FILE_PATH);
+    await api.upload({
+      fromLocal: TEMP_LOCAL_FILE,
+      toRemote: TEST_FILE_PATH,
+    });
     const exists = await api.fileExists(TEST_FILE_PATH);
     expect(exists).toBe(true);
   });
 
   it('uploads a second file to NetStorage', async () => {
-    const stream = createReadStream(TEMP_LOCAL_FILE_2);
-    await api.upload(stream, TEST_FILE_PATH_2);
+    await api.upload({
+      fromLocal: TEMP_LOCAL_FILE_2,
+      toRemote: TEST_FILE_PATH_2,
+    });
     const exists = await api.fileExists(TEST_FILE_PATH_2);
     expect(exists).toBe(true);
   });
 
   // Download test
   it('downloads a file from NetStorage', async () => {
-    const writeStream = createWriteStream(TEMP_DOWNLOAD_DEST);
-    await api.download(TEST_FILE_PATH, writeStream);
+    await api.download({
+      fromRemote: TEST_FILE_PATH,
+      toLocal: TEMP_DOWNLOAD_DEST,
+    });
     const contents = readFileSync(TEMP_DOWNLOAD_DEST, 'utf-8');
     expect(contents).toBe(TEMP_FILE_CONTENT);
   });
@@ -167,9 +167,11 @@ describe('NetStorageAPI integration tests', () => {
 
   // Negative test: download non-existent file
   it('fails to download a non-existent file', async () => {
-    const writeStream = createWriteStream(TEMP_DOWNLOAD_DEST);
     await expect(
-      api.download('/nonexistent/path.txt', writeStream),
+      api.download({
+        fromRemote: '/nonexistent/path.txt',
+        toLocal: TEMP_DOWNLOAD_DEST,
+      }),
     ).rejects.toThrow();
   });
 });
