@@ -689,7 +689,7 @@ export default class NetStorageAPI {
     const body = await response.text();
 
     if (response.status >= 300) {
-      let msg = `The server sent us the ${response.status} code for path: ${path}`;
+      let msg = `Unexpected HTTP ${response.status} received from server for request to: ${path}`;
       msg += `. Body: ${body}`;
       throw new HttpError(msg, response.status);
     }
