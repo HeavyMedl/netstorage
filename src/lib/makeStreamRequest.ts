@@ -3,7 +3,7 @@ import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { promisify } from 'node:util';
 import { URLSearchParams } from 'node:url';
-import { HttpError } from '../errors';
+import { HttpError } from './errors';
 import { createLogger } from './logger';
 
 import type { ClientRequest, IncomingMessage } from 'node:http';

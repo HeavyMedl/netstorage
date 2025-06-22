@@ -5,7 +5,7 @@ import { XMLParser } from 'fast-xml-parser';
 
 import { createRateLimiters } from './lib/rateLimiter';
 import { resolveAbortSignal } from './lib/resolveAbortSignal';
-import { HttpError } from './errors';
+import { HttpError } from './lib/errors';
 import { createRetryConfig, withRetries } from './lib/withRetries';
 import { name as packageName } from '../package.json';
 import type {

@@ -1,7 +1,7 @@
 import type { RateLimiter } from 'limiter';
 
 import type { WithRetriesOptions } from '../types';
-import { HttpError } from '../errors';
+import { HttpError } from './errors';
 import { createLogger } from './logger';
 
 const logger = createLogger('info', 'withRetries');
