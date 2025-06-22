@@ -113,19 +113,19 @@ describe('NetStorageAPI - Rate Limiting', () => {
 
   it('calls readLimiter on stat()', async () => {
     const spy = spyOnLimiter(api, 'read');
-    await api.stat('/path');
+    await api.stat({ path: '/path' });
     expect(spy).toHaveBeenCalledWith(1);
   });
 
   it('calls writeLimiter on mkdir()', async () => {
     const spy = spyOnLimiter(api, 'write');
-    await api.mkdir('/some/new/dir');
+    await api.mkdir({ path: '/some/new/dir' });
     expect(spy).toHaveBeenCalledWith(1);
   });
 
   it('calls dirLimiter on dir()', async () => {
     const spy = spyOnLimiter(api, 'dir');
-    await api.dir('/some/dir');
+    await api.dir({ path: '/some/dir' });
     expect(spy).toHaveBeenCalledWith(1);
   });
 
@@ -276,18 +276,20 @@ describe('NetStorageAPI - Timeout and Abort Signal', () => {
 
   it('respects per-request timeout', async () => {
     const api = createAPI();
-    await expectAbort(api.stat('/slow', { timeout: 10 }));
+    await expectAbort(api.stat({ path: '/slow', options: { timeout: 10 } }));
   });
 
   it('respects global config timeout', async () => {
     const api = createAPI({ request: { timeout: 10 } });
-    await expectAbort(api.stat('/slow'));
+    await expectAbort(api.stat({ path: '/slow' }));
   });
 
   it('aborts when external signal is triggered', async () => {
     const api = createAPI();
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 5);
-    await expectAbort(api.stat('/foo', { signal: controller.signal }));
+    await expectAbort(
+      api.stat({ path: '/foo', options: { signal: controller.signal } }),
+    );
   });
 });

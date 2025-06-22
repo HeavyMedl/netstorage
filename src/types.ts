@@ -92,6 +92,160 @@ export interface RateLimitConfig {
 }
 
 /**
+ * Parameters for the `stat` operation.
+ *
+ * @property path - The path of the file or directory to retrieve metadata for.
+ * @property options - Optional per-request configuration for timeout or cancellation.
+ */
+export interface StatParams {
+  path: string;
+  options?: RequestOptions;
+}
+
+/**
+ * Parameters for the `du` (disk usage) operation.
+ *
+ * @property path - The path of the directory to calculate disk usage for.
+ * @property options - Optional per-request configuration for timeout or cancellation.
+ */
+export interface DuParams {
+  path: string;
+  options?: RequestOptions;
+}
+
+/**
+ * Parameters for the `dir` (directory listing) operation.
+ *
+ * @property path - The directory path to list contents for.
+ * @property options - Optional per-request configuration for timeout or cancellation.
+ */
+export interface DirParams {
+  path: string;
+  options?: RequestOptions;
+}
+
+/**
+ * Parameters for the `mkdir` (make directory) operation.
+ *
+ * @property path - The path of the directory to create.
+ * @property options - Optional per-request configuration for timeout or cancellation.
+ */
+export interface MkdirParams {
+  path: string;
+  options?: RequestOptions;
+}
+
+/**
+ * Parameters for the `rmdir` (remove directory) operation.
+ *
+ * @property path - The path of the directory to remove.
+ * @property options - Optional per-request configuration for timeout or cancellation.
+ */
+export interface RmdirParams {
+  path: string;
+  options?: RequestOptions;
+}
+
+/**
+ * Parameters for the `delete` operation.
+ *
+ * @property path - The path of the file or directory to delete.
+ * @property options - Optional per-request configuration for timeout or cancellation.
+ */
+export interface DeleteParams {
+  path: string;
+  options?: RequestOptions;
+}
+
+/**
+ * Parameters for the `upload` operation.
+ *
+ * @property fromLocal - The local file path to upload.
+ * @property toRemote - The destination path in NetStorage.
+ * @property options - Optional per-request configuration for timeout or cancellation.
+ * @property shouldUpload - Optional predicate function to determine if the upload should proceed.
+ */
+export interface UploadParams {
+  fromLocal: string;
+  toRemote: string;
+  options?: RequestOptions;
+  shouldUpload?: () => Promise<boolean>;
+}
+
+/**
+ * Parameters for the `download` operation.
+ *
+ * @property fromRemote - The path in NetStorage to download from.
+ * @property toLocal - The destination local file path.
+ * @property options - Optional per-request configuration for timeout or cancellation.
+ * @property shouldDownload - Optional predicate function to determine if the download should proceed.
+ */
+export interface DownloadParams {
+  fromRemote: string;
+  toLocal: string;
+  options?: RequestOptions;
+  shouldDownload?: () => Promise<boolean>;
+}
+
+/**
+ * Parameters for the `rename` operation.
+ *
+ * @property pathFrom - The original file or directory path.
+ * @property pathTo - The new target path after renaming.
+ * @property options - Optional per-request configuration for timeout or cancellation.
+ */
+export interface RenameParams {
+  pathFrom: string;
+  pathTo: string;
+  options?: RequestOptions;
+}
+
+/**
+ * Parameters for the `symlink` operation.
+ *
+ * @property pathFileTo - The target file path the symlink should point to.
+ * @property pathSymlink - The path of the symbolic link to create.
+ * @property options - Optional per-request configuration for timeout or cancellation.
+ */
+export interface SymlinkParams {
+  pathFileTo: string;
+  pathSymlink: string;
+  options?: RequestOptions;
+}
+
+/**
+ * Parameters for the `mtime` operation.
+ *
+ * @property path - The file path to set the modification time on.
+ * @property date - The modification date to set.
+ * @property options - Optional per-request configuration for timeout or cancellation.
+ */
+export interface MtimeParams {
+  path: string;
+  date: Date;
+  options?: RequestOptions;
+}
+
+/**
+ * Parameters for a generic HTTP-like request.
+ *
+ * This interface is intended for internal or advanced use cases where
+ * specific control over the HTTP method, headers, body, or cancellation
+ * behavior is required. It is not tied to any specific NetStorage API method.
+ *
+ * @property request - Optional object containing HTTP method settings.
+ * @property headers - Optional key-value pairs of request headers.
+ * @property body - Optional request payload, such as a JSON or stream body.
+ * @property options - Optional configuration for timeout or cancellation.
+ */
+export interface GenericRequestParams {
+  request?: { method?: string };
+  headers?: Record<string, string>;
+  body?: BodyInit | null;
+  options?: RequestOptions;
+}
+
+/**
  * Configuration options for retrying asynchronous operations using exponential backoff.
  *
  * This interface supports flexible and safe retries with optional jitter and retry hooks.

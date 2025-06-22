@@ -27,7 +27,7 @@ describe('NetStorageAPI integration tests', () => {
   beforeAll(async () => {
     writeFileSync(TEMP_LOCAL_FILE, TEMP_FILE_CONTENT);
     writeFileSync(TEMP_LOCAL_FILE_2, TEMP_FILE_CONTENT);
-    await api.mkdir(TEST_ROOT);
+    await api.mkdir({ path: TEST_ROOT });
   });
 
   afterAll(async () => {
@@ -39,9 +39,9 @@ describe('NetStorageAPI integration tests', () => {
         SYMLINK_PATH,
       ];
       for (const file of files) {
-        await api.delete(file).catch(() => {});
+        await api.delete({ path: file }).catch(() => {});
       }
-      await api.rmdir(TEST_ROOT).catch(() => {});
+      await api.rmdir({ path: TEST_ROOT }).catch(() => {});
     } catch {
       // Ignore cleanup errors
     }
@@ -85,20 +85,23 @@ describe('NetStorageAPI integration tests', () => {
 
   // Stat test
   it('fetches file metadata via stat', async () => {
-    const result = await api.stat(TEST_FILE_PATH);
+    const result = await api.stat({ path: TEST_FILE_PATH });
     expect(result).toHaveProperty('stat.file.name', 'sample.txt');
   });
 
   // Rename test
   it('renames a file in NetStorage', async () => {
-    await api.rename(TEST_FILE_PATH, RENAMED_FILE_PATH);
+    await api.rename({ pathFrom: TEST_FILE_PATH, pathTo: RENAMED_FILE_PATH });
     expect(await api.fileExists(TEST_FILE_PATH)).toBe(false);
     expect(await api.fileExists(RENAMED_FILE_PATH)).toBe(true);
   });
 
   // Symlink test
   it('creates a symlink to a file', async () => {
-    await api.symlink(RENAMED_FILE_PATH, SYMLINK_PATH);
+    await api.symlink({
+      pathFileTo: RENAMED_FILE_PATH,
+      pathSymlink: SYMLINK_PATH,
+    });
     const exists = await api.fileExists(SYMLINK_PATH);
     expect(exists).toBe(true);
   });
@@ -106,14 +109,14 @@ describe('NetStorageAPI integration tests', () => {
   // Mtime test
   it('sets mtime on a file', async () => {
     const date = new Date();
-    await api.mtime(RENAMED_FILE_PATH, date);
-    const stat = await api.stat(RENAMED_FILE_PATH);
+    await api.mtime({ path: RENAMED_FILE_PATH, date });
+    const stat = await api.stat({ path: RENAMED_FILE_PATH });
     expect(stat?.stat?.file).toBeDefined();
   });
 
   // Dir test
   it('lists the contents of a directory using dir()', async () => {
-    const listing = await api.dir(TEST_ROOT);
+    const listing = await api.dir({ path: TEST_ROOT });
     const files = listing?.stat?.file
       ? Array.isArray(listing.stat.file)
         ? listing.stat.file
@@ -134,7 +137,7 @@ describe('NetStorageAPI integration tests', () => {
         };
         directory?: string;
       };
-    } = await api.du(TEST_ROOT);
+    } = await api.du({ path: TEST_ROOT });
     expect(usage?.du?.['du-info']).toHaveProperty('bytes');
     expect(usage?.du?.directory).toBe(TEST_ROOT);
     expect(Number(usage?.du?.['du-info']?.files)).toBeGreaterThanOrEqual(1);
@@ -142,9 +145,9 @@ describe('NetStorageAPI integration tests', () => {
 
   // Delete test
   it('deletes a file from NetStorage', async () => {
-    await api.delete(RENAMED_FILE_PATH).catch(() => {});
-    await api.delete(SYMLINK_PATH).catch(() => {});
-    await api.delete(TEST_FILE_PATH_2).catch(() => {});
+    await api.delete({ path: RENAMED_FILE_PATH }).catch(() => {});
+    await api.delete({ path: SYMLINK_PATH }).catch(() => {});
+    await api.delete({ path: TEST_FILE_PATH_2 }).catch(() => {});
 
     const renamedExists = await api.fileExists(RENAMED_FILE_PATH);
     const symlinkExists = await api.fileExists(SYMLINK_PATH);
@@ -160,7 +163,7 @@ describe('NetStorageAPI integration tests', () => {
   // Rmdir test
   it('removes a directory from NetStorage', async () => {
     // Now remove the directory
-    await api.rmdir(TEST_ROOT);
+    await api.rmdir({ path: TEST_ROOT });
     const exists = await api.fileExists(TEST_ROOT);
     expect(exists).toBe(false);
   });
