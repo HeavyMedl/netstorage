@@ -315,20 +315,26 @@ export interface StreamRequestOptions {
 }
 
 /**
- * Represents metadata about a file returned in a NetStorage `stat` response.
+ * Represents metadata about a file or directory returned in a NetStorage `stat` response.
  *
- * @property type - The type of the entry (e.g., 'file').
- * @property name - The name of the file.
- * @property mtime - The last modified time of the file as a Unix timestamp string.
- * @property size - The size of the file in bytes, represented as a string.
+ * @property type - The type of the entry ('file' or 'dir').
+ * @property name - The name of the file or directory.
+ * @property mtime - The last modified time as a Unix timestamp string.
+ * @property size - The size of the file in bytes, if applicable.
+ * @property bytes - Total size of a directory in bytes, if applicable.
+ * @property files - Number of files in the directory, if applicable.
  * @property md5 - Optional MD5 checksum of the file, if included in the response.
+ * @property implicit - Whether the directory is implicit (optional).
  */
-export interface NetStorageStatFile {
-  type: string;
+export interface NetStorageFile {
+  type: 'file' | 'dir';
   name: string;
   mtime: string;
-  size: string;
+  size?: string;
+  bytes?: string;
+  files?: string;
   md5?: string;
+  implicit?: string;
 }
 
 /**
@@ -342,7 +348,7 @@ export interface NetStorageStatFile {
  */
 export interface NetStorageStat {
   stat: {
-    file?: NetStorageStatFile;
+    file?: NetStorageFile | NetStorageFile[];
     directory?: string;
   };
 }

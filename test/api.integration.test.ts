@@ -1,5 +1,5 @@
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
-import { unlinkSync, writeFileSync, readFileSync } from 'node:fs';
+import { writeFileSync, readFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import NetStorageAPI from '../src/main';
@@ -11,137 +11,143 @@ const api = new NetStorageAPI({
 });
 
 describe('NetStorageAPI integration tests', () => {
-  const TEST_ROOT = '/34612/tmp/api-integration-tests';
-  const TEST_FILE_NAME = 'sample.txt';
-  const TEST_FILE_PATH = `${TEST_ROOT}/${TEST_FILE_NAME}`;
-  const RENAMED_FILE_PATH = `${TEST_ROOT}/renamed.txt`;
-  const SYMLINK_PATH = `${TEST_ROOT}/symlink.txt`;
+  const REMOTE_ROOT = '/34612/tmp/api-integration-tests';
 
-  const TEST_FILE_NAME_2 = 'another.txt';
-  const TEST_FILE_PATH_2 = `${TEST_ROOT}/${TEST_FILE_NAME_2}`;
-  const TEMP_FILE_CONTENT = 'Hello, NetStorage!';
-  const TEMP_LOCAL_FILE = resolve(tmpdir(), 'upload-test-file.txt');
-  const TEMP_LOCAL_FILE_2 = resolve(tmpdir(), 'upload-test-file-2.txt');
-  const TEMP_DOWNLOAD_DEST = resolve(tmpdir(), 'download-test-file.txt');
+  const REMOTE_FILE_PATH = `${REMOTE_ROOT}/sample.txt`;
+  const REMOTE_RENAMED_FILE_PATH = `${REMOTE_ROOT}/renamed.txt`;
+  const REMOTE_SYMLINK_PATH = `${REMOTE_ROOT}/symlink.txt`;
+  const REMOTE_FILE_PATH_2 = `${REMOTE_ROOT}/another.txt`;
+  const REMOTE_CONDITIONAL_PATH = `${REMOTE_ROOT}/conditional.txt`;
+  const REMOTE_NESTED_DIR = `${REMOTE_ROOT}/nested`;
+  const REMOTE_NESTED_FILE_PATH = `${REMOTE_NESTED_DIR}/nested-file.txt`;
 
-  const CONDITIONAL_PATH = `${TEST_ROOT}/conditional.txt`;
-  const CONDITIONAL_LOCAL = resolve(tmpdir(), 'upload-conditional.txt');
+  const LOCAL_FILE_CONTENT = 'Hello, NetStorage!';
+  const LOCAL_FILE_PATH = resolve(tmpdir(), 'upload-test-file.txt');
+  const LOCAL_FILE_PATH_2 = resolve(tmpdir(), 'upload-test-file-2.txt');
+  const LOCAL_DOWNLOAD_DEST = resolve(tmpdir(), 'download-test-file.txt');
+  const LOCAL_CONDITIONAL_FILE = resolve(tmpdir(), 'upload-conditional.txt');
+  const LOCAL_NESTED_DIR = resolve(tmpdir(), 'nested');
+  const LOCAL_NESTED_FILE_PATH = resolve(LOCAL_NESTED_DIR, 'nested-file.txt');
 
   beforeAll(async () => {
-    writeFileSync(TEMP_LOCAL_FILE, TEMP_FILE_CONTENT);
-    writeFileSync(TEMP_LOCAL_FILE_2, TEMP_FILE_CONTENT);
-    await api.mkdir({ path: TEST_ROOT });
+    writeFileSync(LOCAL_FILE_PATH, LOCAL_FILE_CONTENT);
+    writeFileSync(LOCAL_FILE_PATH_2, LOCAL_FILE_CONTENT);
+    mkdirSync(LOCAL_NESTED_DIR, { recursive: true });
+    writeFileSync(LOCAL_NESTED_FILE_PATH, LOCAL_FILE_CONTENT);
+    await api.mkdir({ path: REMOTE_ROOT });
   });
 
   afterAll(async () => {
     try {
       const files = [
-        RENAMED_FILE_PATH,
-        TEST_FILE_PATH,
-        TEST_FILE_PATH_2,
-        SYMLINK_PATH,
+        REMOTE_RENAMED_FILE_PATH,
+        REMOTE_FILE_PATH,
+        REMOTE_FILE_PATH_2,
+        REMOTE_SYMLINK_PATH,
+        REMOTE_CONDITIONAL_PATH,
       ];
       for (const file of files) {
         await api.delete({ path: file }).catch(() => {});
       }
-      await api.rmdir({ path: TEST_ROOT }).catch(() => {});
+      await api.rmdir({ path: REMOTE_ROOT }).catch(() => {});
     } catch {
       // Ignore cleanup errors
-    }
-    try {
-      unlinkSync(TEMP_LOCAL_FILE);
-      unlinkSync(TEMP_LOCAL_FILE_2);
-      unlinkSync(TEMP_DOWNLOAD_DEST);
-      unlinkSync(CONDITIONAL_LOCAL);
-    } catch {
-      /* empty */
     }
   });
 
   // Upload test
   it('uploads a file to NetStorage', async () => {
     await api.upload({
-      fromLocal: TEMP_LOCAL_FILE,
-      toRemote: TEST_FILE_PATH,
+      fromLocal: LOCAL_FILE_PATH,
+      toRemote: REMOTE_FILE_PATH,
     });
-    const exists = await api.fileExists(TEST_FILE_PATH);
+    const exists = await api.fileExists(REMOTE_FILE_PATH);
     expect(exists).toBe(true);
   });
 
   it('uploads a second file to NetStorage', async () => {
     await api.upload({
-      fromLocal: TEMP_LOCAL_FILE_2,
-      toRemote: TEST_FILE_PATH_2,
+      fromLocal: LOCAL_FILE_PATH_2,
+      toRemote: REMOTE_FILE_PATH_2,
     });
-    const exists = await api.fileExists(TEST_FILE_PATH_2);
+    const exists = await api.fileExists(REMOTE_FILE_PATH_2);
+    expect(exists).toBe(true);
+  });
+
+  it('uploads a nested file to NetStorage', async () => {
+    await api.upload({
+      fromLocal: LOCAL_NESTED_FILE_PATH,
+      toRemote: REMOTE_NESTED_FILE_PATH,
+    });
+    const exists = await api.fileExists(REMOTE_NESTED_FILE_PATH);
     expect(exists).toBe(true);
   });
 
   it('conditionally uploads only if remote file is missing', async () => {
-    writeFileSync(CONDITIONAL_LOCAL, TEMP_FILE_CONTENT);
+    writeFileSync(LOCAL_CONDITIONAL_FILE, LOCAL_FILE_CONTENT);
 
     // First call should upload since the file is missing
     await api.uploadIfMissing({
-      fromLocal: CONDITIONAL_LOCAL,
-      toRemote: CONDITIONAL_PATH,
+      fromLocal: LOCAL_CONDITIONAL_FILE,
+      toRemote: REMOTE_CONDITIONAL_PATH,
     });
-    expect(await api.fileExists(CONDITIONAL_PATH)).toBe(true);
+    expect(await api.fileExists(REMOTE_CONDITIONAL_PATH)).toBe(true);
 
     // Second call should not upload since the file already exists
     const skipped = await api.uploadIfMissing({
-      fromLocal: CONDITIONAL_LOCAL,
-      toRemote: CONDITIONAL_PATH,
+      fromLocal: LOCAL_CONDITIONAL_FILE,
+      toRemote: REMOTE_CONDITIONAL_PATH,
     });
     expect(skipped?.status?.code).toBe(0);
-
-    // Cleanup
-    await api.delete({ path: CONDITIONAL_PATH }).catch(() => {});
   });
 
   // Download test
   it('downloads a file from NetStorage', async () => {
     await api.download({
-      fromRemote: TEST_FILE_PATH,
-      toLocal: TEMP_DOWNLOAD_DEST,
+      fromRemote: REMOTE_FILE_PATH,
+      toLocal: LOCAL_DOWNLOAD_DEST,
     });
-    const contents = readFileSync(TEMP_DOWNLOAD_DEST, 'utf-8');
-    expect(contents).toBe(TEMP_FILE_CONTENT);
+    const contents = readFileSync(LOCAL_DOWNLOAD_DEST, 'utf-8');
+    expect(contents).toBe(LOCAL_FILE_CONTENT);
   });
 
   // Stat test
   it('fetches file metadata via stat', async () => {
-    const result = await api.stat({ path: TEST_FILE_PATH });
+    const result = await api.stat({ path: REMOTE_FILE_PATH });
     expect(result).toHaveProperty('stat.file.name', 'sample.txt');
   });
 
   // Rename test
   it('renames a file in NetStorage', async () => {
-    await api.rename({ pathFrom: TEST_FILE_PATH, pathTo: RENAMED_FILE_PATH });
-    expect(await api.fileExists(TEST_FILE_PATH)).toBe(false);
-    expect(await api.fileExists(RENAMED_FILE_PATH)).toBe(true);
+    await api.rename({
+      pathFrom: REMOTE_FILE_PATH,
+      pathTo: REMOTE_RENAMED_FILE_PATH,
+    });
+    expect(await api.fileExists(REMOTE_FILE_PATH)).toBe(false);
+    expect(await api.fileExists(REMOTE_RENAMED_FILE_PATH)).toBe(true);
   });
 
   // Symlink test
   it('creates a symlink to a file', async () => {
     await api.symlink({
-      pathFileTo: RENAMED_FILE_PATH,
-      pathSymlink: SYMLINK_PATH,
+      pathFileTo: REMOTE_RENAMED_FILE_PATH,
+      pathSymlink: REMOTE_SYMLINK_PATH,
     });
-    const exists = await api.fileExists(SYMLINK_PATH);
+    const exists = await api.fileExists(REMOTE_SYMLINK_PATH);
     expect(exists).toBe(true);
   });
 
   // Mtime test
   it('sets mtime on a file', async () => {
     const date = new Date();
-    await api.mtime({ path: RENAMED_FILE_PATH, date });
-    const stat = await api.stat({ path: RENAMED_FILE_PATH });
+    await api.mtime({ path: REMOTE_RENAMED_FILE_PATH, date });
+    const stat = await api.stat({ path: REMOTE_RENAMED_FILE_PATH });
     expect(stat?.stat?.file).toBeDefined();
   });
 
   // Dir test
   it('lists the contents of a directory using dir()', async () => {
-    const listing = await api.dir({ path: TEST_ROOT });
+    const listing = await api.dir({ path: REMOTE_ROOT });
     const files = listing?.stat?.file
       ? Array.isArray(listing.stat.file)
         ? listing.stat.file
@@ -162,34 +168,23 @@ describe('NetStorageAPI integration tests', () => {
         };
         directory?: string;
       };
-    } = await api.du({ path: TEST_ROOT });
+    } = await api.du({ path: REMOTE_ROOT });
     expect(usage?.du?.['du-info']).toHaveProperty('bytes');
-    expect(usage?.du?.directory).toBe(TEST_ROOT);
+    expect(usage?.du?.directory).toBe(REMOTE_ROOT);
     expect(Number(usage?.du?.['du-info']?.files)).toBeGreaterThanOrEqual(1);
   });
 
   // Delete test
   it('deletes a file from NetStorage', async () => {
-    await api.delete({ path: RENAMED_FILE_PATH }).catch(() => {});
-    await api.delete({ path: SYMLINK_PATH }).catch(() => {});
-    await api.delete({ path: TEST_FILE_PATH_2 }).catch(() => {});
-
-    const renamedExists = await api.fileExists(RENAMED_FILE_PATH);
-    const symlinkExists = await api.fileExists(SYMLINK_PATH);
-    const file1Exists = await api.fileExists(TEST_FILE_PATH);
-    const file2Exists = await api.fileExists(TEST_FILE_PATH_2);
-
-    expect(renamedExists).toBe(false);
-    expect(symlinkExists).toBe(false);
-    expect(file1Exists).toBe(false);
-    expect(file2Exists).toBe(false);
+    await api.delete({ path: REMOTE_NESTED_FILE_PATH }).catch(() => {});
+    const nestedExists = await api.fileExists(REMOTE_NESTED_FILE_PATH);
+    expect(nestedExists).toBe(false);
   });
 
   // Rmdir test
   it('removes a directory from NetStorage', async () => {
-    // Now remove the directory
-    await api.rmdir({ path: TEST_ROOT });
-    const exists = await api.fileExists(TEST_ROOT);
+    await api.rmdir({ path: REMOTE_NESTED_DIR }).catch(() => {});
+    const exists = await api.fileExists(REMOTE_NESTED_DIR);
     expect(exists).toBe(false);
   });
 
@@ -198,7 +193,7 @@ describe('NetStorageAPI integration tests', () => {
     await expect(
       api.download({
         fromRemote: '/nonexistent/path.txt',
-        toLocal: TEMP_DOWNLOAD_DEST,
+        toLocal: LOCAL_DOWNLOAD_DEST,
       }),
     ).rejects.toThrow();
   });

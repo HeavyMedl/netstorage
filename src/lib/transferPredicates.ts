@@ -1,7 +1,7 @@
 import { stat as fsStat } from 'node:fs/promises';
 import { createLogger } from './logger';
 
-import type { NetStorageStat } from '../types';
+import type { NetStorageFile, NetStorageStat } from '../types';
 
 const logger = createLogger('info', 'transferPredicates');
 
@@ -31,7 +31,7 @@ export async function isSizeMismatch(
   localPath: string,
   netStorageStat?: NetStorageStat,
 ): Promise<boolean> {
-  const file = netStorageStat?.stat?.file;
+  const file = netStorageStat?.stat?.file as NetStorageFile;
   const remoteSize =
     typeof file?.size === 'string'
       ? parseInt(file.size, 10)
@@ -65,7 +65,7 @@ export async function isMtimeNewer(
   localPath: string,
   netStorageStat?: NetStorageStat,
 ): Promise<boolean> {
-  const file = netStorageStat?.stat?.file;
+  const file = netStorageStat?.stat?.file as NetStorageFile;
   const remoteMtime = file?.mtime;
   if (!remoteMtime) {
     logger.info('Remote mtime is missing.', { method: 'isMtimeNewer' });
