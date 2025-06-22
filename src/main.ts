@@ -26,10 +26,12 @@ import type {
   SymlinkParams,
   UploadParams,
   GenericRequestParams,
+  NetStorageStat,
 } from './types';
 
 import { createLogger } from './lib/logger';
 import { makeStreamRequest } from './lib/makeStreamRequest';
+import { isRemoteMissing } from './lib/transferPredicates';
 
 /**
  * Asserts that a given string is non-empty and not just whitespace.
@@ -258,17 +260,14 @@ export default class NetStorageAPI {
    * Retrieves file or directory metadata at the specified path.
    *
    * @param {StatParams} params - Parameters for stat operation.
-   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure
+   * @returns {Promise<NetStorageStat>} Parsed object structure
    *   of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
    * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
    * const statInfo = await api.stat({ path: '/path/to/file' });
    */
-  public async stat({
-    path,
-    options,
-  }: StatParams): Promise<ParsedNetStorageResponse> {
+  public async stat({ path, options }: StatParams): Promise<NetStorageStat> {
     return withRetries(
       async () => {
         this.logger.info(path, { method: 'stat' });
@@ -615,16 +614,10 @@ export default class NetStorageAPI {
     options,
     shouldUpload,
   }: UploadParams): Promise<ParsedNetStorageResponse> {
-    if (shouldUpload) {
-      const shouldProceed = await shouldUpload();
-      if (!shouldProceed) {
-        this.logger.info(`Skipping upload to ${toRemote} due to predicate`, {
-          method: 'upload',
-        });
-        return { status: { code: 0 } };
-      }
-    }
     this.logger.info(toRemote, { method: 'upload' });
+    if (shouldUpload && !(await shouldUpload())) {
+      return { status: { code: 0 } };
+    }
 
     return withRetries(
       async () => {
@@ -681,17 +674,10 @@ export default class NetStorageAPI {
     options,
     shouldDownload,
   }: DownloadParams): Promise<{ status: { code: number } }> {
-    if (shouldDownload) {
-      const shouldProceed = await shouldDownload();
-      if (!shouldProceed) {
-        this.logger.info(
-          `Skipping download from ${fromRemote} due to predicate`,
-          { method: 'download' },
-        );
-        return { status: { code: 0 } };
-      }
-    }
     this.logger.info(fromRemote, { method: 'download' });
+    if (shouldDownload && !(await shouldDownload())) {
+      return { status: { code: 0 } };
+    }
 
     return withRetries(
       async () => {
@@ -713,6 +699,34 @@ export default class NetStorageAPI {
   }
 
   /**
+   * Uploads a file only if the remote file is missing.
+   *
+   * This method uses `stat` to check for the remote file and
+   * proceeds with upload only if it does not exist.
+   *
+   * @param {Object} params - Upload parameters.
+   * @param {string} params.fromLocal - Local path to the file.
+   * @param {string} params.toRemote - Destination path for upload.
+   * @param {RequestOptions} [params.options] - Optional request configuration.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
+   */
+  public async uploadIfMissing({
+    fromLocal,
+    toRemote,
+    options,
+  }: UploadParams): Promise<ParsedNetStorageResponse> {
+    const netStorageStat = await this.stat({
+      path: toRemote,
+    }).catch(() => undefined);
+    return this.upload({
+      fromLocal,
+      toRemote,
+      options,
+      shouldUpload: async () => isRemoteMissing(netStorageStat),
+    });
+  }
+
+  /**
    * Makes a generic request to the NetStorage API.
    *
    * @param {string} path - Target API path.
@@ -730,10 +744,10 @@ export default class NetStorageAPI {
    *   { request: { method: 'GET' }, headers: { action: 'stat' } }
    * );
    */
-  private async sendRequest(
+  private async sendRequest<T>(
     path: string,
     params: GenericRequestParams = {},
-  ): Promise<ParsedNetStorageResponse> {
+  ): Promise<T> {
     const url = this.getUri(path);
     const headers = this.getHeaders(path, params.headers || {});
 
@@ -766,6 +780,6 @@ export default class NetStorageAPI {
       { method: 'sendRequest' },
     );
 
-    return this.parseXmlResponse(body, response.status);
+    return this.parseXmlResponse(body, response.status) as T;
   }
 }

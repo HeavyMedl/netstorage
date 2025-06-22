@@ -24,6 +24,9 @@ describe('NetStorageAPI integration tests', () => {
   const TEMP_LOCAL_FILE_2 = resolve(tmpdir(), 'upload-test-file-2.txt');
   const TEMP_DOWNLOAD_DEST = resolve(tmpdir(), 'download-test-file.txt');
 
+  const CONDITIONAL_PATH = `${TEST_ROOT}/conditional.txt`;
+  const CONDITIONAL_LOCAL = resolve(tmpdir(), 'upload-conditional.txt');
+
   beforeAll(async () => {
     writeFileSync(TEMP_LOCAL_FILE, TEMP_FILE_CONTENT);
     writeFileSync(TEMP_LOCAL_FILE_2, TEMP_FILE_CONTENT);
@@ -49,6 +52,7 @@ describe('NetStorageAPI integration tests', () => {
       unlinkSync(TEMP_LOCAL_FILE);
       unlinkSync(TEMP_LOCAL_FILE_2);
       unlinkSync(TEMP_DOWNLOAD_DEST);
+      unlinkSync(CONDITIONAL_LOCAL);
     } catch {
       /* empty */
     }
@@ -71,6 +75,27 @@ describe('NetStorageAPI integration tests', () => {
     });
     const exists = await api.fileExists(TEST_FILE_PATH_2);
     expect(exists).toBe(true);
+  });
+
+  it('conditionally uploads only if remote file is missing', async () => {
+    writeFileSync(CONDITIONAL_LOCAL, TEMP_FILE_CONTENT);
+
+    // First call should upload since the file is missing
+    await api.uploadIfMissing({
+      fromLocal: CONDITIONAL_LOCAL,
+      toRemote: CONDITIONAL_PATH,
+    });
+    expect(await api.fileExists(CONDITIONAL_PATH)).toBe(true);
+
+    // Second call should not upload since the file already exists
+    const skipped = await api.uploadIfMissing({
+      fromLocal: CONDITIONAL_LOCAL,
+      toRemote: CONDITIONAL_PATH,
+    });
+    expect(skipped?.status?.code).toBe(0);
+
+    // Cleanup
+    await api.delete({ path: CONDITIONAL_PATH }).catch(() => {});
   });
 
   // Download test

@@ -313,3 +313,36 @@ export interface StreamRequestOptions {
   onProgress?: (bytes: number) => void;
   query?: Record<string, string | number>;
 }
+
+/**
+ * Represents metadata about a file returned in a NetStorage `stat` response.
+ *
+ * @property type - The type of the entry (e.g., 'file').
+ * @property name - The name of the file.
+ * @property mtime - The last modified time of the file as a Unix timestamp string.
+ * @property size - The size of the file in bytes, represented as a string.
+ * @property md5 - Optional MD5 checksum of the file, if included in the response.
+ */
+export interface NetStorageStatFile {
+  type: string;
+  name: string;
+  mtime: string;
+  size: string;
+  md5?: string;
+}
+
+/**
+ * Represents the parsed structure of a NetStorage `stat` response.
+ *
+ * This structure is derived from the XML response returned by the NetStorage
+ * `stat` operation and reflects the presence of file and/or directory metadata.
+ *
+ * @property stat.file - Optional metadata describing the file.
+ * @property stat.directory - Optional directory path returned in the stat response.
+ */
+export interface NetStorageStat {
+  stat: {
+    file?: NetStorageStatFile;
+    directory?: string;
+  };
+}

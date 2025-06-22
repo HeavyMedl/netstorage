@@ -1,48 +1,83 @@
 import { stat as fsStat } from 'node:fs/promises';
+import { createLogger } from './logger';
 
-export type FileMetadata = { size?: string | number; mtime?: string };
+import type { NetStorageStat } from '../types';
+
+const logger = createLogger('info', 'transferPredicates');
 
 /**
  * Checks if the remote file metadata is missing.
- * Useful as a reusable predicate for conditional transfer logic.
- * @param remote Remote file metadata object.
+ * @param netStorageStat Remote file metadata object.
  * @returns True if remote metadata is missing, otherwise false.
  */
-export function isRemoteMissing(remote?: FileMetadata): boolean {
-  return !remote;
+export function isRemoteMissing(netStorageStat?: NetStorageStat): boolean {
+  const file = netStorageStat?.stat?.file;
+  if (!file || Object.keys(file).length === 0) {
+    logger.info('Remote file metadata is missing or empty.', {
+      method: 'isRemoteMissing',
+    });
+    return true;
+  }
+  return false;
 }
 
 /**
  * Checks if the local file size differs from the remote file size.
- * Useful as a reusable predicate for conditional transfer logic.
  * @param localPath Absolute path to the local file.
- * @param remote Remote file metadata object.
+ * @param netStorageStat Remote file metadata object.
  * @returns True if sizes differ or remote size is missing, otherwise false.
  */
 export async function isSizeMismatch(
   localPath: string,
-  remote?: FileMetadata,
+  netStorageStat?: NetStorageStat,
 ): Promise<boolean> {
-  if (!remote?.size) return true;
-  const local = await fsStat(localPath);
+  const file = netStorageStat?.stat?.file;
   const remoteSize =
-    typeof remote.size === 'string' ? parseInt(remote.size, 10) : remote.size;
-  return local.size !== remoteSize;
+    typeof file?.size === 'string'
+      ? parseInt(file.size, 10)
+      : typeof file?.size === 'number'
+        ? file.size
+        : undefined;
+
+  if (!remoteSize) {
+    logger.info('Remote size is missing or invalid.', {
+      method: 'isSizeMismatch',
+    });
+    return true;
+  }
+
+  const local = await fsStat(localPath);
+  const result = local.size !== remoteSize;
+  logger.info(
+    `Local size: ${local.size}, Remote size: ${remoteSize}, Mismatch: ${result}`,
+    { method: 'isSizeMismatch' },
+  );
+  return result;
 }
 
 /**
  * Checks if the local file modification time is newer than the remote file modification time.
- * Useful as a reusable predicate for conditional transfer logic.
  * @param localPath Absolute path to the local file.
- * @param remote Remote file metadata object.
+ * @param netStorageStat Remote file metadata object.
  * @returns True if local mtime is newer, otherwise false.
  */
 export async function isMtimeNewer(
   localPath: string,
-  remote?: FileMetadata,
+  netStorageStat?: NetStorageStat,
 ): Promise<boolean> {
-  if (!remote?.mtime) return false;
+  const file = netStorageStat?.stat?.file;
+  const remoteMtime = file?.mtime;
+  if (!remoteMtime) {
+    logger.info('Remote mtime is missing.', { method: 'isMtimeNewer' });
+    return false;
+  }
+
   const local = await fsStat(localPath);
-  const remoteTime = new Date(remote.mtime).getTime();
-  return local.mtimeMs > remoteTime;
+  const remoteTime = new Date(parseInt(remoteMtime, 10) * 1000).getTime();
+  const result = local.mtimeMs > remoteTime;
+  logger.info(
+    `Local mtime: ${local.mtimeMs}, Remote mtime: ${remoteTime}, Is newer: ${result}`,
+    { method: 'isMtimeNewer' },
+  );
+  return result;
 }
