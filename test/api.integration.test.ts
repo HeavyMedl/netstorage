@@ -12,6 +12,7 @@ const api = new NetStorageAPI({
 
 describe('NetStorageAPI integration tests', () => {
   const REMOTE_ROOT = '/34612/tmp/api-integration-tests';
+  // const WALK_ROOT = '/34612/packages/febs';
 
   const REMOTE_FILE_PATH = `${REMOTE_ROOT}/sample.txt`;
   const REMOTE_RENAMED_FILE_PATH = `${REMOTE_ROOT}/renamed.txt`;
@@ -197,4 +198,9 @@ describe('NetStorageAPI integration tests', () => {
       }),
     ).rejects.toThrow();
   });
+
+  // Walk test
+  // it('walks a remote directory and logs contents', async () => {
+  //   await api.tree({ path: WALK_ROOT, showSize: true });
+  // });
 });

@@ -317,17 +317,18 @@ export interface StreamRequestOptions {
 /**
  * Represents metadata about a file or directory returned in a NetStorage `stat` response.
  *
- * @property type - The type of the entry ('file' or 'dir').
- * @property name - The name of the file or directory.
+ * @property type - The type of the entry ('file', 'dir', or 'symlink').
+ * @property name - The name of the file, directory, or symbolic link.
  * @property mtime - The last modified time as a Unix timestamp string.
  * @property size - The size of the file in bytes, if applicable.
  * @property bytes - Total size of a directory in bytes, if applicable.
  * @property files - Number of files in the directory, if applicable.
  * @property md5 - Optional MD5 checksum of the file, if included in the response.
  * @property implicit - Whether the directory is implicit (optional).
+ * @property target - The target path of a symbolic link, if applicable.
  */
 export interface NetStorageFile {
-  type: 'file' | 'dir';
+  type: 'file' | 'dir' | 'symlink';
   name: string;
   mtime: string;
   size?: string;
@@ -335,6 +336,7 @@ export interface NetStorageFile {
   files?: string;
   md5?: string;
   implicit?: string;
+  target?: string;
 }
 
 /**
@@ -351,4 +353,61 @@ export interface NetStorageStat {
     file?: NetStorageFile | NetStorageFile[];
     directory?: string;
   };
+}
+
+/**
+ * Represents a single entry yielded during a directory walk operation.
+ *
+ * This entry is derived from the `file` array in a NetStorage `dir` listing
+ * and includes both the entry metadata and its fully qualified path.
+ *
+ * @property file - Metadata about the file or directory.
+ * @property path - The full NetStorage path for the entry.
+ * @property parent - The parent directory of the entry.
+ * @property depth - The depth of the entry in the directory tree.
+ * @property relativePath - The relative path of the entry from the root directory.
+ */
+export interface WalkEntry {
+  file: NetStorageFile;
+  path: string;
+  parent: string;
+  relativePath: string;
+  depth: number;
+}
+
+/**
+ * Parameters for the `walk` operation.
+ *
+ * @property path - The root NetStorage path to begin traversal from.
+ * @property maxDepth - Optional maximum recursion depth. A value of 0 yields only the root contents.
+ * @property shouldInclude - Optional async predicate to determine whether a given entry should be yielded.
+ */
+export interface WalkParams {
+  path: string;
+  maxDepth?: number;
+  shouldInclude?: (entry: WalkEntry) => boolean | Promise<boolean>;
+  // followSymlinks?: boolean;
+}
+
+/**
+ * Parameters for the `tree` operation.
+ *
+ * Extends the base `walk` parameters to include options for controlling
+ * display behavior, such as file sizes, modification times, checksums,
+ * symbolic link targets, and whether to include the full path in output.
+ *
+ * @property {boolean} [showSize] - Whether to include file sizes in the output.
+ * @property {boolean} [showMtime] - Whether to include last modified time in the output.
+ * @property {boolean} [showChecksum] - Whether to include MD5 checksums if available.
+ * @property {boolean} [showSymlinkTarget] - Whether to show symlink target paths.
+ * @property {boolean} [showRelativePath] - Whether to display relative path instead of full.
+ * @property {boolean} [showAbsolutePath] - Whether to display full absolute path instead of relative.
+ */
+export interface TreeParams extends WalkParams {
+  showSize?: boolean;
+  showMtime?: boolean;
+  showChecksum?: boolean;
+  showSymlinkTarget?: boolean;
+  showRelativePath?: boolean;
+  showAbsolutePath?: boolean;
 }

@@ -27,11 +27,16 @@ import type {
   UploadParams,
   GenericRequestParams,
   NetStorageStat,
+  WalkEntry,
+  NetStorageFile,
+  WalkParams,
+  TreeParams,
 } from './types';
 
 import { createLogger } from './lib/logger';
 import { makeStreamRequest } from './lib/makeStreamRequest';
 import { isRemoteMissing } from './lib/transferPredicates';
+import { formatBytes } from './lib/utils';
 
 /**
  * Asserts that a given string is non-empty and not just whitespace.
@@ -52,8 +57,8 @@ function assertNonEmpty(value: string, name: string): void {
  * A modern TypeScript wrapper for the Akamai NetStorage HTTP API.
  *
  * This class provides a typed interface for common file operations on
- * Akamai NetStorage, including reading metadata, uploading/downloading
- * files, and managing directories.
+ * Akamai NetStorage, including reading metadata, uploading/downloading files,
+ * and managing directories.
  *
  * Features:
  * - Typed configuration and input validation
@@ -121,7 +126,9 @@ export default class NetStorageAPI {
    * @returns {this} The updated instance of NetStorageAPI.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * api.setConfig({ logLevel: 'debug' });
    */
   public setConfig(conf: Partial<NetStorageAPIConfig>): this {
@@ -137,7 +144,9 @@ export default class NetStorageAPI {
    * @returns {NetStorageAPIConfig} The current configuration object.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * const config = api.getConfig();
    */
   public getConfig(): NetStorageAPIConfig {
@@ -156,7 +165,9 @@ export default class NetStorageAPI {
    * @returns {string} The full URI as a string.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ host: 'example.com', ssl: true });
+   * const api = new NetStorageAPI({
+   *   host: 'example.com', ssl: true
+   * });
    * const uri = api.getUri('/path/to/resource');
    */
   private getUri(path: string): string {
@@ -177,7 +188,9 @@ export default class NetStorageAPI {
    * @returns {HeadersMap} Headers including authentication and action.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ host: 'example.com', ssl: true });
+   * const api = new NetStorageAPI({
+   *   host: 'example.com', ssl: true
+   * });
    * const headers = api.getHeaders('/path', { action: 'stat' });
    */
   private getHeaders(
@@ -260,11 +273,13 @@ export default class NetStorageAPI {
    * Retrieves file or directory metadata at the specified path.
    *
    * @param {StatParams} params - Parameters for stat operation.
-   * @returns {Promise<NetStorageStat>} Parsed object structure
-   *   of a NetStorage XML API response.
+   * @returns {Promise<NetStorageStat>} Parsed object structure of a
+   *   NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * const statInfo = await api.stat({ path: '/path/to/file' });
    */
   public async stat({ path, options }: StatParams): Promise<NetStorageStat> {
@@ -292,7 +307,9 @@ export default class NetStorageAPI {
    *   of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * const usage = await api.du({ path: '/path/to/directory' });
    */
   public async du({
@@ -319,17 +336,16 @@ export default class NetStorageAPI {
    * Lists the contents of a directory at the specified path.
    *
    * @param {DirParams} params - Parameters for dir operation.
-   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure
-   *   of a NetStorage XML API response.
+   * @returns {Promise<NetStorageStat>} Parsed object structure of a
+   *   NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * const contents = await api.dir({ path: '/path/to/directory' });
    */
-  public async dir({
-    path,
-    options,
-  }: DirParams): Promise<ParsedNetStorageResponse> {
+  public async dir({ path, options }: DirParams): Promise<NetStorageStat> {
     return withRetries(
       async () => {
         this.logger.info(path, { method: 'dir' });
@@ -354,7 +370,9 @@ export default class NetStorageAPI {
    *   of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * await api.mkdir({ path: '/path/to/newdir' });
    */
   public async mkdir({
@@ -385,7 +403,9 @@ export default class NetStorageAPI {
    *   of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * await api.rmdir({ path: '/path/to/dir' });
    */
   public async rmdir({
@@ -416,7 +436,9 @@ export default class NetStorageAPI {
    *   of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * await api.delete({ path: '/path/to/file' });
    */
   public async delete({
@@ -451,7 +473,9 @@ export default class NetStorageAPI {
    *   of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * await api.rename('/old/path', '/new/path');
    */
   public async rename({
@@ -489,7 +513,9 @@ export default class NetStorageAPI {
    *   of a NetStorage XML API response.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * await api.symlink('/target/file', '/link/path');
    */
   public async symlink({
@@ -528,7 +554,9 @@ export default class NetStorageAPI {
    * @throws {TypeError} If the date is not a valid Date instance.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * await api.mtime('/path/to/file', new Date());
    */
   public async mtime({
@@ -569,7 +597,9 @@ export default class NetStorageAPI {
    * @throws {Error} If the request fails with an unexpected error.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * const exists = await api.fileExists('/path/to/file');
    */
   public async fileExists(path: string): Promise<boolean> {
@@ -602,7 +632,9 @@ export default class NetStorageAPI {
    * @throws {HttpError} If the upload fails.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * await api.upload({
    *   localPath: 'file.bin',
    *   remotePath: '/upload/path/file.bin'
@@ -662,7 +694,9 @@ export default class NetStorageAPI {
    * @throws {Error} If the response body is null.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * await api.download({
    *   remotePath: '/remote/path/file',
    *   localPath: 'downloaded.file'
@@ -707,8 +741,10 @@ export default class NetStorageAPI {
    * @param {Object} params - Upload parameters.
    * @param {string} params.fromLocal - Local path to the file.
    * @param {string} params.toRemote - Destination path for upload.
-   * @param {RequestOptions} [params.options] - Optional request configuration.
-   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure of a NetStorage XML API response.
+   * @param {RequestOptions} [params.options] - Optional request
+   *   configuration.
+   * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure
+   *   of a NetStorage XML API response.
    */
   public async uploadIfMissing({
     fromLocal,
@@ -738,7 +774,9 @@ export default class NetStorageAPI {
    * @throws {HttpError} If the request fails.
    * @example
    * import NetStorageAPI from 'netstorage-api-esm';
-   * const api = new NetStorageAPI({ key: '...', keyName: '...', host: '...' });
+   * const api = new NetStorageAPI({
+   *   key: '...', keyName: '...', host: '...'
+   * });
    * const response = await api.sendRequest(
    *   '/path',
    *   { request: { method: 'GET' }, headers: { action: 'stat' } }
@@ -781,5 +819,226 @@ export default class NetStorageAPI {
     );
 
     return this.parseXmlResponse(body, response.status) as T;
+  }
+
+  /**
+   * Asynchronously traverses a NetStorage directory hierarchy.
+   *
+   * This async generator yields metadata about each file and directory found
+   * under the specified root, optionally filtered or transformed through a
+   * user-defined predicate.
+   *
+   * @param params - Parameters controlling the traversal behavior.
+   * @returns An async generator yielding `NetStorageWalkEntry` objects.
+   */
+  public async *walk({
+    path,
+    maxDepth,
+    shouldInclude,
+  }: WalkParams): AsyncGenerator<WalkEntry> {
+    const rootPath = path.replace(/\/+$/, '');
+    yield* this.walkRecursive(rootPath, rootPath, maxDepth, shouldInclude, 0);
+  }
+
+  /**
+   * Internal recursive helper for `walk`, used to traverse directories in
+   * depth-first order.
+   *
+   * @param currentPath - The current path being traversed.
+   * @param rootPath - The root path of traversal.
+   * @param maxDepth - Maximum allowed depth.
+   * @param shouldInclude - Optional predicate to determine which entries to
+   *   yield.
+   * @param depth - The current depth relative to the root path.
+   * @returns An async generator yielding `NetStorageWalkEntry` objects.
+   * @internal
+   */
+  private async *walkRecursive(
+    currentPath: string,
+    rootPath: string,
+    maxDepth: number | undefined,
+    shouldInclude: WalkParams['shouldInclude'],
+    depth: number = 0,
+  ): AsyncGenerator<WalkEntry> {
+    if (typeof maxDepth === 'number' && depth > maxDepth) return;
+
+    let result: NetStorageStat;
+    try {
+      result = await this.dir({ path: currentPath });
+    } catch (err) {
+      this.logger.warn(`Failed to walk ${currentPath}: ${err}`, {
+        method: 'walk',
+      });
+      return;
+    }
+
+    const fileList: NetStorageFile[] = Array.isArray(result.stat?.file)
+      ? result.stat!.file
+      : result.stat?.file
+        ? [result.stat.file]
+        : [];
+
+    for (const entry of fileList) {
+      const fullPath = [currentPath, entry.name]
+        .join('/')
+        .replace(/\/{2,}/g, '/');
+      const relativePath = fullPath.slice(rootPath.length).replace(/^\/+/, '');
+
+      const walkEntry: WalkEntry = {
+        file: entry,
+        path: fullPath,
+        parent: currentPath,
+        depth,
+        relativePath,
+      };
+
+      const shouldYield = shouldInclude ? await shouldInclude(walkEntry) : true;
+      if (shouldYield) yield walkEntry;
+
+      if (entry.type === 'dir') {
+        yield* this.walkRecursive(
+          fullPath,
+          rootPath,
+          maxDepth,
+          shouldInclude,
+          depth + 1,
+        );
+      }
+    }
+  }
+
+  /**
+   * Logs a formatted tree structure of the remote NetStorage directory.
+   *
+   * Uses the `walk` function to traverse the directory structure and displays
+   * a visual tree layout similar to the Unix `tree` command.
+   *
+   * @param params - Parameters extending `TreeParams` to configure traversal
+   *   and filtering.
+   * @returns A promise that resolves when the directory tree has been printed.
+   */
+  public async tree(params: TreeParams): Promise<void> {
+    const {
+      path,
+      maxDepth,
+      shouldInclude,
+      showSize,
+      showMtime,
+      showChecksum,
+      showSymlinkTarget,
+      showRelativePath,
+      showAbsolutePath,
+    } = params;
+    const grouped = await this.getDirEntriesByDepth({
+      path,
+      maxDepth,
+      shouldInclude,
+    });
+    function getChildren(parentPath: string, depth: number) {
+      const group = grouped.find((g) => g.depth === depth);
+      if (!group) return [];
+      return group.entries.filter((e) => e.parent === parentPath);
+    }
+    function renderTree(entries: WalkEntry[], depth = 0, indent = ''): void {
+      entries.forEach((entry, i) => {
+        const isLast = i === entries.length - 1;
+        const isRootFirst = depth === 0 && i === 0;
+        const prefix = isRootFirst ? '┌──' : isLast ? '└──' : '├──';
+        const file = entry.file;
+        const icon =
+          file.type === 'dir' ? '📁' : file.type === 'symlink' ? '🔗' : '📄';
+
+        // Build meta string based on params booleans
+        const metaParts: string[] = [];
+
+        let fileNameWithPath = file.name;
+        const pathDisplay = showAbsolutePath
+          ? ` [${entry.path}]`
+          : showRelativePath
+            ? ` [${entry.relativePath}]`
+            : '';
+        fileNameWithPath += pathDisplay;
+
+        if (showSize && file.size) {
+          metaParts.push(formatBytes(parseInt(file.size)));
+        }
+
+        if (showMtime && file.mtime) {
+          const date = new Date(parseInt(file.mtime, 10) * 1000);
+          metaParts.push(date.toISOString());
+        }
+
+        if (showChecksum && file.md5) {
+          metaParts.push(file.md5);
+        }
+
+        if (showSymlinkTarget && file.target) {
+          metaParts.push(`→ ${file.target}`);
+        }
+
+        const meta = metaParts.length > 0 ? ` (${metaParts.join(', ')})` : '';
+        const line = `${indent}${prefix} ${icon} ${fileNameWithPath}${meta}`;
+        process.stdout.write(`${line}\n`);
+        if (file.type === 'dir') {
+          const children = getChildren(entry.path, depth + 1);
+          if (children.length > 0) {
+            renderTree(children, depth + 1, indent + (isLast ? '  ' : '│ '));
+          }
+        }
+      });
+    }
+    // Find root entries (depth 0)
+    const rootGroup = grouped.find((g) => g.depth === 0);
+    const rootEntries = rootGroup ? rootGroup.entries : [];
+    renderTree(rootEntries, 0, '');
+  }
+
+  /**
+   * Groups a list of NetStorage walk entries by their depth in the directory
+   * tree.
+   *
+   * @param entries - An array of `NetStorageWalkEntry` objects collected from
+   *   a walk operation.
+   * @returns A map of depth level to arrays of corresponding entries.
+   */
+  public async getDirEntriesByDepth(params: WalkParams): Promise<
+    Array<{
+      depth: number;
+      entries: WalkEntry[];
+    }>
+  > {
+    const grouped = new Map<number, WalkEntry[]>();
+    for await (const entry of this.walk(params)) {
+      if (!grouped.has(entry.depth)) {
+        grouped.set(entry.depth, []);
+      }
+      grouped.get(entry.depth)!.push(entry);
+    }
+    return [...grouped.entries()].map(([depth, entries]) => ({
+      depth,
+      entries,
+    }));
+  }
+
+  /**
+   * Recursively walks a NetStorage directory and returns all entries
+   * that match the provided predicate.
+   *
+   * @param params - Parameters including the root path to walk
+   *  and the predicate to match.
+   * @returns A promise resolving to an array of matching entries.
+   */
+  public async findAll(
+    params: WalkParams & {
+      predicate: (entry: WalkEntry) => boolean | Promise<boolean>;
+    },
+  ): Promise<WalkEntry[]> {
+    const matches: WalkEntry[] = [];
+    for await (const entry of this.walk(params)) {
+      if (await params.predicate(entry)) {
+        matches.push(entry);
+      }
+    }
+    return matches;
   }
 }
