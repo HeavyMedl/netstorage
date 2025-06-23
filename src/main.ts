@@ -36,7 +36,7 @@ import type {
 import { createLogger } from './lib/logger';
 import { makeStreamRequest } from './lib/makeStreamRequest';
 import { isRemoteMissing } from './lib/transferPredicates';
-import { formatBytes } from './lib/utils';
+import { formatBytes, formatMtime } from './lib/utils';
 
 /**
  * Asserts that a given string is non-empty and not just whitespace.
@@ -929,13 +929,18 @@ export default class NetStorageAPI {
       showRelativePath,
       showAbsolutePath,
     } = params;
-    const grouped = await this.getDirEntriesByDepth({
-      path,
-      maxDepth,
-      shouldInclude,
-    });
+    const { groupedEntries: entries, totalSize } =
+      await this.getDirEntriesByDepth({
+        path,
+        maxDepth,
+        shouldInclude,
+      });
+    // Flatten all entries for aggregation
+    const allEntries: WalkEntry[] = entries.flatMap((g) => g.entries);
+    const directorySizeMap = this.aggregateDirectorySizes(allEntries);
+
     function getChildren(parentPath: string, depth: number) {
-      const group = grouped.find((g) => g.depth === depth);
+      const group = entries.find((g) => g.depth === depth);
       if (!group) return [];
       return group.entries.filter((e) => e.parent === parentPath);
     }
@@ -945,41 +950,33 @@ export default class NetStorageAPI {
         const isRootFirst = depth === 0 && i === 0;
         const prefix = isRootFirst ? '┌──' : isLast ? '└──' : '├──';
         const file = entry.file;
-        const icon =
-          file.type === 'dir' ? '📁' : file.type === 'symlink' ? '🔗' : '📄';
+        const isSymlink = file.type === 'symlink';
+        const isDir = file.type === 'dir';
+        const icon = isSymlink ? '🔗' : file.type === 'dir' ? '📁' : '📄';
 
-        // Build meta string based on params booleans
-        const metaParts: string[] = [];
+        // Label logic for file and directory rendering (simplified version)
+        const dirSize = directorySizeMap.get(entry.path)?.aggregatedSize ?? 0;
+        const fileSize = file.size ? Number(file.size) : 0;
+        const displaySize = isDir
+          ? formatBytes(dirSize)
+          : formatBytes(fileSize);
 
-        let fileNameWithPath = file.name;
-        const pathDisplay = showAbsolutePath
-          ? ` [${entry.path}]`
-          : showRelativePath
-            ? ` [${entry.relativePath}]`
-            : '';
-        fileNameWithPath += pathDisplay;
+        const displayParts = [
+          showRelativePath ? entry.relativePath : null,
+          showAbsolutePath ? entry.path : null,
+          showSize && (isDir || file.size) ? displaySize : null,
+          showMtime && file.mtime ? formatMtime(file.mtime) : null,
+          showChecksum && file.md5 ? `md5: ${file.md5}` : null,
+          showSymlinkTarget && isSymlink && file.target
+            ? `-> ${file.target}`
+            : null,
+        ].filter(Boolean);
 
-        if (showSize && file.size) {
-          metaParts.push(formatBytes(parseInt(file.size)));
-        }
-
-        if (showMtime && file.mtime) {
-          const date = new Date(parseInt(file.mtime, 10) * 1000);
-          metaParts.push(date.toISOString());
-        }
-
-        if (showChecksum && file.md5) {
-          metaParts.push(file.md5);
-        }
-
-        if (showSymlinkTarget && file.target) {
-          metaParts.push(`→ ${file.target}`);
-        }
-
-        const meta = metaParts.length > 0 ? ` (${metaParts.join(', ')})` : '';
-        const line = `${indent}${prefix} ${icon} ${fileNameWithPath}${meta}`;
+        const suffix =
+          displayParts.length > 0 ? ` (${displayParts.join(' | ')})` : '';
+        const line = `${indent}${prefix} ${icon} ${file.name}${suffix}`;
         process.stdout.write(`${line}\n`);
-        if (file.type === 'dir') {
+        if (isDir) {
           const children = getChildren(entry.path, depth + 1);
           if (children.length > 0) {
             renderTree(children, depth + 1, indent + (isLast ? '  ' : '│ '));
@@ -988,36 +985,95 @@ export default class NetStorageAPI {
       });
     }
     // Find root entries (depth 0)
-    const rootGroup = grouped.find((g) => g.depth === 0);
+    const rootGroup = entries.find((g) => g.depth === 0);
     const rootEntries = rootGroup ? rootGroup.entries : [];
     renderTree(rootEntries, 0, '');
+    // Print total size if requested
+    if (showSize) {
+      process.stdout.write('\n');
+      process.stdout.write(`Total size: ${formatBytes(totalSize)}\n\n`);
+    }
+  }
+
+  /**
+   * Aggregates file sizes and rolls them up to each directory in the walk.
+   *
+   * This function creates a map of directory paths to their cumulative size.
+   * It assumes that entries are ordered by increasing depth, so children appear
+   * before parents. Each file contributes its size to its own directory, and
+   * each directory bubbles up its children's size.
+   *
+   * @param entries - The list of walk entries to process.
+   * @returns A map of directory paths to their aggregated size in bytes.
+   */
+  private aggregateDirectorySizes(
+    entries: WalkEntry[],
+  ): Map<string, { aggregatedSize: number }> {
+    const directoryMap = new Map<string, { aggregatedSize: number }>();
+
+    for (const entry of [...entries].reverse()) {
+      const isFile = entry.file.type === 'file';
+      const isDir = entry.file.type === 'dir';
+
+      const size = isFile
+        ? Number(entry.file.size ?? 0)
+        : (directoryMap.get(entry.path)?.aggregatedSize ?? 0);
+
+      if (!directoryMap.has(entry.parent)) {
+        directoryMap.set(entry.parent, { aggregatedSize: 0 });
+      }
+
+      if (entry.depth > 0) {
+        const parentData = directoryMap.get(entry.parent);
+        if (parentData) {
+          parentData.aggregatedSize += size;
+        }
+      }
+
+      // Store current directory size too
+      if (isDir) {
+        if (!directoryMap.has(entry.path)) {
+          directoryMap.set(entry.path, { aggregatedSize: size });
+        }
+      }
+    }
+
+    return directoryMap;
   }
 
   /**
    * Groups a list of NetStorage walk entries by their depth in the directory
-   * tree.
+   * tree, and accumulates the total size of all files.
    *
    * @param entries - An array of `NetStorageWalkEntry` objects collected from
    *   a walk operation.
-   * @returns A map of depth level to arrays of corresponding entries.
+   * @returns An object with grouped entries by depth and the total size.
    */
-  public async getDirEntriesByDepth(params: WalkParams): Promise<
-    Array<{
+  public async getDirEntriesByDepth(params: WalkParams): Promise<{
+    groupedEntries: Array<{
       depth: number;
       entries: WalkEntry[];
-    }>
-  > {
+    }>;
+    totalSize: number;
+  }> {
     const grouped = new Map<number, WalkEntry[]>();
+    let totalSize = 0;
     for await (const entry of this.walk(params)) {
-      if (!grouped.has(entry.depth)) {
-        grouped.set(entry.depth, []);
+      grouped.set(entry.depth, [...(grouped.get(entry.depth) ?? []), entry]);
+      if (entry?.file?.size) {
+        const size = parseInt(entry.file.size, 10);
+        if (!Number.isNaN(size)) {
+          totalSize += size;
+        }
       }
-      grouped.get(entry.depth)!.push(entry);
     }
-    return [...grouped.entries()].map(([depth, entries]) => ({
-      depth,
-      entries,
-    }));
+    return {
+      groupedEntries: Array.from(grouped, ([depth, entries]) => ({
+        depth,
+        entries,
+      })),
+      totalSize,
+    };
   }
 
   /**
