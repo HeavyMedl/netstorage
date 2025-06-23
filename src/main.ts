@@ -73,7 +73,7 @@ function assertNonEmpty(value: string, name: string): void {
  * @since 1.0.0
  * @packageDocumentation
  * @example
- * import NetStorageAPI from 'netstorage-api-esm';
+ * import NetStorageAPI from 'netstorage';
  *
  * const api = new NetStorageAPI({
  *   key: 'your-secret-key',
@@ -125,7 +125,7 @@ export default class NetStorageAPI {
    *   merge with existing config.
    * @returns {this} The updated instance of NetStorageAPI.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -143,7 +143,7 @@ export default class NetStorageAPI {
    *
    * @returns {NetStorageAPIConfig} The current configuration object.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -164,7 +164,7 @@ export default class NetStorageAPI {
    * @param {string} path - The API path.
    * @returns {string} The full URI as a string.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   host: 'example.com', ssl: true
    * });
@@ -187,7 +187,7 @@ export default class NetStorageAPI {
    *   parameters.
    * @returns {HeadersMap} Headers including authentication and action.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   host: 'example.com', ssl: true
    * });
@@ -276,7 +276,7 @@ export default class NetStorageAPI {
    * @returns {Promise<NetStorageStat>} Parsed object structure of a
    *   NetStorage XML API response.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -306,7 +306,7 @@ export default class NetStorageAPI {
    * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure
    *   of a NetStorage XML API response.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -339,7 +339,7 @@ export default class NetStorageAPI {
    * @returns {Promise<NetStorageStat>} Parsed object structure of a
    *   NetStorage XML API response.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -369,7 +369,7 @@ export default class NetStorageAPI {
    * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure
    *   of a NetStorage XML API response.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -402,7 +402,7 @@ export default class NetStorageAPI {
    * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure
    *   of a NetStorage XML API response.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -435,7 +435,7 @@ export default class NetStorageAPI {
    * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure
    *   of a NetStorage XML API response.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -472,7 +472,7 @@ export default class NetStorageAPI {
    * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure
    *   of a NetStorage XML API response.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -512,7 +512,7 @@ export default class NetStorageAPI {
    * @returns {Promise<ParsedNetStorageResponse>} Parsed object structure
    *   of a NetStorage XML API response.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -553,7 +553,7 @@ export default class NetStorageAPI {
    *   of a NetStorage XML API response.
    * @throws {TypeError} If the date is not a valid Date instance.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -596,7 +596,7 @@ export default class NetStorageAPI {
    * @returns {Promise<boolean>} True if file exists, false if not.
    * @throws {Error} If the request fails with an unexpected error.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -631,7 +631,7 @@ export default class NetStorageAPI {
    *   of a NetStorage XML API response.
    * @throws {HttpError} If the upload fails.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -693,7 +693,7 @@ export default class NetStorageAPI {
    * @throws {HttpError} If the download fails.
    * @throws {Error} If the response body is null.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });
@@ -773,7 +773,7 @@ export default class NetStorageAPI {
    * @returns {Promise<ParsedNetStorageResponse>} Parsed XML API response.
    * @throws {HttpError} If the request fails.
    * @example
-   * import NetStorageAPI from 'netstorage-api-esm';
+   * import NetStorageAPI from 'netstorage';
    * const api = new NetStorageAPI({
    *   key: '...', keyName: '...', host: '...'
    * });

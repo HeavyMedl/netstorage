@@ -1,5 +1,5 @@
 {
-  "name": "netstorage-api-esm",
+  "name": "netstorage",
   "version": "1.0.0",
   "description": "A modern, ESM-native TypeScript client for the Akamai NetStorage REST API",
   "keywords": [

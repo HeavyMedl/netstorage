@@ -1,3 +1,3 @@
-# netstorage-api-esm
+# netstorage
 
 A modern, ESM-native TypeScript client for the Akamai NetStorage REST API
