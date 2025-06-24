@@ -1,3 +1,8 @@
+import path from 'node:path';
+import klaw from 'klaw';
+import micromatch from 'micromatch';
+import type { WalkLocalOptions } from '../types';
+
 /**
  * Converts a byte size into a human-readable string with appropriate units.
  *
@@ -23,4 +28,58 @@ export function formatBytes(bytes: number, decimals = 2): string {
 export function formatMtime(unixSeconds: string | number): string {
   const date = new Date(Number(unixSeconds) * 1000);
   return date.toISOString().replace('T', ' ').split('.')[0];
+}
+
+/**
+ * Recursively walks a local directory and yields files (and optionally directories).
+ *
+ * @param root - The root directory to start walking from.
+ * @param options - Options to control filtering and traversal behavior.
+ * @returns An async generator yielding each matched file or directory entry.
+ */
+export async function* walkLocalDir(
+  root: string,
+  {
+    ignore = [],
+    followSymlinks = false,
+    includeDirs = false,
+    onEnterDir,
+  }: WalkLocalOptions = {},
+): AsyncGenerator<{
+  localPath: string;
+  relativePath: string;
+  isDirectory: boolean;
+}> {
+  const seen = new Set<string>();
+  const rootAbs = path.resolve(root);
+
+  const walker = klaw(rootAbs, { preserveSymlinks: !followSymlinks });
+
+  for await (const item of walker) {
+    const relative = path.relative(rootAbs, item.path);
+    if (relative === '') continue; // skip root
+
+    if (ignore.length && micromatch.some(relative, ignore)) continue;
+
+    const stat = item.stats;
+    const isDir = stat.isDirectory();
+    const isSym = stat.isSymbolicLink?.();
+
+    if (isDir && onEnterDir) {
+      onEnterDir(item.path, relative);
+    }
+
+    if (isDir && !includeDirs) continue;
+
+    if (isSym && !followSymlinks) continue;
+
+    if (seen.has(item.path)) continue;
+    seen.add(item.path);
+
+    yield {
+      localPath: item.path,
+      relativePath: relative,
+      isDirectory: isDir,
+    };
+  }
 }

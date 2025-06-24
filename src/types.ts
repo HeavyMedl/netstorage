@@ -411,3 +411,75 @@ export interface TreeParams extends WalkParams {
   showRelativePath?: boolean;
   showAbsolutePath?: boolean;
 }
+
+/**
+ * Represents the result of a NetStorage `tree` operation.
+ *
+ * This structure includes directory walk entries grouped into depth buckets,
+ * a map of aggregated directory sizes (in bytes), and the total cumulative size
+ * of all encountered files.
+ *
+ * @property depthBuckets - Array of entry groups indexed by depth in the directory tree.
+ * Each group contains the depth level and a list of entries (files/directories) at that level.
+ * @property directorySizeMap - A Map keyed by directory path, where each value contains
+ * the aggregated size (in bytes) of files and subdirectories under that directory.
+ * @property totalSize - The total size in bytes of all encountered files in the walk.
+ */
+export interface TreeResult {
+  depthBuckets: { depth: number; entries: WalkEntry[] }[];
+  directorySizeMap: Map<string, { aggregatedSize: number }>;
+  totalSize: number;
+}
+
+/**
+ * Parameters for the `uploadDirectory` operation.
+ *
+ * Defines options for uploading a local directory to a NetStorage destination.
+ *
+ * @property localPath - Absolute or relative path to the local directory to upload.
+ * @property remotePath - Destination path in NetStorage where files will be uploaded.
+ * @property overwrite - Whether to overwrite existing remote files (default: true).
+ * @property followSymlinks - Whether to follow symbolic links during traversal (default: false).
+ * @property ignore - Optional glob-style patterns for excluding files (e.g., 'node_modules').
+ * @property dryRun - If true, simulates the upload without making any changes.
+ * @property maxConcurrency - Maximum number of concurrent uploads (default: 5).
+ * @property onUpload - Callback triggered when a file is successfully uploaded.
+ * @property onSkip - Callback triggered when a file is skipped, including the reason.
+ */
+export interface UploadDirectoryParams {
+  localPath: string;
+  remotePath: string;
+  overwrite?: boolean;
+  followSymlinks?: boolean;
+  ignore?: string[];
+  dryRun?: boolean;
+  maxConcurrency?: number;
+  onUpload?: (info: { localPath: string; remotePath: string }) => void;
+  onSkip?: (info: {
+    localPath: string;
+    remotePath: string;
+    reason:
+      | 'exists'
+      | 'filtered'
+      | 'symlink'
+      | 'dryRun'
+      | 'overwriteFalse'
+      | 'error';
+    error?: unknown;
+  }) => void;
+}
+
+/**
+ * Options for walking a local directory tree.
+ *
+ * @property ignore - Optional glob patterns to exclude files or directories.
+ * @property followSymlinks - Whether to follow symbolic links during traversal.
+ * @property includeDirs - Whether to yield directory entries as well as files.
+ * @property onEnterDir - Optional callback invoked when entering a new directory.
+ */
+export interface WalkLocalOptions {
+  ignore?: string[];
+  followSymlinks?: boolean;
+  includeDirs?: boolean;
+  onEnterDir?: (dirPath: string, relativePath: string) => void;
+}

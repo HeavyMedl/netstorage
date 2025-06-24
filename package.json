@@ -54,10 +54,15 @@
   },
   "dependencies": {
     "fast-xml-parser": "^5.2.5",
+    "klaw": "^4.1.0",
     "limiter": "^3.0.0",
+    "micromatch": "^4.0.8",
+    "p-limit": "^6.2.0",
     "winston": "^3.17.0"
   },
   "devDependencies": {
+    "@types/klaw": "^3.0.7",
+    "@types/micromatch": "^4.0.9",
     "@types/node": "^22",
     "@vitest/coverage-v8": "^3",
     "eslint": "^9",

@@ -1,5 +1,7 @@
 import crypto from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
+import path from 'node:path';
+import pLimit from 'p-limit';
 
 import { XMLParser } from 'fast-xml-parser';
 
@@ -31,12 +33,14 @@ import type {
   NetStorageFile,
   WalkParams,
   TreeParams,
+  UploadDirectoryParams,
+  TreeResult,
 } from './types';
 
 import { createLogger } from './lib/logger';
 import { makeStreamRequest } from './lib/makeStreamRequest';
 import { isRemoteMissing } from './lib/transferPredicates';
-import { formatBytes, formatMtime } from './lib/utils';
+import { formatBytes, formatMtime, walkLocalDir } from './lib/utils';
 
 /**
  * Asserts that a given string is non-empty and not just whitespace.
@@ -285,7 +289,7 @@ export default class NetStorageAPI {
   public async stat({ path, options }: StatParams): Promise<NetStorageStat> {
     return withRetries(
       async () => {
-        this.logger.info(path, { method: 'stat' });
+        this.logger.debug(path, { method: 'stat' });
         return this.sendRequest(path, {
           request: { method: 'GET' },
           headers: { action: 'stat' },
@@ -348,7 +352,7 @@ export default class NetStorageAPI {
   public async dir({ path, options }: DirParams): Promise<NetStorageStat> {
     return withRetries(
       async () => {
-        this.logger.info(path, { method: 'dir' });
+        this.logger.debug(path, { method: 'dir' });
         return this.sendRequest(path, {
           request: { method: 'GET' },
           headers: { action: 'dir' },
@@ -603,7 +607,7 @@ export default class NetStorageAPI {
    * const exists = await api.fileExists('/path/to/file');
    */
   public async fileExists(path: string): Promise<boolean> {
-    this.logger.info(path, { method: 'fileExists' });
+    this.logger.debug(path, { method: 'fileExists' });
     try {
       const data = await this.stat({ path });
       return Boolean(data?.stat?.file);
@@ -917,7 +921,7 @@ export default class NetStorageAPI {
    *   and filtering.
    * @returns A promise that resolves when the directory tree has been printed.
    */
-  public async tree(params: TreeParams): Promise<void> {
+  public async tree(params: TreeParams): Promise<TreeResult> {
     const {
       path,
       maxDepth,
@@ -929,18 +933,26 @@ export default class NetStorageAPI {
       showRelativePath,
       showAbsolutePath,
     } = params;
-    const { groupedEntries: entries, totalSize } =
-      await this.getDirEntriesByDepth({
-        path,
-        maxDepth,
-        shouldInclude,
-      });
+    this.logger.info(`Generating directory tree for ${path}`, {
+      method: 'tree',
+    });
+    const { depthBuckets, totalSize } = await this.buildAdjacencyList({
+      path,
+      maxDepth,
+      shouldInclude,
+    });
+    // Print total size if requested
+    if (showSize) {
+      process.stdout.write(`Total size: ${formatBytes(totalSize)}\n\n`);
+    }
     // Flatten all entries for aggregation
-    const allEntries: WalkEntry[] = entries.flatMap((g) => g.entries);
+    const allEntries: WalkEntry[] = depthBuckets.flatMap(
+      (bucket) => bucket.entries,
+    );
     const directorySizeMap = this.aggregateDirectorySizes(allEntries);
 
     function getChildren(parentPath: string, depth: number) {
-      const group = entries.find((g) => g.depth === depth);
+      const group = depthBuckets.find((bucket) => bucket.depth === depth);
       if (!group) return [];
       return group.entries.filter((e) => e.parent === parentPath);
     }
@@ -953,8 +965,6 @@ export default class NetStorageAPI {
         const isSymlink = file.type === 'symlink';
         const isDir = file.type === 'dir';
         const icon = isSymlink ? '🔗' : file.type === 'dir' ? '📁' : '📄';
-
-        // Label logic for file and directory rendering (simplified version)
         const dirSize = directorySizeMap.get(entry.path)?.aggregatedSize ?? 0;
         const fileSize = file.size ? Number(file.size) : 0;
         const displaySize = isDir
@@ -985,14 +995,10 @@ export default class NetStorageAPI {
       });
     }
     // Find root entries (depth 0)
-    const rootGroup = entries.find((g) => g.depth === 0);
+    const rootGroup = depthBuckets.find((g) => g.depth === 0);
     const rootEntries = rootGroup ? rootGroup.entries : [];
     renderTree(rootEntries, 0, '');
-    // Print total size if requested
-    if (showSize) {
-      process.stdout.write('\n');
-      process.stdout.write(`Total size: ${formatBytes(totalSize)}\n\n`);
-    }
+    return { depthBuckets, directorySizeMap, totalSize };
   }
 
   /**
@@ -1042,15 +1048,14 @@ export default class NetStorageAPI {
   }
 
   /**
-   * Groups a list of NetStorage walk entries by their depth in the directory
+   * Builds an adjacency list of NetStorage walk entries grouped by their depth in the directory
    * tree, and accumulates the total size of all files.
    *
-   * @param entries - An array of `NetStorageWalkEntry` objects collected from
-   *   a walk operation.
-   * @returns An object with grouped entries by depth and the total size.
+   * @param params - Parameters for walking the directory tree.
+   * @returns An object with depthBuckets (entries grouped by depth) and the total size.
    */
-  public async getDirEntriesByDepth(params: WalkParams): Promise<{
-    groupedEntries: Array<{
+  public async buildAdjacencyList(params: WalkParams): Promise<{
+    depthBuckets: Array<{
       depth: number;
       entries: WalkEntry[];
     }>;
@@ -1068,7 +1073,7 @@ export default class NetStorageAPI {
       }
     }
     return {
-      groupedEntries: Array.from(grouped, ([depth, entries]) => ({
+      depthBuckets: Array.from(grouped, ([depth, entries]) => ({
         depth,
         entries,
       })),
@@ -1096,5 +1101,90 @@ export default class NetStorageAPI {
       }
     }
     return matches;
+  }
+
+  /**
+   * Uploads a local directory to a destination path in NetStorage.
+   *
+   * Recursively traverses a local directory, uploading each file to a remote
+   * destination path on NetStorage. Supports concurrency limits, dry-run mode,
+   * and file skipping logic.
+   *
+   * @param params - UploadDirectoryParams
+   */
+  public async uploadDirectory({
+    localPath,
+    remotePath,
+    overwrite = true,
+    followSymlinks = false,
+    ignore = [],
+    dryRun = false,
+    maxConcurrency = 5,
+    onUpload,
+    onSkip,
+  }: UploadDirectoryParams): Promise<void> {
+    this.logger.info(`Uploading ${localPath} → ${remotePath}`, {
+      method: 'uploadDirectory',
+    });
+    const limiter = pLimit(maxConcurrency);
+    const tasks: Array<Promise<void>> = [];
+
+    for await (const entry of walkLocalDir(localPath, {
+      ignore,
+      followSymlinks,
+    })) {
+      if (entry.isDirectory) continue;
+
+      const destPath = path.posix.join(
+        remotePath,
+        entry.relativePath.split(path.sep).join('/'),
+      );
+
+      const handle = limiter(async () => {
+        const skip = async (reason: 'dryRun' | 'overwriteFalse' | 'error') => {
+          onSkip?.({
+            localPath: entry.localPath,
+            remotePath: destPath,
+            reason,
+          });
+        };
+
+        if (dryRun) {
+          this.logger.info(
+            `[dryRun] Would upload ${entry.localPath} → ${destPath}`,
+            { method: 'uploadDirectory' },
+          );
+          return skip('dryRun');
+        }
+
+        if (!overwrite && (await this.fileExists(destPath))) {
+          this.logger.debug(`Skipping existing file: ${destPath}`, {
+            method: 'uploadDirectory',
+          });
+          return skip('overwriteFalse');
+        }
+
+        try {
+          await this.upload({
+            fromLocal: entry.localPath,
+            toRemote: destPath,
+          });
+          onUpload?.({
+            localPath: entry.localPath,
+            remotePath: destPath,
+          });
+        } catch (error) {
+          this.logger.error(
+            `Failed to upload ${entry.localPath} → ${destPath}; error: ${error}`,
+            { method: 'uploadDirectory' },
+          );
+          await skip('error');
+        }
+      });
+
+      tasks.push(handle);
+    }
+
+    await Promise.all(tasks);
   }
 }

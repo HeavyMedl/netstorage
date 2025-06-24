@@ -1,5 +1,5 @@
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
-import { writeFileSync, readFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, readFileSync, mkdirSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import NetStorageAPI from '../src/main';
@@ -12,8 +12,9 @@ const api = new NetStorageAPI({
 
 describe('NetStorageAPI integration tests', () => {
   const REMOTE_ROOT = '/34612/tmp/api-integration-tests';
-  // const WALK_ROOT = '/34612/packages/febs';
+  const WALK_ROOT = '/34612/packages/febs';
 
+  const REMOTE_TEMP_DIR = `${REMOTE_ROOT}/temp-dir`;
   const REMOTE_FILE_PATH = `${REMOTE_ROOT}/sample.txt`;
   const REMOTE_RENAMED_FILE_PATH = `${REMOTE_ROOT}/renamed.txt`;
   const REMOTE_SYMLINK_PATH = `${REMOTE_ROOT}/symlink.txt`;
@@ -30,12 +31,23 @@ describe('NetStorageAPI integration tests', () => {
   const LOCAL_NESTED_DIR = resolve(tmpdir(), 'nested');
   const LOCAL_NESTED_FILE_PATH = resolve(LOCAL_NESTED_DIR, 'nested-file.txt');
 
+  const LOCAL_UPLOAD_DIR = resolve(tmpdir(), 'simple-upload');
+  const LOCAL_UPLOAD_FILE = resolve(LOCAL_UPLOAD_DIR, 'hello.txt');
+  const LOCAL_UPLOAD_SUBDIR = resolve(LOCAL_UPLOAD_DIR, 'sub');
+  const LOCAL_UPLOAD_NESTED_FILE = resolve(LOCAL_UPLOAD_SUBDIR, 'nested.txt');
+
+  // const REMOTE_UPLOAD_DIR = `${REMOTE_ROOT}/upload-dir`;
+  // const REMOTE_UPLOAD_FILE = `${REMOTE_UPLOAD_DIR}/hello.txt`;
+  // const REMOTE_UPLOAD_NESTED_FILE = `${REMOTE_UPLOAD_DIR}/sub/nested.txt`;
+
   beforeAll(async () => {
+    mkdirSync(LOCAL_NESTED_DIR, { recursive: true });
+    mkdirSync(LOCAL_UPLOAD_SUBDIR, { recursive: true });
     writeFileSync(LOCAL_FILE_PATH, LOCAL_FILE_CONTENT);
     writeFileSync(LOCAL_FILE_PATH_2, LOCAL_FILE_CONTENT);
-    mkdirSync(LOCAL_NESTED_DIR, { recursive: true });
     writeFileSync(LOCAL_NESTED_FILE_PATH, LOCAL_FILE_CONTENT);
-    await api.mkdir({ path: REMOTE_ROOT });
+    writeFileSync(LOCAL_UPLOAD_FILE, 'Hello from root!');
+    writeFileSync(LOCAL_UPLOAD_NESTED_FILE, 'Hello from nested!');
   });
 
   afterAll(async () => {
@@ -50,9 +62,21 @@ describe('NetStorageAPI integration tests', () => {
       for (const file of files) {
         await api.delete({ path: file }).catch(() => {});
       }
-      await api.rmdir({ path: REMOTE_ROOT }).catch(() => {});
     } catch {
       // Ignore cleanup errors
+    }
+    // Clean up local temp files and folders
+    try {
+      rmSync(LOCAL_FILE_PATH, { force: true });
+      rmSync(LOCAL_FILE_PATH_2, { force: true });
+      rmSync(LOCAL_CONDITIONAL_FILE, { force: true });
+      rmSync(LOCAL_DOWNLOAD_DEST, { force: true });
+      rmSync(LOCAL_UPLOAD_FILE, { force: true });
+      rmSync(LOCAL_UPLOAD_NESTED_FILE, { force: true });
+      rmSync(LOCAL_UPLOAD_DIR, { recursive: true, force: true });
+      rmSync(LOCAL_NESTED_DIR, { recursive: true, force: true });
+    } catch {
+      // Ignore local cleanup errors
     }
   });
 
@@ -175,18 +199,22 @@ describe('NetStorageAPI integration tests', () => {
     expect(Number(usage?.du?.['du-info']?.files)).toBeGreaterThanOrEqual(1);
   });
 
+  // Mkdir + Rmdir test
+  it('creates and removes a directory using mkdir() and rmdir()', async () => {
+    await api.mkdir({ path: REMOTE_TEMP_DIR });
+    const existsAfterMkdir = await api.fileExists(REMOTE_TEMP_DIR);
+    expect(existsAfterMkdir).toBe(true);
+
+    await api.rmdir({ path: REMOTE_TEMP_DIR });
+    const existsAfterRmdir = await api.fileExists(REMOTE_TEMP_DIR);
+    expect(existsAfterRmdir).toBe(false);
+  });
+
   // Delete test
   it('deletes a file from NetStorage', async () => {
     await api.delete({ path: REMOTE_NESTED_FILE_PATH }).catch(() => {});
     const nestedExists = await api.fileExists(REMOTE_NESTED_FILE_PATH);
     expect(nestedExists).toBe(false);
-  });
-
-  // Rmdir test
-  it('removes a directory from NetStorage', async () => {
-    await api.rmdir({ path: REMOTE_NESTED_DIR }).catch(() => {});
-    const exists = await api.fileExists(REMOTE_NESTED_DIR);
-    expect(exists).toBe(false);
   });
 
   // Negative test: download non-existent file
@@ -200,7 +228,36 @@ describe('NetStorageAPI integration tests', () => {
   });
 
   // Walk test
-  // it('walks a remote directory and logs contents', async () => {
-  //   await api.tree({ path: WALK_ROOT, showSize: true });
-  // });
+  it('walks a remote directory and logs contents', async () => {
+    await api.tree({
+      path: WALK_ROOT,
+      showSize: true,
+    });
+  });
+
+  // UploadDirectory test
+  it('uploads a local directory with nested files to NetStorage', async () => {
+    // const uploaded: string[] = [];
+    // await api.uploadDirectory({
+    //   localPath: LOCAL_UPLOAD_DIR,
+    //   remotePath: REMOTE_UPLOAD_DIR,
+    //   onUpload: ({ localPath, remotePath }) => {
+    //     uploaded.push(`${localPath} -> ${remotePath}`);
+    //   },
+    // });
+    // await api.uploadDirectory({
+    //   localPath: LOCAL_UPLOAD_DIR,
+    //   remotePath: REMOTE_UPLOAD_DIR,
+    //   dryRun: true,
+    //   onUpload: ({ localPath, remotePath }) => {
+    //     uploaded.push(`${localPath} -> ${remotePath}`);
+    //   },
+    // });
+    // expect(await api.fileExists(REMOTE_UPLOAD_FILE)).toBe(true);
+    // expect(await api.fileExists(REMOTE_UPLOAD_NESTED_FILE)).toBe(true);
+    // expect(uploaded).toContain(`${LOCAL_UPLOAD_FILE} -> ${REMOTE_UPLOAD_FILE}`);
+    // expect(uploaded).toContain(
+    //   `${LOCAL_UPLOAD_NESTED_FILE} -> ${REMOTE_UPLOAD_NESTED_FILE}`,
+    // );
+  });
 });
