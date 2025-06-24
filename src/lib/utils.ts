@@ -2,6 +2,7 @@ import path from 'node:path';
 import klaw from 'klaw';
 import micromatch from 'micromatch';
 import type { WalkLocalOptions } from '../types';
+import { name as packageName } from '../../package.json';
 
 /**
  * Converts a byte size into a human-readable string with appropriate units.
@@ -81,5 +82,20 @@ export async function* walkLocalDir(
       relativePath: relative,
       isDirectory: isDir,
     };
+  }
+}
+
+/**
+ * Asserts that a given string is non-empty and not just whitespace.
+ *
+ * @param {string} value - The value to validate.
+ * @param {string} name - The name of the value, used in error messages.
+ * @throws {TypeError} If the value is not a non-empty string.
+ */
+export function assertNonEmpty(value: string, name: string): void {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new TypeError(
+      `[${packageName}]: Missing or invalid \`${name}\` in configuration`,
+    );
   }
 }

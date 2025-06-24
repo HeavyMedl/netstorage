@@ -2,14 +2,20 @@ import crypto from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
 import path from 'node:path';
 import pLimit from 'p-limit';
-
 import { XMLParser } from 'fast-xml-parser';
-
 import { createRateLimiters } from './lib/rateLimiter';
 import { resolveAbortSignal } from './lib/resolveAbortSignal';
 import { HttpError } from './lib/errors';
 import { createRetryConfig, withRetries } from './lib/withRetries';
-import { name as packageName } from '../package.json';
+import { createLogger } from './lib/logger';
+import { makeStreamRequest } from './lib/makeStreamRequest';
+import { isRemoteMissing } from './lib/transferPredicates';
+import {
+  assertNonEmpty,
+  formatBytes,
+  formatMtime,
+  walkLocalDir,
+} from './lib/utils';
 import type {
   NetStorageAPIConfig,
   RequiredConfig,
@@ -36,26 +42,6 @@ import type {
   UploadDirectoryParams,
   TreeResult,
 } from './types';
-
-import { createLogger } from './lib/logger';
-import { makeStreamRequest } from './lib/makeStreamRequest';
-import { isRemoteMissing } from './lib/transferPredicates';
-import { formatBytes, formatMtime, walkLocalDir } from './lib/utils';
-
-/**
- * Asserts that a given string is non-empty and not just whitespace.
- *
- * @param {string} value - The value to validate.
- * @param {string} name - The name of the value, used in error messages.
- * @throws {TypeError} If the value is not a non-empty string.
- */
-function assertNonEmpty(value: string, name: string): void {
-  if (typeof value !== 'string' || !value.trim()) {
-    throw new TypeError(
-      `[${packageName}]: Missing or invalid \`${name}\` in configuration`,
-    );
-  }
-}
 
 /**
  * A modern TypeScript wrapper for the Akamai NetStorage HTTP API.
@@ -835,13 +821,19 @@ export default class NetStorageAPI {
    * @param params - Parameters controlling the traversal behavior.
    * @returns An async generator yielding `NetStorageWalkEntry` objects.
    */
-  public async *walk({
+  public async *remoteWalk({
     path,
     maxDepth,
     shouldInclude,
   }: WalkParams): AsyncGenerator<WalkEntry> {
     const rootPath = path.replace(/\/+$/, '');
-    yield* this.walkRecursive(rootPath, rootPath, maxDepth, shouldInclude, 0);
+    yield* this.remoteWalkRecursive(
+      rootPath,
+      rootPath,
+      maxDepth,
+      shouldInclude,
+      0,
+    );
   }
 
   /**
@@ -857,7 +849,7 @@ export default class NetStorageAPI {
    * @returns An async generator yielding `NetStorageWalkEntry` objects.
    * @internal
    */
-  private async *walkRecursive(
+  private async *remoteWalkRecursive(
     currentPath: string,
     rootPath: string,
     maxDepth: number | undefined,
@@ -900,7 +892,7 @@ export default class NetStorageAPI {
       if (shouldYield) yield walkEntry;
 
       if (entry.type === 'dir') {
-        yield* this.walkRecursive(
+        yield* this.remoteWalkRecursive(
           fullPath,
           rootPath,
           maxDepth,
@@ -1063,7 +1055,7 @@ export default class NetStorageAPI {
   }> {
     const grouped = new Map<number, WalkEntry[]>();
     let totalSize = 0;
-    for await (const entry of this.walk(params)) {
+    for await (const entry of this.remoteWalk(params)) {
       grouped.set(entry.depth, [...(grouped.get(entry.depth) ?? []), entry]);
       if (entry?.file?.size) {
         const size = parseInt(entry.file.size, 10);
@@ -1095,7 +1087,7 @@ export default class NetStorageAPI {
     },
   ): Promise<WalkEntry[]> {
     const matches: WalkEntry[] = [];
-    for await (const entry of this.walk(params)) {
+    for await (const entry of this.remoteWalk(params)) {
       if (await params.predicate(entry)) {
         matches.push(entry);
       }
