@@ -16,6 +16,9 @@ export * from '@/operations/stat';
 export * from '@/operations/symlink';
 export * from '@/operations/upload';
 
+export * from '@/transports/sendRequest';
+export * from '@/transports/makeStreamRequest';
+
 export * from '@/operations/wrappers/buildAdjacencyList';
 export * from '@/operations/wrappers/fileExists';
 export * from '@/operations/wrappers/findAll';
