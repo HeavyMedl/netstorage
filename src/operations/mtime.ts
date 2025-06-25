@@ -1,8 +1,8 @@
-import type { NetStorageClientContext } from '../config/createClientContext';
-import type { RequestOptions } from '../types';
-import { withRetries } from '../utils/withRetries';
-import { sendRequest } from '../transports/sendRequest';
-import { resolveAbortSignal } from '../utils/resolveAbortSignal';
+import type { NetStorageClientContext } from '@/config/createClientContext';
+import type { RequestOptions } from '@/types';
+import { withRetries } from '@/utils/withRetries';
+import { sendRequest } from '@/transports/sendRequest';
+import { resolveAbortSignal } from '@/utils/resolveAbortSignal';
 
 /**
  * Represents the parsed response for a NetStorage `mtime` operation.

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { dir } from '../../src/operations/dir';
-import { createContext } from '../../src/config/createContext';
-import { uploadDirectory } from '../../src/operations/wrappers/uploadDirectory';
-import { removeDirectory } from '../../src/operations/wrappers/removeDirectory';
+import { dir } from '@/operations/dir';
+import { createContext } from '@/config/createContext';
+import { uploadDirectory } from '@/operations/wrappers/uploadDirectory';
+import { removeDirectory } from '@/operations/wrappers/removeDirectory';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';

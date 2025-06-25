@@ -1,8 +1,8 @@
-import type { NetStorageClientContext } from '../config/createClientContext';
-import type { NetStorageFile, RequestOptions } from '../types';
-import { sendRequest } from '../transports/sendRequest';
-import { withRetries } from '../utils/withRetries';
-import { resolveAbortSignal } from '../utils/resolveAbortSignal';
+import type { NetStorageClientContext } from '@/config/createClientContext';
+import type { NetStorageFile, RequestOptions } from '@/types';
+import { sendRequest } from '@/transports/sendRequest';
+import { withRetries } from '@/utils/withRetries';
+import { resolveAbortSignal } from '@/utils/resolveAbortSignal';
 
 /**
  * Represents the parsed structure of a NetStorage `dir` response.

@@ -1,9 +1,9 @@
-import { createAuthConfig } from './createAuthConfig';
-import { createClientContext } from './createClientContext';
+import { createAuthConfig } from '@/config/createAuthConfig';
+import { createClientContext } from '@/config/createClientContext';
 import type {
   ClientContext,
   NetStorageClientContext,
-} from './createClientContext';
+} from '@/config/createClientContext';
 
 export function createContext(raw: ClientContext): NetStorageClientContext {
   const auth = createAuthConfig(raw);

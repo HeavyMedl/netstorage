@@ -1,8 +1,8 @@
-import type { NetStorageClientContext } from '../../config/createClientContext';
-import type { UploadParams } from '../upload';
-import { upload } from '../upload';
-import { stat } from '../stat';
-import { isRemoteMissing } from '../../utils/transferPredicates';
+import type { NetStorageClientContext } from '@/config/createClientContext';
+import type { UploadParams } from '@/operations/upload';
+import { upload } from '@/operations/upload';
+import { stat } from '@/operations/stat';
+import { isRemoteMissing } from '@/utils/transferPredicates';
 
 /**
  * Uploads a file only if the remote file is missing.

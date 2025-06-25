@@ -1,9 +1,9 @@
 import { stat as fsStat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import type { NetStorageStat } from '../operations/stat';
-import type { NetStorageFile } from '../types';
-import type { NetStorageClientContext } from '../config/createClientContext';
+import type { NetStorageStat } from '@/operations/stat';
+import type { NetStorageFile } from '@/types';
+import type { NetStorageClientContext } from '@/config/createClientContext';
 
 /**
  * Checks if the remote file metadata is missing.

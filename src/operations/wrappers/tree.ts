@@ -1,9 +1,12 @@
-import type { NetStorageClientContext } from '../../config/createClientContext';
-import { aggregateDirectorySizes } from '../../utils/aggregateDirectorySizes';
-import { formatBytes } from '../../utils/formatBytes';
-import { formatMtime } from '../../utils/formatMtime';
-import { buildAdjacencyList } from './buildAdjacencyList';
-import type { RemoteWalkEntry, RemoteWalkParams } from './remoteWalk';
+import type { NetStorageClientContext } from '@/config/createClientContext';
+import { aggregateDirectorySizes } from '@/utils/aggregateDirectorySizes';
+import { formatBytes } from '@/utils/formatBytes';
+import { formatMtime } from '@/utils/formatMtime';
+import { buildAdjacencyList } from '@/operations/wrappers/buildAdjacencyList';
+import type {
+  RemoteWalkEntry,
+  RemoteWalkParams,
+} from '@/operations/wrappers/remoteWalk';
 
 /**
  * Parameters for the `tree` operation.

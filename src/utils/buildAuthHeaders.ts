@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import { generateUniqueId } from './generateUniqueId';
-import type { NetStorageClientContext } from '../config/createClientContext';
+import { generateUniqueId } from '@/utils/generateUniqueId';
+import type { NetStorageClientContext } from '@/config/createClientContext';
 
 export type HeadersMap = Record<string, string>;
 

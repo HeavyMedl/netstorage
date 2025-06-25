@@ -27,22 +27,23 @@
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/src/index.d.ts"
     }
   },
   "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "vite build && tsc",
+    "build": "vite build && tsc && tsc-alias",
     "format": "prettier --write .",
     "lint": "eslint .",
     "lint-staged": "lint-staged",
     "lint:fix": "eslint . --fix",
     "open-coverage": "npm run test && open ./coverage/index.html",
     "prepare": "husky",
+    "sandbox": "vite-node sandbox/index.ts",
     "test": "vitest run --coverage"
   },
   "lint-staged": {
@@ -74,6 +75,7 @@
     "lint-staged": "^15",
     "prettier": "^3",
     "prettier-eslint": "^16",
+    "tsc-alias": "^1.8.16",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8",
     "vite": "^6.3.5",

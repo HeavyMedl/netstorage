@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { upload } from '../../src/operations/upload';
-import { download } from '../../src/operations/download';
-import { rm } from '../../src/operations/rm';
-import { createContext } from '../../src/config/createContext';
+import { upload } from '@/operations/upload';
+import { download } from '@/operations/download';
+import { rm } from '@/operations/rm';
+import { createContext } from '@/config/createContext';
 import { writeFileSync, unlinkSync, existsSync, readFileSync } from 'node:fs';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =

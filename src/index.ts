@@ -1,20 +1,42 @@
-// import { tree } from './operations/wrappers/tree';
-// import { createContext } from './config/createContext';
+export * from '@/config/createAuthConfig';
+export * from '@/config/createClientContext';
+export * from '@/config/createContext';
 
-// const ctx = createContext({
-//   key: process.env.NETSTORAGE_API_KEY!,
-//   keyName: process.env.NETSTORAGE_API_KEYNAME!,
-//   host: process.env.NETSTORAGE_HOST!,
-//   logLevel: 'verbose',
-// });
+export * from '@/errors/httpError';
 
-// (async () => {
-//   try {
-//     await tree(ctx, {
-//       path: REMOTE_DIR,
-//       showSize: true,
-//     });
-//   } catch (err) {
-//     console.error('Error running tree:', err);
-//   }
-// })();
+export * from '@/operations/dir';
+export * from '@/operations/download';
+export * from '@/operations/du';
+export * from '@/operations/mkdir';
+export * from '@/operations/mtime';
+export * from '@/operations/rename';
+export * from '@/operations/rm';
+export * from '@/operations/rmdir';
+export * from '@/operations/stat';
+export * from '@/operations/symlink';
+export * from '@/operations/upload';
+
+export * from '@/operations/wrappers/buildAdjacencyList';
+export * from '@/operations/wrappers/fileExists';
+export * from '@/operations/wrappers/findAll';
+export * from '@/operations/wrappers/remoteWalk';
+export * from '@/operations/wrappers/removeDirectory';
+export * from '@/operations/wrappers/tree';
+export * from '@/operations/wrappers/uploadDirectory';
+export * from '@/operations/wrappers/uploadMissing';
+
+export * from '@/utils/aggregateDirectorySizes';
+export * from '@/utils/buildAuthHeaders';
+export * from '@/utils/buildUri';
+export * from '@/utils/createLogger';
+export * from '@/utils/createRateLimiters';
+export * from '@/utils/formatBytes';
+export * from '@/utils/formatMtime';
+export * from '@/utils/generateUniqueId';
+export * from '@/utils/parseXmlResponse';
+export * from '@/utils/resolveAbortSignal';
+export * from '@/utils/transferPredicates';
+export * from '@/utils/walkLocalDir';
+export * from '@/utils/withRetries';
+
+export * from '@/types';

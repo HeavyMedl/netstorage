@@ -1,7 +1,7 @@
-import { removeDirectory } from '../../../src/operations/wrappers/removeDirectory';
+import { removeDirectory } from '@/operations/wrappers/removeDirectory';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { uploadDirectory } from '../../../src/operations/wrappers/uploadDirectory';
-import { createContext } from '../../../src/config/createContext';
+import { uploadDirectory } from '@/operations/wrappers/uploadDirectory';
+import { createContext } from '@/config/createContext';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';

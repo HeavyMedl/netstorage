@@ -1,4 +1,4 @@
-import type { RemoteWalkEntry } from '../operations/wrappers/remoteWalk';
+import type { RemoteWalkEntry } from '@/operations/wrappers/remoteWalk';
 
 /**
  * Aggregates file sizes and rolls them up to each directory in the walk.

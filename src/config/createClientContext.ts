@@ -1,9 +1,9 @@
-import type { NetStorageAuthConfig } from './createAuthConfig';
-import { createLogger, type WinstonLogLevel } from '../utils/createLogger';
+import type { NetStorageAuthConfig } from '@/config/createAuthConfig';
+import { createLogger, type WinstonLogLevel } from '@/utils/createLogger';
 import {
   createRateLimiters,
   type RateLimitConfig,
-} from '../utils/createRateLimiters';
+} from '@/utils/createRateLimiters';
 import { name as packageName } from '../../package.json';
 
 export interface ClientContext extends NetStorageAuthConfig {

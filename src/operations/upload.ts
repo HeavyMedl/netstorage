@@ -1,13 +1,13 @@
-// import type { NetStorageClientContext } from '../config/createContext';
-import type { NetStorageClientContext } from '../config/createClientContext';
-import type { RequestOptions } from '../types';
-import { makeStreamRequest } from '../transports/makeStreamRequest';
-import { withRetries } from '../utils/withRetries';
-import { resolveAbortSignal } from '../utils/resolveAbortSignal';
+// import type { NetStorageClientContext } from '@/config/createContext';
+import type { NetStorageClientContext } from '@/config/createClientContext';
+import type { RequestOptions } from '@/types';
+import { makeStreamRequest } from '@/transports/makeStreamRequest';
+import { withRetries } from '@/utils/withRetries';
+import { resolveAbortSignal } from '@/utils/resolveAbortSignal';
 import { createReadStream } from 'node:fs';
-import { parseXmlResponse } from '../utils/parseXmlResponse';
-import { buildAuthHeaders } from '../utils/buildAuthHeaders';
-import { buildUri } from '../utils/buildUri';
+import { parseXmlResponse } from '@/utils/parseXmlResponse';
+import { buildAuthHeaders } from '@/utils/buildAuthHeaders';
+import { buildUri } from '@/utils/buildUri';
 
 /**
  * Represents the parsed response for a NetStorage `upload` operation.

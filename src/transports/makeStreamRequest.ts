@@ -1,12 +1,12 @@
-import { pipeline, Readable, Writable } from 'node:stream';
+import { pipeline, type Readable, type Writable } from 'node:stream';
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { promisify } from 'node:util';
 import { URLSearchParams } from 'node:url';
 
 import type { ClientRequest, IncomingMessage } from 'node:http';
-import { HttpError } from '../errors/httpError';
-import type { NetStorageClientContext } from '../config/createClientContext';
+import { HttpError } from '@/errors/httpError';
+import type { NetStorageClientContext } from '@/config/createClientContext';
 
 /**
  * Options for configuring the streamRequest function.

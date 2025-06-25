@@ -1,11 +1,11 @@
-import type { NetStorageClientContext } from '../config/createClientContext';
-import type { RequestOptions } from '../types';
+import type { NetStorageClientContext } from '@/config/createClientContext';
+import type { RequestOptions } from '@/types';
 import { createWriteStream } from 'node:fs';
-import { withRetries } from '../utils/withRetries';
-import { buildUri } from '../utils/buildUri';
-import { buildAuthHeaders } from '../utils/buildAuthHeaders';
-import { resolveAbortSignal } from '../utils/resolveAbortSignal';
-import { makeStreamRequest } from '../transports/makeStreamRequest';
+import { withRetries } from '@/utils/withRetries';
+import { buildUri } from '@/utils/buildUri';
+import { buildAuthHeaders } from '@/utils/buildAuthHeaders';
+import { resolveAbortSignal } from '@/utils/resolveAbortSignal';
+import { makeStreamRequest } from '@/transports/makeStreamRequest';
 
 export interface NetStorageDownload {
   status: {

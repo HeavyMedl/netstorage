@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { mkdir } from '../../src/operations/mkdir';
-import { rmdir } from '../../src/operations/rmdir';
-import { createContext } from '../../src/config/createContext';
+import { mkdir } from '@/operations/mkdir';
+import { rmdir } from '@/operations/rmdir';
+import { createContext } from '@/config/createContext';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;

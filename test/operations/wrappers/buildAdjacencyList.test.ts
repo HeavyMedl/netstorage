@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { removeDirectory } from '../../../src/operations/wrappers/removeDirectory';
-import { uploadDirectory } from '../../../src/operations/wrappers/uploadDirectory';
+import { removeDirectory } from '@/operations/wrappers/removeDirectory';
+import { uploadDirectory } from '@/operations/wrappers/uploadDirectory';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { createContext } from '../../../src/config/createContext';
-import { buildAdjacencyList } from '../../../src/operations/wrappers/buildAdjacencyList';
+import { createContext } from '@/config/createContext';
+import { buildAdjacencyList } from '@/operations/wrappers/buildAdjacencyList';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;

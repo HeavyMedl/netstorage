@@ -1,5 +1,5 @@
-import type { RequestOptions } from '../types';
-import type { NetStorageClientContext } from '../config/createClientContext';
+import type { RequestOptions } from '@/types';
+import type { NetStorageClientContext } from '@/config/createClientContext';
 
 export function resolveAbortSignal(
   ctx: NetStorageClientContext,

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createContext } from '../../src/config/createContext';
-import { upload } from '../../src/operations/upload';
-import { rm } from '../../src/operations/rm';
+import { createContext } from '@/config/createContext';
+import { upload } from '@/operations/upload';
+import { rm } from '@/operations/rm';
 
 import { writeFileSync, unlinkSync } from 'node:fs';
 
