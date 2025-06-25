@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": "src",
     "target": "ES2020",
     "useDefineForClassFields": true,
     "module": "ESNext",

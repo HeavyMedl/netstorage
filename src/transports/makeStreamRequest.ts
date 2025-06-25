@@ -3,13 +3,42 @@ import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { promisify } from 'node:util';
 import { URLSearchParams } from 'node:url';
-import { HttpError } from './errors';
-import { createLogger } from './logger';
 
 import type { ClientRequest, IncomingMessage } from 'node:http';
-import type { StreamRequestOptions } from '../types';
+import { HttpError } from '../errors/httpError';
+import type { NetStorageClientContext } from '../config/createClientContext';
 
-const logger = createLogger('info', 'makeStreamRequest');
+/**
+ * Options for configuring the streamRequest function.
+ *
+ * @property {string} [url] - Optional full URL to use instead of protocol + host + path.
+ * @property {'http' | 'https'} [protocol] - Protocol to use for the request. Optional if `url` is specified.
+ * @property {string} [host] - Hostname of the server. Optional if `url` is specified.
+ * @property {string} [path] - Path of the request URL. Optional if `url` is specified.
+ * @property {'PUT' | 'POST' | 'PATCH' | 'GET'} [method] - HTTP method to use (default is 'GET').
+ * @property {Record<string, string>} [headers] - Headers to include with the request.
+ * @property {Readable} [inputStream] - Optional readable stream to send as the request body.
+ * @property {Writable} [outputStream] - Optional writable stream to pipe the response body into.
+ * @property {AbortSignal} [signal] - Optional AbortSignal to cancel the request.
+ * @property {number} [timeout] - Optional timeout in milliseconds for the request.
+ * @property {(bytes: number) => void} [onProgress] - Optional callback to track progress of data transfer.
+ * @property {Record<string, string | number>} [query] - Optional query parameters to append to the URL.
+ */
+export interface StreamRequestOptions {
+  url?: string;
+  protocol?: 'http' | 'https';
+  host?: string;
+  path?: string;
+  method?: 'PUT' | 'POST' | 'PATCH' | 'GET';
+  headers?: Record<string, string>;
+  inputStream?: Readable;
+  outputStream?: Writable;
+  signal?: AbortSignal;
+  timeout?: number;
+  onProgress?: (bytes: number) => void;
+  query?: Record<string, string | number>;
+}
+
 const pipelineAsync = promisify(pipeline);
 
 /****
@@ -132,21 +161,25 @@ function createStreamRequestError(
 /**
  * Makes an HTTP or HTTPS request with streaming support for request and response bodies.
  * Supports timeouts, abort signals, query parameters, progress tracking, and optional logging.
+ * @param ctx - The NetStorageContext containing logger and other context info.
  * @param options - Configuration options for the request.
  * @param options.url - Optional full URL to override protocol/host/path/query resolution.
  * @returns A promise that resolves to an object containing the HTTP status code and optionally the response body.
  *          If an output stream is provided, the body will be undefined.
  */
-export async function makeStreamRequest({
-  method = 'GET',
-  headers = {},
-  inputStream,
-  outputStream,
-  signal,
-  timeout,
-  onProgress,
-  ...options
-}: StreamRequestOptions): Promise<{ statusCode: number; body?: string }> {
+export async function makeStreamRequest(
+  ctx: NetStorageClientContext,
+  {
+    method = 'GET',
+    headers = {},
+    inputStream,
+    outputStream,
+    signal,
+    timeout,
+    onProgress,
+    ...options
+  }: StreamRequestOptions,
+): Promise<{ statusCode: number; body?: string }> {
   const fullUrl =
     options.url ??
     constructRequestURL(
@@ -169,7 +202,9 @@ export async function makeStreamRequest({
         }
 
         // Log the response details
-        logger.debug(`Received ${res.statusCode} from ${url.href}`, { method });
+        ctx.logger.verbose(`Received ${res.statusCode} from ${url.href}`, {
+          method,
+        });
 
         try {
           // Handle the response body (stream or buffer)
@@ -200,16 +235,11 @@ export async function makeStreamRequest({
     signal?.addEventListener('abort', abortHandler);
     req.on('close', () => signal?.removeEventListener('abort', abortHandler));
 
-    // Log the request details
-    logger.debug(`Requesting ${url.href}`, { method });
+    ctx.logger.verbose(`Requesting ${url.href}`, { method });
 
-    // Handle errors on the request
     req.on('error', reject);
 
-    // Apply the timeout to the request if specified
     applyRequestTimeout(req, timeout, signal);
-
-    // Write the request body from the stream if provided
     writeRequestBody(inputStream, req).catch((err) => {
       reject(createStreamRequestError(method, url.toString(), err));
     });

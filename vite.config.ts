@@ -5,9 +5,9 @@ export default defineConfig({
   plugins: [externalizeDeps()],
   build: {
     lib: {
-      entry: 'src/main.ts',
+      entry: 'src/index.ts',
       formats: ['es'],
-      fileName: 'main',
+      fileName: 'index',
     },
   },
 });

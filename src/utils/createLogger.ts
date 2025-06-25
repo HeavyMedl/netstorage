@@ -1,5 +1,20 @@
 import winston from 'winston';
-import type { WinstonLogLevel } from '../types';
+
+/**
+ * Available logging levels supported by Winston using the `npm` levels preset.
+ *
+ * These determine the severity of logs that will be captured.
+ *
+ * @see https://github.com/winstonjs/winston#logging-levels
+ */
+export type WinstonLogLevel =
+  | 'error'
+  | 'warn'
+  | 'info'
+  | 'http'
+  | 'verbose'
+  | 'debug'
+  | 'silly';
 
 winston.addColors({
   error: 'red',
