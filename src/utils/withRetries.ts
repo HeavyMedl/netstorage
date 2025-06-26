@@ -51,7 +51,7 @@ export function shouldRetrySystemError(
   const shouldRetry = retryableCodes.some((code) => err.message.includes(code));
 
   if (!shouldRetry) {
-    ctx.logger.warn(`Non-retryable system error encountered: ${err.message}`, {
+    ctx.logger.debug(`Non-retryable system error encountered: ${err.message}`, {
       method,
     });
   }

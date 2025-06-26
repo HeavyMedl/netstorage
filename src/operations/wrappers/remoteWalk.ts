@@ -90,8 +90,8 @@ async function* remoteWalkRecursive(
   try {
     result = await dir(ctx, { path: currentPath });
   } catch (err) {
-    ctx.logger.warn(`Failed to walk ${currentPath}: ${err}`, {
-      method: 'walk',
+    ctx.logger.debug(`Failed to walk ${currentPath}: ${err}`, {
+      method: 'remoteWalk',
     });
     return;
   }

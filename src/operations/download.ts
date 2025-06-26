@@ -24,7 +24,7 @@ export async function download(
   ctx: NetStorageClientContext,
   { fromRemote, toLocal, options, shouldDownload }: DownloadParams,
 ): Promise<NetStorageDownload> {
-  ctx.logger.info(fromRemote, { method: 'download' });
+  ctx.logger.verbose(fromRemote, { method: 'download' });
 
   if (shouldDownload && !(await shouldDownload())) {
     return { status: { code: 0 } };
