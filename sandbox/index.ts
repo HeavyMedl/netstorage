@@ -1,5 +1,4 @@
-import { tree } from '@/operations/wrappers/tree';
-import { createContext } from '@/config/createContext';
+import { downloadDirectory, createContext } from '@/index';
 
 const REMOTE_DIR = '/34612/dir-test';
 
@@ -11,8 +10,10 @@ const ctx = createContext({
 });
 
 (async () => {
-  await tree(ctx, {
-    path: REMOTE_DIR,
-    showSize: true,
+  await downloadDirectory(ctx, {
+    remotePath: REMOTE_DIR,
+    localPath: '/Users/kmedley/Desktop/metrics',
+    overwrite: true,
+    // onDownload: ({ remotePath }) => downloaded.push(remotePath),
   });
 })();

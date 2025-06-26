@@ -26,6 +26,7 @@ export * from '@/operations/wrappers/remoteWalk';
 export * from '@/operations/wrappers/removeDirectory';
 export * from '@/operations/wrappers/tree';
 export * from '@/operations/wrappers/uploadDirectory';
+export * from '@/operations/wrappers/downloadDirectory';
 export * from '@/operations/wrappers/uploadMissing';
 
 export * from '@/utils/aggregateDirectorySizes';
