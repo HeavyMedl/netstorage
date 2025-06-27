@@ -20,7 +20,7 @@ A modern, ESM-native TypeScript client for the [Akamai NetStorage REST API](http
 npm install netstorage
 ```
 
-## Basic Usage
+## Programmatic Usage
 
 ```ts
 import { createContext, upload, download, stat } from 'netstorage';
