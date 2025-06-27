@@ -126,3 +126,7 @@ These are exposed for advanced use cases and deeper customization.
 - `buildAdjacencyList` — Construct a directory graph structure from remote entries
 - `findAll` — Find all matching remote files by pattern
 - `remoteWalk` — Async generator for recursively walking remote directories
+
+## Disclaimer
+
+This project is provided as-is under an unlicensed status. It is an unofficial and independent implementation of the Akamai NetStorage REST API. The author assumes no responsibility for any issues, damages, or misuse arising from its use. Use at your own risk.
