@@ -11,16 +11,14 @@ import {
 /**
  * Parameters for the `tree` operation.
  *
- * Extends the base `walk` parameters to include options for controlling
- * display behavior, such as file sizes, modification times, checksums,
- * symbolic link targets, and whether to include the full path in output.
+ * Extends `RemoteWalkParams` with additional display options.
  *
- * @property {boolean} [showSize] - Whether to include file sizes in the output.
- * @property {boolean} [showMtime] - Whether to include last modified time in the output.
- * @property {boolean} [showChecksum] - Whether to include MD5 checksums if available.
- * @property {boolean} [showSymlinkTarget] - Whether to show symlink target paths.
- * @property {boolean} [showRelativePath] - Whether to display relative path instead of full.
- * @property {boolean} [showAbsolutePath] - Whether to display full absolute path instead of relative.
+ * @property {boolean} [showSize] - Display file sizes.
+ * @property {boolean} [showMtime] - Display last modified timestamps.
+ * @property {boolean} [showChecksum] - Display MD5 checksums, if available.
+ * @property {boolean} [showSymlinkTarget] - Display symlink target paths.
+ * @property {boolean} [showRelativePath] - Show relative paths.
+ * @property {boolean} [showAbsolutePath] - Show absolute paths.
  */
 export interface TreeParams extends RemoteWalkParams {
   showSize?: boolean;
@@ -32,17 +30,11 @@ export interface TreeParams extends RemoteWalkParams {
 }
 
 /**
- * Represents the result of a NetStorage `tree` operation.
+ * Result of the `tree` operation.
  *
- * This structure includes directory walk entries grouped into depth buckets,
- * a map of aggregated directory sizes (in bytes), and the total cumulative size
- * of all encountered files.
- *
- * @property depthBuckets - Array of entry groups indexed by depth in the directory tree.
- * Each group contains the depth level and a list of entries (files/directories) at that level.
- * @property directorySizeMap - A Map keyed by directory path, where each value contains
- * the aggregated size (in bytes) of files and subdirectories under that directory.
- * @property totalSize - The total size in bytes of all encountered files in the walk.
+ * @property {Array<{ depth: number; entries: RemoteWalkEntry[] }>} depthBuckets - Entries grouped by depth.
+ * @property {Map<string, { aggregatedSize: number }>} directorySizeMap - Aggregated sizes per directory.
+ * @property {number} totalSize - Total size of all files in bytes.
  */
 export interface TreeResult {
   depthBuckets: { depth: number; entries: RemoteWalkEntry[] }[];
@@ -51,14 +43,13 @@ export interface TreeResult {
 }
 
 /**
- * Logs a formatted tree structure of the remote NetStorage directory.
+ * Generate and print a tree structure of a remote NetStorage path.
  *
- * Uses the `walk` function to traverse the directory structure and displays
- * a visual tree layout similar to the Unix `tree` command.
+ * Walks the directory tree and renders a visual layout with optional metadata.
  *
- * @param params - Parameters extending `TreeParams` to configure traversal
- *   and filtering.
- * @returns A promise that resolves when the directory tree has been printed.
+ * @param {NetStorageClientContext} ctx - Authenticated NetStorage client context.
+ * @param {TreeParams} params - Tree rendering and traversal options.
+ * @returns {Promise<TreeResult>} Resolves with grouped entries and size data.
  */
 export async function tree(
   ctx: NetStorageClientContext,
@@ -89,11 +80,24 @@ export async function tree(
   );
   const directorySizeMap = aggregateDirectorySizes(allEntries);
 
+  /**
+   * Get immediate children of a directory at a given depth.
+   *
+   * @param {string} parentPath - Path of the parent directory.
+   * @param {number} depth - Depth level of children to retrieve.
+   * @returns {RemoteWalkEntry[]} Array of child entries.
+   */
   function getChildren(parentPath: string, depth: number) {
     const group = depthBuckets.find((bucket) => bucket.depth === depth);
     if (!group) return [];
     return group.entries.filter((e) => e.parent === parentPath);
   }
+  /**
+   * Recursively render a tree view of entries with optional metadata.
+   *
+   * @param {RemoteWalkEntry[]} entries - Entries to render.
+   * @param {string} prefix - Prefix string for visual indentation.
+   */
   function renderTree(entries: RemoteWalkEntry[], prefix = ''): void {
     entries.forEach((entry, index) => {
       const isLast = index === entries.length - 1;

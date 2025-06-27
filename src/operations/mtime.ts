@@ -7,9 +7,9 @@ import {
 } from '@/index';
 
 /**
- * Represents the parsed response for a NetStorage `mtime` operation.
+ * Response shape for a successful NetStorage `mtime` operation.
  *
- * This structure reflects a simple success status returned from the API.
+ * @property code - The response status code from the API.
  */
 export interface NetStorageMtime {
   status: {
@@ -18,11 +18,11 @@ export interface NetStorageMtime {
 }
 
 /**
- * Parameters for the `mtime` operation.
+ * Parameters for updating the modification time.
  *
- * @property path - Target path of the file or directory.
- * @property date - New modification date.
- * @property options - Optional per-request configuration.
+ * @property path - The remote file or directory path.
+ * @property date - The new modification time as a Date instance.
+ * @property options - Optional per-request settings.
  */
 export interface MtimeParams {
   path: string;
@@ -31,12 +31,12 @@ export interface MtimeParams {
 }
 
 /**
- * Updates the modification time of a file or directory.
+ * Sets the modification time for a remote file or directory.
  *
  * @param ctx - The NetStorage client context.
- * @param params - Parameters including target path, date, and optional request settings.
- * @returns Parsed object structure of a NetStorage XML API response.
- * @throws {TypeError} If the provided date is not a valid Date instance.
+ * @param params - Object containing the target path, date, and optional request options.
+ * @returns The parsed NetStorage response object.
+ * @throws {TypeError} If `date` is not a valid Date instance.
  */
 export async function mtime(
   ctx: NetStorageClientContext,

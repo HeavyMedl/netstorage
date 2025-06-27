@@ -8,10 +8,11 @@ import {
 } from '@/index';
 
 /**
- * Checks if the remote file metadata is missing.
- * @param ctx Client context containing logger.
- * @param netStorageStat Remote file metadata object.
- * @returns True if remote metadata is missing, otherwise false.
+ * Determines if remote file metadata is absent or empty.
+ *
+ * @param ctx - Client context with logger.
+ * @param netStorageStat - Remote file metadata object.
+ * @returns True if remote metadata is missing or invalid.
  */
 export function isRemoteMissing(
   ctx: NetStorageClientContext,
@@ -28,11 +29,12 @@ export function isRemoteMissing(
 }
 
 /**
- * Checks if the local file size differs from the remote file size.
- * @param ctx Client context containing logger.
- * @param localPath Absolute path to the local file.
- * @param netStorageStat Remote file metadata object.
- * @returns True if sizes differ or remote size is missing, otherwise false.
+ * Compares the size of a local file with its remote counterpart.
+ *
+ * @param ctx - Client context with logger.
+ * @param localPath - Absolute path to the local file.
+ * @param netStorageStat - Remote file metadata object.
+ * @returns True if sizes differ or remote size is missing.
  */
 export async function isSizeMismatch(
   ctx: NetStorageClientContext,
@@ -60,11 +62,12 @@ export async function isSizeMismatch(
 }
 
 /**
- * Checks if the local file modification time is newer than the remote file modification time.
- * @param ctx Client context containing logger.
- * @param localPath Absolute path to the local file.
- * @param netStorageStat Remote file metadata object.
- * @returns True if local mtime is newer, otherwise false.
+ * Checks if the local file's modification time is more recent than the remote file's.
+ *
+ * @param ctx - Client context with logger.
+ * @param localPath - Absolute path to the local file.
+ * @param netStorageStat - Remote file metadata object.
+ * @returns True if local mtime is newer.
  */
 export async function isMtimeNewer(
   ctx: NetStorageClientContext,
@@ -89,11 +92,12 @@ export async function isMtimeNewer(
 }
 
 /**
- * Compares the local file's MD5 checksum with the remote file's.
- * @param ctx Client context containing logger.
- * @param localPath Absolute path to the local file.
- * @param netStorageStat Remote file metadata object.
- * @returns True if checksums differ or remote checksum is missing, otherwise false.
+ * Validates if the local file's MD5 checksum differs from the remote file's checksum.
+ *
+ * @param ctx - Client context with logger.
+ * @param localPath - Absolute path to the local file.
+ * @param netStorageStat - Remote file metadata object.
+ * @returns True if checksums do not match or remote checksum is unavailable.
  */
 export async function isChecksumMismatch(
   ctx: NetStorageClientContext,

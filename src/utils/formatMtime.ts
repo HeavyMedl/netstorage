@@ -1,8 +1,8 @@
 /**
- * Formats a Unix timestamp (in seconds) into a human-readable datetime string.
+ * Convert a Unix timestamp (in seconds) into a formatted UTC datetime string.
  *
- * @param unixSeconds - The Unix timestamp in seconds.
- * @returns A string like '2025-06-21 14:32:10'.
+ * @param unixSeconds - Unix timestamp as a number or string.
+ * @returns Formatted datetime string in 'YYYY-MM-DD HH:mm:ss' (UTC).
  */
 export function formatMtime(unixSeconds: string | number): string {
   const date = new Date(Number(unixSeconds) * 1000);

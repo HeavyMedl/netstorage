@@ -1,11 +1,11 @@
 import { stat, HttpError, type NetStorageClientContext } from '@/index';
 
 /**
- * Checks if a file exists at the specified NetStorage path.
+ * Check if a file exists at the specified NetStorage path.
  *
- * @param ctx - The NetStorage client context.
- * @param path - The remote file path to check.
- * @returns True if the file exists, false if not.
+ * @param ctx - NetStorage client context
+ * @param path - Remote file path to verify
+ * @returns Promise resolving to true if file exists, false otherwise
  */
 export async function fileExists(
   ctx: NetStorageClientContext,

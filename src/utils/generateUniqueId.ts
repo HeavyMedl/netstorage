@@ -1,7 +1,9 @@
 /**
- * Generates a unique identifier used in authentication headers.
+ * Generates a concise pseudo-random string identifier.
  *
- * @returns A unique string identifier.
+ * Combines random bits and the current process ID to minimize collisions.
+ *
+ * @returns {string} Unique string identifier.
  */
 export function generateUniqueId(): string {
   let str = '';

@@ -1,12 +1,7 @@
 /**
- * Optional per-request configuration that enables fine-grained control over
- * timeouts and cancellation using AbortController or AbortSignal.
- *
- * This can be passed to any public method (e.g., stat, upload, download) to
- * override the global timeout or inject a custom AbortSignal for cancellation.
- *
- * @property timeout - Optional override (in milliseconds) for request timeout. If not set, falls back to `config.request.timeout`.
- * @property signal - Optional AbortSignal instance to allow external cancellation.
+ * Options for customizing individual NetStorage requests.
+ * @property {number} [timeout] Optional timeout in milliseconds. Overrides global default.
+ * @property {AbortSignal} [signal] Optional signal for aborting the request.
  */
 export interface RequestOptions {
   timeout?: number;
@@ -14,17 +9,16 @@ export interface RequestOptions {
 }
 
 /**
- * Represents metadata about a file or directory returned in a NetStorage `stat` response.
- *
- * @property type - The type of the entry ('file', 'dir', or 'symlink').
- * @property name - The name of the file, directory, or symbolic link.
- * @property mtime - The last modified time as a Unix timestamp string.
- * @property size - The size of the file in bytes, if applicable.
- * @property bytes - Total size of a directory in bytes, if applicable.
- * @property files - Number of files in the directory, if applicable.
- * @property md5 - Optional MD5 checksum of the file, if included in the response.
- * @property implicit - Whether the directory is implicit (optional).
- * @property target - The target path of a symbolic link, if applicable.
+ * Metadata for a NetStorage entry, which may be a file, directory, or symlink.
+ * @property {'file' | 'dir' | 'symlink'} type Type of the entry.
+ * @property {string} name Name of the entry.
+ * @property {string} mtime Last modified time (Unix timestamp string).
+ * @property {string} [size] Size in bytes (for files).
+ * @property {string} [bytes] Aggregate size in bytes (for directories).
+ * @property {string} [files] Number of files (for directories).
+ * @property {string} [md5] MD5 checksum (for files).
+ * @property {string} [implicit] Indicates if the directory is implicit.
+ * @property {string} [target] Target path for symlinks.
  */
 export interface NetStorageFile {
   type: 'file' | 'dir' | 'symlink';
@@ -38,6 +32,9 @@ export interface NetStorageFile {
   target?: string;
 }
 
+/**
+ * Valid operation types supported by the NetStorage API.
+ */
 export type NetStorageOperation =
   | 'dir'
   | 'download'

@@ -9,6 +9,13 @@ import {
   type SyncResultHandlers,
 } from '@/index';
 
+/**
+ * Synchronizes a single local file with a remote NetStorage path.
+ *
+ * @param ctx - The NetStorage client context.
+ * @param params - Configuration options for the sync operation.
+ * @returns A SyncResult summarizing transferred, skipped, and deleted files.
+ */
 export async function syncFile(
   ctx: NetStorageClientContext,
   {
@@ -33,12 +40,24 @@ export async function syncFile(
     },
   );
 
+  /**
+   * Accumulates results during the sync process.
+   * @property transferred - Files that were transferred.
+   * @property skipped - Files that were skipped due to comparison or rules.
+   * @property deleted - Files that were deleted as extraneous.
+   */
   const results: SyncResultAccumulator = {
     transferred: [],
     skipped: [],
     deleted: [],
   };
 
+  /**
+   * Handlers for collecting sync results and triggering user-defined callbacks.
+   * @property onTransfer - Callback for each transferred file.
+   * @property onSkip - Callback for each skipped file.
+   * @property onDelete - Callback for each deleted file.
+   */
   const handlers: SyncResultHandlers = {
     onTransfer: (event) => {
       results.transferred.push(event);

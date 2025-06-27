@@ -9,6 +9,18 @@ import {
   type RemoteWalkEntry,
 } from '@/index';
 
+/**
+ * Options for downloading a remote directory to the local filesystem.
+ *
+ * @property remotePath Absolute path to the remote directory.
+ * @property localPath Local destination path.
+ * @property overwrite Whether to overwrite existing local files. Default is false.
+ * @property dryRun If true, simulates the operation without downloading.
+ * @property maxConcurrency Maximum number of concurrent downloads.
+ * @property onDownload Callback for each successfully downloaded file.
+ * @property onSkip Callback for each skipped file with reason.
+ * @property shouldDownload Optional filter function to determine whether to download a file.
+ */
 export interface DownloadDirectoryParams {
   remotePath: string;
   localPath: string;
@@ -25,6 +37,12 @@ export interface DownloadDirectoryParams {
   shouldDownload?: (entry: RemoteWalkEntry) => boolean | Promise<boolean>;
 }
 
+/**
+ * Checks if a local file exists and is a file (not directory).
+ *
+ * @param path Local file path.
+ * @returns True if the file exists and is a regular file.
+ */
 async function fileExistsLocal(path: string): Promise<boolean> {
   try {
     const stats = await stat(path);
@@ -34,6 +52,12 @@ async function fileExistsLocal(path: string): Promise<boolean> {
   }
 }
 
+/**
+ * Downloads all files from a remote directory to a local path, respecting filters and concurrency.
+ *
+ * @param ctx NetStorage client context.
+ * @param params Download options.
+ */
 export async function downloadDirectory(
   ctx: NetStorageClientContext,
   params: DownloadDirectoryParams,

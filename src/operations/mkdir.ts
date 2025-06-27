@@ -7,9 +7,9 @@ import {
 } from '@/index';
 
 /**
- * Represents the parsed response for a NetStorage `mkdir` operation.
+ * Response shape for a NetStorage `mkdir` operation.
  *
- * This structure reflects a simple success status returned from the API.
+ * @property status - The status object containing a numeric status code.
  */
 export interface NetStorageMkdir {
   status: {
@@ -29,7 +29,11 @@ export interface MkdirParams {
 }
 
 /**
- * Creates a new directory at the specified NetStorage path.
+ * Creates a new directory on NetStorage at the specified path.
+ *
+ * @param ctx - The NetStorage client context.
+ * @param params - Parameters including the target path and optional request options.
+ * @returns A promise resolving to the mkdir operation response.
  */
 export async function mkdir(
   ctx: NetStorageClientContext,

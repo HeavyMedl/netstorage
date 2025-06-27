@@ -19,6 +19,11 @@ import {
   type SyncSingleEntryParams,
 } from '@/index';
 
+/**
+ * Determines if a transfer is allowed based on the provided strategy, direction, action, and resolution.
+ * @param input - Transfer permission configuration
+ * @returns Whether the file transfer should proceed
+ */
 export function isTransferAllowed({
   compareStrategy,
   direction,
@@ -35,14 +40,18 @@ export function isTransferAllowed({
 }
 
 /**
- * Wraps a NetStorageFile object in a NetStorageStat structure.
+ * Wraps a NetStorageFile in a NetStorageStat structure.
+ * @param file - The remote file metadata
+ * @returns A NetStorageStat object
  */
 export function toNetStorageStat(file?: NetStorageFile): NetStorageStat {
   return { stat: { file } };
 }
 
 /**
- * Determines if a file should be transferred based on the compare strategy and direction.
+ * Determines whether a file should be transferred based on the compare strategy and direction.
+ * @param input - Parameters including paths, direction, and compare strategy
+ * @returns True if transfer should occur, false otherwise
  */
 export async function shouldTransferFile({
   ctx,
@@ -73,7 +82,9 @@ export async function shouldTransferFile({
 }
 
 /**
- * Determines the action to take based on conflict rules and relative path.
+ * Resolves the transfer action (upload, download, or skip) based on conflict resolution rules.
+ * @param input - Relative path and conflict rules mapping
+ * @returns The resolved transfer action or 'skip'
  */
 export function resolveConflictAction({
   relativePath,
@@ -89,7 +100,9 @@ export function resolveConflictAction({
 }
 
 /**
- * Formats sync direction logs.
+ * Formats a sync operation into a directional log message.
+ * @param input - Sync direction and file paths
+ * @returns A formatted string describing the sync operation
  */
 export function formatSyncDirectionLog({
   localPath,
@@ -105,6 +118,10 @@ export function formatSyncDirectionLog({
   return `Syncing ${localPath} ${arrow} ${remotePath} [${syncDirection}]`;
 }
 
+/**
+ * Performs a one-to-one sync operation for a single file, supporting dry-run and transfer logging.
+ * @param params - Configuration for syncing a single entry
+ */
 export async function syncSingleEntry({
   ctx,
   direction,
@@ -169,6 +186,10 @@ export async function syncSingleEntry({
   onTransfer?.({ direction, localPath, remotePath });
 }
 
+/**
+ * Deletes files that exist in one location (local or remote) but not in the other.
+ * @param params - Configuration for comparing and optionally deleting extraneous files
+ */
 export async function deleteExtraneous({
   ctx,
   deleteExtraneous,

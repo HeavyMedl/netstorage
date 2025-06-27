@@ -3,11 +3,11 @@ import micromatch from 'micromatch';
 import klaw from 'klaw';
 
 /**
- * Represents an entry encountered while walking a local directory.
+ * Represents a file or directory encountered during traversal.
  *
- * @property localPath - Absolute path to the file or directory on disk.
- * @property relativePath - Path relative to the root of the traversal.
- * @property isDirectory - True if the entry is a directory.
+ * @property {string} localPath - Absolute path to the file or directory.
+ * @property {string} relativePath - Path relative to the traversal root.
+ * @property {boolean} isDirectory - Indicates if the entry is a directory.
  */
 export interface LocalWalkEntry {
   localPath: string;
@@ -16,12 +16,12 @@ export interface LocalWalkEntry {
 }
 
 /**
- * Options for walking a local directory tree.
+ * Configuration options for walking a local directory tree.
  *
- * @property ignore - Optional glob patterns to exclude files or directories.
- * @property followSymlinks - Whether to follow symbolic links during traversal.
- * @property includeDirs - Whether to yield directory entries as well as files.
- * @property onEnterDir - Optional callback invoked when entering a new directory.
+ * @property {string[]} [ignore] - Glob patterns to exclude during traversal.
+ * @property {boolean} [followSymlinks] - Follow symbolic links if true.
+ * @property {boolean} [includeDirs] - Yield directory entries if true.
+ * @property {(dirPath: string, relativePath: string) => void} [onEnterDir] - Callback when entering a directory.
  */
 export interface WalkLocalOptions {
   ignore?: string[];
@@ -31,11 +31,11 @@ export interface WalkLocalOptions {
 }
 
 /**
- * Recursively walks a local directory and yields files (and optionally directories).
+ * Recursively walks a local directory tree, yielding files and optionally directories.
  *
- * @param root - The root directory to start walking from.
- * @param options - Options to control filtering and traversal behavior.
- * @returns An async generator yielding each matched file or directory entry.
+ * @param {string} root - Root directory to begin traversal.
+ * @param {WalkLocalOptions} [options] - Options to configure traversal behavior.
+ * @returns {AsyncGenerator<LocalWalkEntry>} Yields matching file and directory entries.
  */
 export async function* walkLocalDir(
   root: string,

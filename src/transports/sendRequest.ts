@@ -9,16 +9,12 @@ import {
 } from '@/index';
 
 /**
- * Parameters for a generic HTTP-like request.
+ * Parameters for a generic NetStorage HTTP request.
  *
- * This interface is intended for internal or advanced use cases where
- * specific control over the HTTP method, headers, body, or cancellation
- * behavior is required. It is not tied to any specific NetStorage API method.
- *
- * @property request - Optional object containing HTTP method settings.
- * @property headers - Optional key-value pairs of request headers.
- * @property body - Optional request payload, such as a JSON or stream body.
- * @property options - Optional configuration for timeout or cancellation.
+ * @property request - Custom request settings including the HTTP method.
+ * @property headers - Optional HTTP headers to include in the request.
+ * @property body - Optional request payload (e.g., string, FormData, stream).
+ * @property options - Optional settings for request timeout or abort signal.
  */
 export interface GenericRequestParams {
   request?: { method?: string };
@@ -28,13 +24,13 @@ export interface GenericRequestParams {
 }
 
 /**
- * Makes a generic request to the NetStorage API using a functional interface.
+ * Executes a NetStorage API request and parses the XML response.
  *
- * @param path - Target API path.
- * @param params - Request parameters.
- * @param ctx - Fully constructed client context.
- * @returns Parsed XML API response.
- * @throws HttpError if the response status indicates failure.
+ * @param ctx - The client context containing credentials and logger.
+ * @param path - The API path to send the request to.
+ * @param params - Optional configuration for method, headers, body, and options.
+ * @returns The parsed response body, typed as T.
+ * @throws HttpError if the HTTP response status indicates a failure.
  */
 export async function sendRequest<T>(
   ctx: NetStorageClientContext,

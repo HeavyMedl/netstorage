@@ -2,20 +2,20 @@ import { RateLimiter } from 'limiter';
 
 import type { NetStorageOperation } from '@/index';
 
+/**
+ * Maps a NetStorage operation to the corresponding limiter key returned from `createRateLimiters`.
+ */
 type LimiterMap = Partial<
   Record<NetStorageOperation, keyof ReturnType<typeof createRateLimiters>>
 >;
 
 /**
- * Optional configuration for throttling NetStorage API operations.
+ * Configuration for throttling NetStorage API operations.
  *
- * This allows fine-grained control over how frequently certain categories
- * of operations are performed to avoid overwhelming the NetStorage API.
- *
- * @property {number} [read] - Maximum number of read operations (e.g., stat, du, dir) per interval.
- * @property {number} [write] - Maximum number of write operations (e.g., upload, delete, mkdir) per interval.
- * @property {number} [dir] - Maximum number of directory listing operations (e.g., dir) per interval.
- * @property {number} [time] - The interval window in milliseconds (default is 1000 ms).
+ * @property {number} [read] - Max read ops (e.g., stat, du, dir) per interval.
+ * @property {number} [write] - Max write ops (e.g., upload, delete, mkdir) per interval.
+ * @property {number} [dir] - Max directory listing ops (e.g., dir) per interval.
+ * @property {number} [time] - Interval window in milliseconds (default: 1000ms).
  */
 export interface RateLimitConfig {
   read?: number;
@@ -25,13 +25,14 @@ export interface RateLimitConfig {
 }
 
 /**
- * Creates a set of token-bucket rate limiters for different NetStorage API operation types.
+ * Creates rate limiters for read, write, and directory operations.
  *
- * Each limiter controls the frequency of operations per defined interval (default: 1000ms).
- *
- * @param {RateLimitConfig} [config] - Optional configuration object to customize rate limits.
- * @returns {{ readLimiter: RateLimiter, writeLimiter: RateLimiter, dirLimiter: RateLimiter }}
- * An object containing separate limiters for read, write, and directory-listing operations.
+ * @param {RateLimitConfig} [config] - Optional rate limit configuration.
+ * @returns {{
+ *   readLimiter: RateLimiter,
+ *   writeLimiter: RateLimiter,
+ *   dirLimiter: RateLimiter
+ * }} Limiters for respective operation types.
  */
 export function createRateLimiters(config?: RateLimitConfig) {
   const { read = 800, write = 25, dir = 50, time = 1000 } = config || {};
@@ -44,12 +45,12 @@ export function createRateLimiters(config?: RateLimitConfig) {
 }
 
 /**
- * Selects the appropriate rate limiter based on the API method name.
+ * Resolves the appropriate limiter for a given NetStorage method.
  *
- * @param method - The API method name (e.g., 'stat', 'upload', 'dir').
- * @param limiters - The object containing all available limiters.
- * @returns The corresponding RateLimiter instance.
- * @throws If the method is not mapped to a limiter.
+ * @param {NetStorageOperation} method - API operation name (e.g., 'stat', 'upload').
+ * @param {ReturnType<typeof createRateLimiters>} limiters - Available rate limiters.
+ * @returns {RateLimiter} Matching limiter instance.
+ * @throws {Error} If no limiter is mapped to the given method.
  */
 export function selectLimiter(
   method: NetStorageOperation,

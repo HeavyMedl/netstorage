@@ -1,11 +1,13 @@
 import type { NetStorageClientContext } from '@/index';
 
 /**
- * Constructs a full URI for a given path using the client context.
+ * @typedef NetStorageClientContext
+ * Represents the configuration context required to make NetStorage requests.
  *
- * @param context - The NetStorage client context containing config details.
- * @param path - The path to append to the base URL.
- * @returns A full URI string.
+ * @property {string} host - The NetStorage API host (e.g., 'example-nsu.akamaihd.net').
+ * @property {string} key - The API key used for authentication.
+ * @property {string} keyName - The name associated with the API key.
+ * @property {boolean} ssl - Whether to use HTTPS (true) or HTTP (false).
  */
 export function buildUri(
   context: NetStorageClientContext,

@@ -7,14 +7,16 @@ import {
 } from '@/index';
 
 /**
- * Uploads a file only if the remote file is missing.
+ * Uploads a file if it does not already exist on NetStorage.
  *
- * This method uses `stat` to check for the remote file and
- * proceeds with upload only if it does not exist.
+ * Uses `stat` to check for the remote file and skips upload if the file exists.
  *
- * @param ctx - NetStorage client context.
- * @param params - Upload parameters.
- * @returns Parsed NetStorage response.
+ * @param ctx NetStorage client context
+ * @param params Upload parameters:
+ *   - fromLocal Local file path to upload
+ *   - toRemote Remote NetStorage destination path
+ *   - options Optional upload settings
+ * @returns Parsed NetStorage upload response
  */
 export async function uploadMissing(
   ctx: NetStorageClientContext,

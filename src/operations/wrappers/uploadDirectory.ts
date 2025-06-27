@@ -9,20 +9,18 @@ import {
 } from '@/index';
 
 /**
- * Parameters for the `uploadDirectory` operation.
+ * Parameters for uploading a local directory to a NetStorage destination.
  *
- * Defines options for uploading a local directory to a NetStorage destination.
- *
- * @property localPath - Absolute or relative path to the local directory to upload.
- * @property remotePath - Destination path in NetStorage where files will be uploaded.
- * @property overwrite - Whether to overwrite existing remote files (default: true).
- * @property followSymlinks - Whether to follow symbolic links during traversal (default: false).
- * @property ignore - Optional glob-style patterns for excluding files (e.g., 'node_modules').
- * @property dryRun - If true, simulates the upload without making any changes.
- * @property maxConcurrency - Maximum number of concurrent uploads (default: 5).
- * @property onUpload - Callback triggered when a file is successfully uploaded.
- * @property onSkip - Callback triggered when a file is skipped, including the reason.
- * @property shouldUpload - Optional callback to determine whether a file should be uploaded.
+ * @property localPath - Path to the local directory to upload.
+ * @property remotePath - Remote NetStorage path to upload files to.
+ * @property overwrite - If true, overwrites existing remote files (default: true).
+ * @property followSymlinks - If true, follows symlinks when walking the local directory (default: false).
+ * @property ignore - Glob patterns to exclude files/directories during traversal.
+ * @property dryRun - If true, simulates the upload without performing file operations.
+ * @property maxConcurrency - Max number of concurrent uploads (default: 5).
+ * @property onUpload - Callback triggered on successful file upload.
+ * @property onSkip - Callback triggered when a file is skipped.
+ * @property shouldUpload - Optional predicate to determine if a file should be uploaded.
  */
 export interface UploadDirectoryParams {
   localPath: string;
@@ -49,14 +47,14 @@ export interface UploadDirectoryParams {
 }
 
 /**
- * Uploads a local directory to a destination path in NetStorage.
+ * Uploads files from a local directory to NetStorage.
  *
- * Recursively traverses a local directory, uploading each file to a remote
- * destination path on NetStorage. Supports concurrency limits, dry-run mode,
- * and file skipping logic.
+ * Traverses the local directory and uploads files to the specified remote path.
+ * Respects ignore patterns, symlink behavior, overwrite flag, and concurrency limits.
  *
- * @param ctx - NetStorage context
- * @param params - UploadDirectoryParams
+ * @param ctx - The NetStorage client context.
+ * @param params - Options controlling upload behavior.
+ * @returns A promise that resolves when all eligible files are processed.
  */
 export async function uploadDirectory(
   ctx: NetStorageClientContext,

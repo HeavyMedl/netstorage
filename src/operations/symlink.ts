@@ -7,7 +7,9 @@ import {
 } from '@/index';
 
 /**
- * Represents the parsed response for a NetStorage `symlink` operation.
+ * Represents the response payload returned from a successful NetStorage `symlink` operation.
+ *
+ * @property code - HTTP status code from the symlink operation response.
  */
 export interface NetStorageSymlink {
   status: {
@@ -16,11 +18,11 @@ export interface NetStorageSymlink {
 }
 
 /**
- * Parameters for the `symlink` operation.
+ * Parameters required to create a symbolic link in NetStorage.
  *
- * @property pathFileTo - The target file path the symlink should point to.
- * @property pathSymlink - The path where the symbolic link will be created.
- * @property options - Optional per-request configuration for timeout or cancellation.
+ * @property pathFileTo - Target file path the symbolic link should reference.
+ * @property pathSymlink - Destination path for the symbolic link.
+ * @property options - Optional per-request configuration, such as timeout or signal.
  */
 export interface SymlinkParams {
   pathFileTo: string;
@@ -29,7 +31,11 @@ export interface SymlinkParams {
 }
 
 /**
- * Creates a symbolic link in NetStorage.
+ * Creates a symbolic link in NetStorage from `pathSymlink` pointing to `pathFileTo`.
+ *
+ * @param ctx - The NetStorage client context containing credentials and configuration.
+ * @param params - Parameters specifying the source and target for the symlink.
+ * @returns A response containing status code of the symlink operation.
  */
 export async function symlink(
   ctx: NetStorageClientContext,

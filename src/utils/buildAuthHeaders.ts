@@ -1,16 +1,22 @@
 import crypto from 'crypto';
 
+// Contains Akamai NetStorage API credentials and configuration
 import { generateUniqueId, type NetStorageClientContext } from '@/index';
 
+/**
+ * Represents a set of HTTP headers.
+ *
+ * @property [key: string] - Header name mapped to its value.
+ */
 export type HeadersMap = Record<string, string>;
 
 /**
- * Generates the headers required for an API request including authentication.
+ * Builds authentication headers for a NetStorage API request.
  *
- * @param context - The client context containing config and other shared dependencies.
- * @param path - The API path.
- * @param queryObj - Additional query parameters (e.g., action, format).
- * @returns Headers including authentication and action.
+ * @param context - The NetStorage client context containing credentials.
+ * @param path - The request URI path.
+ * @param queryObj - Optional query parameters to include in the action header.
+ * @returns A map of headers including Akamai auth data and signature.
  */
 export function buildAuthHeaders(
   context: NetStorageClientContext,

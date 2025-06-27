@@ -6,13 +6,14 @@ import {
 } from '@/index';
 
 /**
- * Recursively walks a NetStorage directory and returns all entries
- * that match the provided predicate.
+ * Recursively walks a NetStorage directory and collects all entries
+ * that satisfy the given predicate.
  *
- * @param ctx - The operation context.
- * @param params - Parameters including the root path to walk
- *  and the predicate to match.
- * @returns A promise resolving to an array of matching entries.
+ * @param ctx - NetStorage client context used for API requests.
+ * @param params - Configuration for the directory walk and filter.
+ * @property {string} params.path - The root directory path to begin walking.
+ * @property {(entry: RemoteWalkEntry) => boolean | Promise<boolean>} params.predicate - A function to determine if an entry should be included.
+ * @returns {Promise<RemoteWalkEntry[]>} A promise that resolves with all matching entries.
  */
 export async function findAll(
   ctx: NetStorageClientContext,

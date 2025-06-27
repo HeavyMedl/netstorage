@@ -11,20 +11,20 @@ import { URLSearchParams } from 'node:url';
 import { HttpError, type NetStorageClientContext } from '@/index';
 
 /**
- * Options for configuring the streamRequest function.
+ * Configuration options for the makeStreamRequest function.
  *
- * @property {string} [url] - Optional full URL to use instead of protocol + host + path.
- * @property {'http' | 'https'} [protocol] - Protocol to use for the request. Optional if `url` is specified.
- * @property {string} [host] - Hostname of the server. Optional if `url` is specified.
- * @property {string} [path] - Path of the request URL. Optional if `url` is specified.
- * @property {'PUT' | 'POST' | 'PATCH' | 'GET'} [method] - HTTP method to use (default is 'GET').
- * @property {Record<string, string>} [headers] - Headers to include with the request.
- * @property {Readable} [inputStream] - Optional readable stream to send as the request body.
- * @property {Writable} [outputStream] - Optional writable stream to pipe the response body into.
- * @property {AbortSignal} [signal] - Optional AbortSignal to cancel the request.
- * @property {number} [timeout] - Optional timeout in milliseconds for the request.
- * @property {(bytes: number) => void} [onProgress] - Optional callback to track progress of data transfer.
- * @property {Record<string, string | number>} [query] - Optional query parameters to append to the URL.
+ * @property {string} [url] Full URL to use instead of protocol + host + path.
+ * @property {'http' | 'https'} [protocol] Protocol for the request.
+ * @property {string} [host] Hostname of the server.
+ * @property {string} [path] Path to append to the host.
+ * @property {'PUT' | 'POST' | 'PATCH' | 'GET'} [method] HTTP method to use.
+ * @property {Record<string, string>} [headers] Headers to include with the request.
+ * @property {Readable} [inputStream] Optional readable stream for request body.
+ * @property {Writable} [outputStream] Optional writable stream for response body.
+ * @property {AbortSignal} [signal] AbortSignal to cancel the request.
+ * @property {number} [timeout] Timeout in milliseconds.
+ * @property {(bytes: number) => void} [onProgress] Callback to track transferred bytes.
+ * @property {Record<string, string | number>} [query] Query parameters to append to the URL.
  */
 export interface StreamRequestOptions {
   url?: string;
@@ -41,6 +41,9 @@ export interface StreamRequestOptions {
   query?: Record<string, string | number>;
 }
 
+/**
+ * Promisified version of stream.pipeline.
+ */
 const pipelineAsync = promisify(pipeline);
 
 /****
@@ -139,6 +142,8 @@ function constructRequestURL(
  * @param method - The HTTP method used.
  * @param url - The full URL being requested.
  * @param err - The caught error or failure reason.
+ * @param statusCode - Optional HTTP status code.
+ * @param body - Optional response body.
  * @returns A formatted Error instance with details.
  */
 function createStreamRequestError(
@@ -166,8 +171,7 @@ function createStreamRequestError(
  * @param ctx - The NetStorageContext containing logger and other context info.
  * @param options - Configuration options for the request.
  * @param options.url - Optional full URL to override protocol/host/path/query resolution.
- * @returns A promise that resolves to an object containing the HTTP status code and optionally the response body.
- *          If an output stream is provided, the body will be undefined.
+ * @returns Promise resolving to an object with statusCode and optional body.
  */
 export async function makeStreamRequest(
   ctx: NetStorageClientContext,

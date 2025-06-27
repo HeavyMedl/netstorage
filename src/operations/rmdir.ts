@@ -7,9 +7,10 @@ import {
 } from '@/index';
 
 /**
- * Represents the parsed response for a NetStorage `rmdir` operation.
+ * Response shape for a NetStorage `rmdir` request.
  *
- * This structure reflects a simple status code returned by the API.
+ * @property {Object} status - Status metadata of the response.
+ * @property {number} status.code - Status code returned by the API.
  */
 export interface NetStorageRmdir {
   status: {
@@ -18,7 +19,10 @@ export interface NetStorageRmdir {
 }
 
 /**
- * Parameters for the `rmdir` operation.
+ * Parameters for the NetStorage `rmdir` operation.
+ *
+ * @property {string} path - Path to the NetStorage directory to remove.
+ * @property {RequestOptions} [options] - Optional request configuration.
  */
 export interface RmdirParams {
   path: string;
@@ -26,7 +30,11 @@ export interface RmdirParams {
 }
 
 /**
- * Removes a directory at the specified NetStorage path.
+ * Sends a request to remove a directory from NetStorage.
+ *
+ * @param {NetStorageClientContext} ctx - Client configuration and logger.
+ * @param {RmdirParams} param1 - Object containing the directory path and options.
+ * @returns {Promise<NetStorageRmdir>} Parsed response from NetStorage.
  */
 export async function rmdir(
   ctx: NetStorageClientContext,

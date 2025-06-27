@@ -1,9 +1,17 @@
 import winston from 'winston';
 
 /**
- * Available logging levels supported by Winston using the `npm` levels preset.
+ * Winston logging levels using the `npm` levels preset.
  *
- * These determine the severity of logs that will be captured.
+ * These represent log severity levels in ascending order of verbosity.
+ *
+ * @property {'error'} error - Critical errors that require immediate attention.
+ * @property {'warn'} warn - Warnings that might indicate potential issues.
+ * @property {'info'} info - General informational messages.
+ * @property {'http'} http - HTTP-level logs, useful for request tracing.
+ * @property {'verbose'} verbose - More detailed information for debugging.
+ * @property {'debug'} debug - Debug-level logs with internal state details.
+ * @property {'silly'} silly - Highly verbose logs, usually not needed in production.
  *
  * @see https://github.com/winstonjs/winston#logging-levels
  */
@@ -27,11 +35,11 @@ winston.addColors({
 });
 
 /**
- * Creates a scoped Winston logger with a standardized format.
+ * Create a scoped Winston logger with colorized output.
  *
- * @param level - The minimum log level to output (e.g., 'info', 'debug').
- * @param scope - Optional identifier for the module or class using the logger.
- * @returns A configured Winston Logger instance.
+ * @param level - Minimum log level to emit. Defaults to 'info'.
+ * @param scope - Optional string label for the logger (e.g. module name).
+ * @returns Configured Winston logger instance.
  */
 export function createLogger(level: WinstonLogLevel = 'info', scope = '') {
   const colorizer = winston.format.colorize();

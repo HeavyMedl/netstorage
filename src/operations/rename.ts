@@ -7,9 +7,9 @@ import {
 } from '@/index';
 
 /**
- * Represents the parsed response for a NetStorage `rename` operation.
+ * Parsed response returned from a NetStorage rename operation.
  *
- * This structure reflects a simple success status returned from the API.
+ * @property code - HTTP-style status code indicating the result of the rename operation.
  */
 export interface NetStorageRename {
   status: {
@@ -18,11 +18,11 @@ export interface NetStorageRename {
 }
 
 /**
- * Parameters for the `rename` operation.
+ * Parameters required to perform a rename operation.
  *
- * @property pathFrom - The source path to rename.
- * @property pathTo - The target destination path.
- * @property options - Optional per-request configuration for timeout or cancellation.
+ * @property pathFrom - Full path of the source file or directory.
+ * @property pathTo - Full destination path for the renamed file or directory.
+ * @property options - Optional request-level configuration (e.g., timeout, abort signal).
  */
 export interface RenameParams {
   pathFrom: string;
@@ -32,6 +32,12 @@ export interface RenameParams {
 
 /**
  * Renames a file or directory within NetStorage.
+ *
+ * Performs a PUT request with the `rename` action and destination path.
+ *
+ * @param ctx - NetStorage client context with credentials and configuration.
+ * @param param1 - Object containing rename parameters.
+ * @returns A promise resolving to a parsed NetStorageRename result.
  */
 export async function rename(
   ctx: NetStorageClientContext,

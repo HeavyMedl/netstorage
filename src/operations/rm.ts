@@ -7,7 +7,9 @@ import {
 } from '@/index';
 
 /**
- * Represents the parsed response for a NetStorage `delete` operation.
+ * Response payload for a successful NetStorage delete operation.
+ *
+ * @property code - HTTP status code returned by the NetStorage API.
  */
 export interface NetStorageRm {
   status: {
@@ -16,10 +18,10 @@ export interface NetStorageRm {
 }
 
 /**
- * Parameters for the `delete` operation.
+ * Parameters for the NetStorage `rm` operation.
  *
- * @property path - The remote path of the file to delete.
- * @property options - Optional per-request configuration for timeout or cancellation.
+ * @property path - Remote path of the file to delete.
+ * @property options - Optional per-request configuration, including timeout and abort signal.
  */
 export interface RmParams {
   path: string;
@@ -27,7 +29,11 @@ export interface RmParams {
 }
 
 /**
- * Deletes a file at the specified path.
+ * Deletes a file from NetStorage at the specified remote path.
+ *
+ * @param ctx - The client context used for authentication and configuration.
+ * @param params - Object containing the remote path and optional request options.
+ * @returns A promise resolving to the NetStorage delete operation response.
  */
 export async function rm(
   ctx: NetStorageClientContext,

@@ -7,10 +7,13 @@ import {
 } from '@/index';
 
 /**
- * Represents the parsed structure of a NetStorage `du` response.
+ * Represents the parsed structure of a NetStorage `du` (disk usage) response.
  *
- * This structure is derived from the XML response returned by the NetStorage
- * `du` operation and reflects disk usage for the specified path.
+ * @property du - Top-level DU response wrapper.
+ * @property du.du-info - Disk usage details including file and byte counts.
+ * @property du.du-info.files - Total number of files.
+ * @property du.du-info.bytes - Total number of bytes.
+ * @property du.directory - Path of the directory reported in the DU response.
  */
 export interface NetStorageDu {
   du: {
@@ -25,14 +28,21 @@ export interface NetStorageDu {
 /**
  * Parameters for the `du` operation.
  *
- * @property path - The path to retrieve disk usage information for.
- * @property options - Optional per-request configuration.
+ * @property path - The remote NetStorage path to retrieve disk usage for.
+ * @property options - Optional configuration for the request.
  */
 export interface DuParams {
   path: string;
   options?: RequestOptions;
 }
 
+/**
+ * Retrieves disk usage information for a given NetStorage path.
+ *
+ * @param ctx - NetStorage client context containing credentials and settings.
+ * @param params - Disk usage request parameters.
+ * @returns A parsed object representing total files and bytes at the path.
+ */
 export async function du(
   ctx: NetStorageClientContext,
   { path, options }: DuParams,

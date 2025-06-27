@@ -8,13 +8,10 @@ import {
 } from '@/index';
 
 /**
- * Represents the parsed structure of a NetStorage `stat` response.
+ * Represents the result of a NetStorage `stat` response.
  *
- * This structure is derived from the XML response returned by the NetStorage
- * `stat` operation and reflects the presence of file and/or directory metadata.
- *
- * @property stat.file - Optional metadata describing the file.
- * @property stat.directory - Optional directory path returned in the stat response.
+ * @property file - Metadata for a file or files if present.
+ * @property directory - Path of the directory if applicable.
  */
 export interface NetStorageStat {
   stat: {
@@ -24,16 +21,23 @@ export interface NetStorageStat {
 }
 
 /**
- * Parameters for the `stat` operation.
+ * Parameters for performing a `stat` operation.
  *
- * @property path - The path of the file or directory to retrieve metadata for.
- * @property options - Optional per-request configuration for timeout or cancellation.
+ * @property path - Path to the file or directory to inspect.
+ * @property options - Optional request configuration.
  */
 export interface StatParams {
   path: string;
   options?: RequestOptions;
 }
 
+/**
+ * Retrieves metadata for a file or directory in NetStorage.
+ *
+ * @param ctx - Context including credentials, configuration, and logger.
+ * @param params - Object with the target path and optional request options.
+ * @returns A promise resolving to file or directory metadata.
+ */
 export async function stat(
   ctx: NetStorageClientContext,
   { path, options }: StatParams,

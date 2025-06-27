@@ -1,20 +1,27 @@
 import type { RemoteWalkEntry } from '@/index';
 
 /**
- * Aggregates file sizes and rolls them up to each directory in the walk.
+ * Represents the aggregated size for a directory.
  *
- * This function creates a map of directory paths to their cumulative size.
- * It assumes that entries are ordered by increasing depth, so children appear
- * before parents. Each file contributes its size to its own directory, and
- * each directory bubbles up its children's size.
+ * @property {number} aggregatedSize - The total size in bytes of files within the directory and its subdirectories.
+ */
+interface AggregatedSize {
+  aggregatedSize: number;
+}
+
+/**
+ * Computes cumulative file sizes for directories based on a list of remote walk entries.
  *
- * @param entries - The list of walk entries to process.
- * @returns A map of directory paths to their aggregated size in bytes.
+ * Entries are processed in reverse depth order to ensure that sizes of child directories
+ * and files are rolled up to their parents.
+ *
+ * @param entries - List of remote file system entries to aggregate.
+ * @returns A map of directory paths to their aggregated sizes in bytes.
  */
 export function aggregateDirectorySizes(
   entries: RemoteWalkEntry[],
-): Map<string, { aggregatedSize: number }> {
-  const directoryMap = new Map<string, { aggregatedSize: number }>();
+): Map<string, AggregatedSize> {
+  const directoryMap = new Map<string, AggregatedSize>();
 
   for (const entry of [...entries].reverse()) {
     const isFile = entry.file.type === 'file';

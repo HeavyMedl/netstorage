@@ -6,35 +6,41 @@ import {
   type NetStorageClientContext,
 } from '@/index';
 
+/**
+ * Parameters for removing a directory from NetStorage.
+ *
+ * @property remotePath - Remote directory path to remove.
+ * @property dryRun - If true, simulates removal without executing.
+ * @property onRemove - Callback invoked for each successfully removed path.
+ * @property onSkip - Callback for each skipped path with reason and optional error.
+ * @property shouldRemove - Optional predicate to filter which entries should be removed.
+ */
 export interface RemoveDirectoryParams {
   remotePath: string;
   dryRun?: boolean;
-  // maxConcurrency?: number;
   onRemove?: (info: { remotePath: string }) => void;
   onSkip?: (info: {
     remotePath: string;
     reason: 'dryRun' | 'error' | 'filtered';
     error?: unknown;
   }) => void;
-  /**
-   * Optional predicate to determine whether a given entry should be removed.
-   * Return true to include the entry for removal, false to skip it.
-   */
   shouldRemove?: (entry: RemoteWalkEntry) => boolean | Promise<boolean>;
 }
 
 /**
- * Recursively removes a directory from NetStorage, including all nested files and directories.
+ * Recursively removes a directory and its contents from NetStorage.
  *
- * @param ctx - NetStorage context
- * @param params - RemoveDirectoryParams
+ * Walks all remote entries under the specified path and deletes them in reverse order.
+ * Honors dryRun, filtering, and error handling via callbacks.
+ *
+ * @param ctx - NetStorage client context.
+ * @param params - Configuration parameters for removal behavior.
  */
 export async function removeDirectory(
   ctx: NetStorageClientContext,
   {
     remotePath,
     dryRun = false,
-    // maxConcurrency = 5,
     onRemove,
     onSkip,
     shouldRemove,

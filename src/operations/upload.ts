@@ -11,9 +11,10 @@ import {
 } from '@/index';
 
 /**
- * Represents the parsed response for a NetStorage `upload` operation.
+ * Response returned from a successful NetStorage upload operation.
  *
- * This structure reflects a simple success status returned from the API.
+ * @property status - Object containing the HTTP status code of the upload.
+ * @property status.code - Numeric status code from the NetStorage API.
  */
 export interface NetStorageUpload {
   status: {
@@ -22,12 +23,12 @@ export interface NetStorageUpload {
 }
 
 /**
- * Parameters for the `upload` operation.
+ * Parameters for the NetStorage upload operation.
  *
- * @property fromLocal - The local file path to upload.
- * @property toRemote - The destination path in NetStorage.
- * @property options - Optional per-request configuration for timeout or cancellation.
- * @property shouldUpload - Optional predicate function to determine if the upload should proceed.
+ * @property fromLocal - Absolute path to the local file being uploaded.
+ * @property toRemote - Target destination path in NetStorage.
+ * @property options - Optional request configuration (e.g., timeout, signal).
+ * @property shouldUpload - Optional predicate to determine if upload should proceed.
  */
 export interface UploadParams {
   fromLocal: string;
@@ -37,7 +38,14 @@ export interface UploadParams {
 }
 
 /**
- * Uploads a local file to a specified remote NetStorage path.
+ * Uploads a local file to the specified remote NetStorage path.
+ *
+ * @param ctx - Client context containing credentials and configuration.
+ * @param fromLocal - Absolute path to the local file to upload.
+ * @param toRemote - Destination path in NetStorage.
+ * @param options - Optional request configuration (e.g., timeout, signal).
+ * @param shouldUpload - Optional predicate that determines whether to proceed with the upload.
+ * @returns A promise resolving to the NetStorage upload response.
  */
 export async function upload(
   ctx: NetStorageClientContext,

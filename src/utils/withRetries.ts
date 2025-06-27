@@ -6,17 +6,15 @@ import {
 } from '@/index';
 
 /**
- * Configuration options for retrying asynchronous operations using exponential backoff.
+ * Configuration for retry behavior using exponential backoff.
  *
- * This interface supports flexible and safe retries with optional jitter and retry hooks.
- *
- * @property retries - The maximum number of retry attempts (default: 3).
- * @property baseDelayMs - The initial delay in milliseconds before retrying (default: 300ms).
- * @property maxDelayMs - The maximum allowed delay between retries in milliseconds (default: 2000ms).
- * @property jitter - Whether to apply random jitter to the delay (default: true).
- * @property shouldRetry - A function that determines whether a given error warrants a retry.
- * @property beforeAttempt - An optional async hook to run before each retry attempt (e.g., rate limiter).
- * @property onRetry - An optional callback invoked after a failed attempt, before delay.
+ * @property retries - Maximum number of retry attempts.
+ * @property baseDelayMs - Base delay in milliseconds before retrying.
+ * @property maxDelayMs - Maximum delay in milliseconds between retries.
+ * @property jitter - Whether to apply random jitter to the backoff delay.
+ * @property shouldRetry - Function to determine if an error should trigger a retry.
+ * @property beforeAttempt - Hook executed before each retry attempt (e.g., for rate limiting).
+ * @property onRetry - Callback invoked after a failed attempt, before the delay.
  */
 export interface WithRetriesOptions {
   retries: number;
@@ -28,6 +26,15 @@ export interface WithRetriesOptions {
   onRetry?: (error: unknown, attempt: number, delay: number) => void;
 }
 
+/**
+ * Calculates exponential backoff delay with optional jitter.
+ *
+ * @param attempt - The current retry attempt (zero-based).
+ * @param base - The base delay in milliseconds.
+ * @param max - The maximum delay allowed.
+ * @param jitter - Whether to apply jitter to the delay.
+ * @returns The delay in milliseconds.
+ */
 export function calculateDelay(
   attempt: number,
   base: number,
@@ -39,10 +46,12 @@ export function calculateDelay(
 }
 
 /**
- * Determines whether a system-level error should trigger a retry.
+ * Determines if a system-level error is transient and retryable.
  *
- * Logs and returns false for non-retryable errors like file not found or permission denied.
- * Returns true for transient errors like connection resets or timeouts.
+ * @param ctx - NetStorage client context for logging.
+ * @param err - The error to evaluate.
+ * @param method - The method or operation name for context.
+ * @returns True if the error should be retried; otherwise, false.
  */
 export function shouldRetrySystemError(
   ctx: NetStorageClientContext,
@@ -62,7 +71,13 @@ export function shouldRetrySystemError(
 }
 
 /**
- * Executes a given asynchronous function with automatic retries using exponential backoff.
+ * Executes a function with retry logic using exponential backoff and optional jitter.
+ *
+ * @param ctx - NetStorage client context for logging and rate limiting.
+ * @param method - The NetStorage operation being executed.
+ * @param fn - The asynchronous function to execute with retry logic.
+ * @param overrides - Optional overrides for retry behavior.
+ * @returns A promise that resolves with the function's result or rejects after final failure.
  */
 export async function withRetries<T>(
   ctx: NetStorageClientContext,

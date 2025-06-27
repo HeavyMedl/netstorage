@@ -6,16 +6,13 @@ import {
 } from '@/index';
 
 /**
- * Represents a single entry yielded during a directory walk operation.
+ * Represents a file or directory entry during a remote NetStorage walk.
  *
- * This entry is derived from the `file` array in a NetStorage `dir` listing
- * and includes both the entry metadata and its fully qualified path.
- *
- * @property file - Metadata about the file or directory.
- * @property path - The full NetStorage path for the entry.
- * @property parent - The parent directory of the entry.
- * @property depth - The depth of the entry in the directory tree.
- * @property relativePath - The relative path of the entry from the root directory.
+ * @property {NetStorageFile} file - Metadata about the file or directory.
+ * @property {string} path - Full path to the entry.
+ * @property {string} parent - Path of the entry’s parent directory.
+ * @property {string} relativePath - Path relative to the walk root.
+ * @property {number} depth - Depth of the entry from the root path.
  */
 export interface RemoteWalkEntry {
   file: NetStorageFile;
@@ -26,11 +23,11 @@ export interface RemoteWalkEntry {
 }
 
 /**
- * Parameters for the `walk` operation.
+ * Parameters to control the remote directory walk behavior.
  *
- * @property path - The root NetStorage path to begin traversal from.
- * @property maxDepth - Optional maximum recursion depth. A value of 0 yields only the root contents.
- * @property shouldInclude - Optional async predicate to determine whether a given entry should be yielded.
+ * @property {string} path - The root NetStorage path to begin traversal from.
+ * @property {number} [maxDepth] - Optional maximum recursion depth.
+ * @property {(entry: RemoteWalkEntry) => boolean | Promise<boolean>} [shouldInclude] - Predicate to filter entries.
  */
 export interface RemoteWalkParams {
   path: string;
@@ -40,15 +37,11 @@ export interface RemoteWalkParams {
 }
 
 /**
- * Asynchronously traverses a NetStorage directory hierarchy.
+ * Initiates a depth-first walk of a NetStorage directory.
  *
- * This async generator yields metadata about each file and directory found
- * under the specified root, optionally filtered or transformed through a
- * user-defined predicate.
- *
- * @param ctx - The NetStorage client context.
- * @param params - Parameters controlling the traversal behavior.
- * @returns An async generator yielding `WalkEntry` objects.
+ * @param {NetStorageClientContext} ctx - The NetStorage client context.
+ * @param {RemoteWalkParams} params - Walk parameters.
+ * @returns {AsyncGenerator<RemoteWalkEntry>} Generator yielding entries found.
  */
 export async function* remoteWalk(
   ctx: NetStorageClientContext,
@@ -66,16 +59,15 @@ export async function* remoteWalk(
 }
 
 /**
- * Internal recursive helper for `remoteWalk`, used to traverse directories in
- * depth-first order.
+ * Recursively traverses a NetStorage directory in depth-first order.
  *
- * @param ctx - The NetStorage client context.
- * @param currentPath - The current path being traversed.
- * @param rootPath - The root path of traversal.
- * @param maxDepth - Maximum allowed depth.
- * @param shouldInclude - Optional predicate to determine which entries to yield.
- * @param depth - The current depth relative to the root path.
- * @returns An async generator yielding `WalkEntry` objects.
+ * @param {NetStorageClientContext} ctx - The NetStorage client context.
+ * @param {string} currentPath - Current path in traversal.
+ * @param {string} rootPath - Initial root path.
+ * @param {number | undefined} maxDepth - Maximum depth limit.
+ * @param {RemoteWalkParams['shouldInclude']} shouldInclude - Optional filter predicate.
+ * @param {number} depth - Current recursion depth.
+ * @returns {AsyncGenerator<RemoteWalkEntry>} Generator yielding walk entries.
  * @internal
  */
 async function* remoteWalkRecursive(

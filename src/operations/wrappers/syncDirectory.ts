@@ -16,6 +16,24 @@ import {
   type SyncResultHandlers,
 } from '@/index';
 
+/**
+ * Synchronizes files between a local directory and a NetStorage remote directory.
+ *
+ * @param ctx - Authenticated NetStorage client context
+ * @param localPath - Absolute or relative path to the local directory
+ * @param remotePath - Remote NetStorage directory path
+ * @param dryRun - If true, simulates operations without making changes
+ * @param conflictRules - Optional map to resolve specific file conflicts
+ * @param compareStrategy - File comparison strategy to decide transfer necessity
+ * @param syncDirection - Direction of sync: upload, download, or both
+ * @param conflictResolution - Default conflict resolution strategy
+ * @param deleteExtraneous - Whether to remove files not present on the opposite side
+ * @param onTransfer - Callback invoked after a file transfer
+ * @param onDelete - Callback invoked after a file deletion
+ * @param onSkip - Callback invoked when a file is skipped
+ * @param maxConcurrency - Maximum number of concurrent sync operations
+ * @returns Summary result of transferred, skipped, and deleted entries
+ */
 export async function syncDirectory(
   ctx: NetStorageClientContext,
   {

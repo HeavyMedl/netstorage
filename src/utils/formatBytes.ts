@@ -1,9 +1,9 @@
 /**
- * Converts a byte size into a human-readable string with appropriate units.
+ * Converts a byte value to a human-readable string.
  *
- * @param bytes - The number of bytes.
- * @param decimals - Number of decimal places to include (default is 2).
- * @returns A formatted string like '1.23 MB' or '456 B'.
+ * @param bytes - Input byte value.
+ * @param decimals - Decimal precision (default: 2).
+ * @returns Formatted string with units (e.g., "1.23 MB").
  */
 export function formatBytes(bytes: number, decimals = 2): string {
   if (bytes === 0) return '0 B';

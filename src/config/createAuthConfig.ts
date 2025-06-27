@@ -1,5 +1,13 @@
 import { name as packageName } from '../../package.json';
 
+/**
+ * Configuration required to authenticate with NetStorage.
+ *
+ * @property {string} key - The API key used for authentication.
+ * @property {string} keyName - The name associated with the API key.
+ * @property {string} host - The NetStorage hostname (without protocol).
+ * @property {boolean} [ssl] - Whether to use SSL (HTTPS). Defaults to false.
+ */
 export interface NetStorageAuthConfig {
   key: string;
   keyName: string;
@@ -22,6 +30,12 @@ function assertNonEmpty(value: string, name: string): void {
   }
 }
 
+/**
+ * Validates and returns a normalized NetStorage authentication config.
+ *
+ * @param {NetStorageAuthConfig} params - The input configuration object.
+ * @returns {NetStorageAuthConfig} The validated and normalized config.
+ */
 export function createAuthConfig(
   params: NetStorageAuthConfig,
 ): NetStorageAuthConfig {
