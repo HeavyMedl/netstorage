@@ -1,9 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { upload } from '@/operations/upload';
-import { rename } from '@/operations/rename';
-import { rm } from '@/operations/rm';
-import { createContext } from '@/config/createContext';
 import { writeFileSync, unlinkSync } from 'node:fs';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+
+import { createContext, rm, rename, upload } from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;

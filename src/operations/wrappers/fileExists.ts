@@ -1,6 +1,4 @@
-import { stat } from '@/operations/stat';
-import type { NetStorageClientContext } from '@/config/createClientContext';
-import { HttpError } from '@/errors/httpError';
+import { stat, HttpError, type NetStorageClientContext } from '@/index';
 
 /**
  * Checks if a file exists at the specified NetStorage path.

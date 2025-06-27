@@ -1,6 +1,6 @@
-import type { NetStorageOperation } from '@/types/shared';
-
 import { RateLimiter } from 'limiter';
+
+import type { NetStorageOperation } from '@/index';
 
 type LimiterMap = Partial<
   Record<NetStorageOperation, keyof ReturnType<typeof createRateLimiters>>

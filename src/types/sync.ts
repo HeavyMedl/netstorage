@@ -1,5 +1,4 @@
-import type { NetStorageClientContext } from '@/config/createClientContext';
-import type { NetStorageFile } from '@/types/shared';
+import type { NetStorageClientContext, NetStorageFile } from '@/index';
 
 export type SyncDirection = 'upload' | 'download' | 'both';
 export type CompareStrategy = 'size' | 'mtime' | 'checksum' | 'exists';

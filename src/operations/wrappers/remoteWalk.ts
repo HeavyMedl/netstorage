@@ -1,7 +1,9 @@
-import type { NetStorageClientContext } from '@/config/createClientContext';
-import type { NetStorageFile } from '@/types/shared';
-import { dir } from '@/operations/dir';
-import type { NetStorageStat } from '@/operations/stat';
+import {
+  dir,
+  type NetStorageClientContext,
+  type NetStorageFile,
+  type NetStorageStat,
+} from '@/index';
 
 /**
  * Represents a single entry yielded during a directory walk operation.

@@ -2,14 +2,12 @@ import {
   formatSyncDirectionLog,
   syncSingleEntry,
   deleteExtraneous,
-} from '@/utils/sync';
-import type { NetStorageClientContext } from '@/config/createClientContext';
-import type {
-  SyncFileParams,
-  SyncResultAccumulator,
-  SyncResultHandlers,
-  SyncResult,
-} from '@/types/sync';
+  type NetStorageClientContext,
+  type SyncFileParams,
+  type SyncResult,
+  type SyncResultAccumulator,
+  type SyncResultHandlers,
+} from '@/index';
 
 export async function syncFile(
   ctx: NetStorageClientContext,

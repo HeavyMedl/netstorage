@@ -1,4 +1,4 @@
-import type { NetStorageClientContext } from '@/config/createClientContext';
+import type { NetStorageClientContext } from '@/index';
 
 /**
  * Constructs a full URI for a given path using the client context.

@@ -1,9 +1,9 @@
-import type { NetStorageClientContext } from '@/config/createClientContext';
 import {
   remoteWalk,
   type RemoteWalkEntry,
   type RemoteWalkParams,
-} from '@/operations/wrappers/remoteWalk';
+  type NetStorageClientContext,
+} from '@/index';
 
 export async function buildAdjacencyList(
   ctx: NetStorageClientContext,

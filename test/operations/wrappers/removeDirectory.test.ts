@@ -1,10 +1,13 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { uploadDirectory } from '@/operations/wrappers/uploadDirectory';
-import { removeDirectory } from '@/operations/wrappers/removeDirectory';
-import { createContext } from '@/config/createContext';
 import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileExists } from '@/operations/wrappers/fileExists';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+
+import {
+  createContext,
+  fileExists,
+  removeDirectory,
+  uploadDirectory,
+} from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;

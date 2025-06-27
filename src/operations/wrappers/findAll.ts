@@ -2,8 +2,8 @@ import {
   remoteWalk,
   type RemoteWalkEntry,
   type RemoteWalkParams,
-} from '@/operations/wrappers/remoteWalk';
-import type { NetStorageClientContext } from '@/config/createClientContext';
+  type NetStorageClientContext,
+} from '@/index';
 
 /**
  * Recursively walks a NetStorage directory and returns all entries

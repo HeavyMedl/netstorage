@@ -1,12 +1,13 @@
 import path from 'node:path';
-import pLimit from 'p-limit';
-import type { NetStorageClientContext } from '@/config/createClientContext';
-import { download } from '@/operations/download';
 import { stat, mkdir } from 'node:fs/promises';
+import pLimit from 'p-limit';
+
 import {
-  type RemoteWalkEntry,
+  download,
   remoteWalk,
-} from '@/operations/wrappers/remoteWalk';
+  type NetStorageClientContext,
+  type RemoteWalkEntry,
+} from '@/index';
 
 export interface DownloadDirectoryParams {
   remotePath: string;

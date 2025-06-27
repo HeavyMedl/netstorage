@@ -2,21 +2,19 @@ import path from 'node:path';
 import fs from 'node:fs';
 import pLimit from 'p-limit';
 
-import { remoteWalk, walkLocalDir } from '@/index';
 import {
-  formatSyncDirectionLog,
-  syncSingleEntry,
   deleteExtraneous,
-} from '@/utils/sync';
-
-import type { NetStorageClientContext } from '@/config/createClientContext';
-import type { NetStorageFile } from '@/types/shared';
-import type {
-  SyncDirectoryParams,
-  SyncResultAccumulator,
-  SyncResultHandlers,
-  SyncResult,
-} from '@/types/sync';
+  formatSyncDirectionLog,
+  remoteWalk,
+  syncSingleEntry,
+  walkLocalDir,
+  type NetStorageClientContext,
+  type NetStorageFile,
+  type SyncDirectoryParams,
+  type SyncResult,
+  type SyncResultAccumulator,
+  type SyncResultHandlers,
+} from '@/index';
 
 export async function syncDirectory(
   ctx: NetStorageClientContext,

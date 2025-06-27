@@ -1,7 +1,9 @@
-import { selectLimiter } from '@/utils/createRateLimiters';
-import type { NetStorageClientContext } from '@/config/createClientContext';
-import { HttpError } from '@/errors/httpError';
-import type { NetStorageOperation } from '@/types/shared';
+import {
+  HttpError,
+  selectLimiter,
+  type NetStorageClientContext,
+  type NetStorageOperation,
+} from '@/index';
 
 /**
  * Configuration options for retrying asynchronous operations using exponential backoff.

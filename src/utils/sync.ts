@@ -2,26 +2,22 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import micromatch from 'micromatch';
 
-import { upload } from '@/operations/upload';
-import { download } from '@/operations/download';
-import { rm } from '@/operations/rm';
-
 import {
   isSizeMismatch,
   isMtimeNewer,
   isChecksumMismatch,
-} from './transferPredicates';
-
-import type { NetStorageFile } from '@/types/shared';
-import type { NetStorageStat } from '@/operations/stat';
-import type {
-  TransferPermissionInput,
-  SyncSingleEntryParams,
-  DeleteExtraneousFilesParams,
-  ShouldTransferFileInput,
-  ResolveConflictActionInput,
-  FormatSyncDirectionLogInput,
-} from '@/types/sync';
+  upload,
+  download,
+  rm,
+  type NetStorageStat,
+  type NetStorageFile,
+  type TransferPermissionInput,
+  type ShouldTransferFileInput,
+  type DeleteExtraneousFilesParams,
+  type FormatSyncDirectionLogInput,
+  type ResolveConflictActionInput,
+  type SyncSingleEntryParams,
+} from '@/index';
 
 export function isTransferAllowed({
   compareStrategy,

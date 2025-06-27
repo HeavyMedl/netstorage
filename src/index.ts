@@ -44,6 +44,7 @@ export * from '@/utils/resolveAbortSignal';
 export * from '@/utils/transferPredicates';
 export * from '@/utils/walkLocalDir';
 export * from '@/utils/withRetries';
+export * from '@/utils/sync';
 
 export * from '@/types/shared';
 export * from '@/types/sync';

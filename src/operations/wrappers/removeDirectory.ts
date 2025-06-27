@@ -1,8 +1,10 @@
-import { remoteWalk } from '@/operations/wrappers/remoteWalk';
-import type { RemoteWalkEntry } from '@/operations/wrappers/remoteWalk';
-import { rm } from '@/operations/rm';
-import type { NetStorageClientContext } from '@/config/createClientContext';
-import { rmdir } from '@/operations/rmdir';
+import {
+  remoteWalk,
+  rm,
+  rmdir,
+  type RemoteWalkEntry,
+  type NetStorageClientContext,
+} from '@/index';
 
 export interface RemoveDirectoryParams {
   remotePath: string;

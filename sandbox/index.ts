@@ -1,5 +1,4 @@
 import {
-  // downloadDirectory,
   createContext,
   syncDirectory,
   fileExists,

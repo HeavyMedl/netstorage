@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import {
   mkdirSync,
   writeFileSync,
@@ -7,6 +6,7 @@ import {
   readFileSync,
 } from 'node:fs';
 import { join } from 'node:path';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createContext, removeDirectory, syncFile, fileExists } from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =

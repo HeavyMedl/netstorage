@@ -1,14 +1,15 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createContext } from '@/config/createContext';
-import {
-  remoteWalk,
-  type RemoteWalkEntry,
-} from '@/operations/wrappers/remoteWalk';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { uploadDirectory } from '@/operations/wrappers/uploadDirectory';
-import { removeDirectory } from '@/operations/wrappers/removeDirectory';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+
+import {
+  createContext,
+  remoteWalk,
+  removeDirectory,
+  uploadDirectory,
+  type RemoteWalkEntry,
+} from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;

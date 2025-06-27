@@ -1,9 +1,12 @@
 import path from 'node:path';
 import pLimit from 'p-limit';
-import { upload } from '@/operations/upload';
-import { fileExists } from '@/operations/wrappers/fileExists';
-import { walkLocalDir, type LocalWalkEntry } from '@/utils/walkLocalDir';
-import type { NetStorageClientContext } from '@/config/createClientContext';
+import {
+  fileExists,
+  upload,
+  walkLocalDir,
+  type LocalWalkEntry,
+  type NetStorageClientContext,
+} from '@/index';
 
 /**
  * Parameters for the `uploadDirectory` operation.
