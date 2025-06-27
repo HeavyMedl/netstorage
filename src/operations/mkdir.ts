@@ -1,5 +1,5 @@
 import type { NetStorageClientContext } from '@/config/createClientContext';
-import type { RequestOptions } from '@/types';
+import type { RequestOptions } from '@/types/shared';
 import { sendRequest } from '@/transports/sendRequest';
 import { withRetries } from '@/utils/withRetries';
 import { resolveAbortSignal } from '@/utils/resolveAbortSignal';

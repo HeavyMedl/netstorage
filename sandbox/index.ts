@@ -16,7 +16,7 @@ const ctx = createContext({
   key: process.env.NETSTORAGE_API_KEY!,
   keyName: process.env.NETSTORAGE_API_KEYNAME!,
   host: process.env.NETSTORAGE_HOST!,
-  // logLevel: 'verbose',
+  logLevel: 'verbose',
 });
 
 (async () => {
@@ -57,5 +57,8 @@ const ctx = createContext({
 
   if (file1Restored && file3Uploaded) {
     console.log('Sync successful');
+  } else {
+    console.log('Sync failed');
   }
+  rmSync(LOCAL_DIR, { recursive: true, force: true });
 })();

@@ -1,5 +1,5 @@
 import type { NetStorageClientContext } from '@/config/createClientContext';
-import type { NetStorageFile } from '@/types';
+import type { NetStorageFile } from '@/types/shared';
 import { dir } from '@/operations/dir';
 import type { NetStorageStat } from '@/operations/stat';
 

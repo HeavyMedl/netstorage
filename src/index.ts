@@ -28,6 +28,7 @@ export * from '@/operations/wrappers/tree';
 export * from '@/operations/wrappers/uploadDirectory';
 export * from '@/operations/wrappers/downloadDirectory';
 export * from '@/operations/wrappers/syncDirectory';
+export * from '@/operations/wrappers/syncFile';
 export * from '@/operations/wrappers/uploadMissing';
 
 export * from '@/utils/aggregateDirectorySizes';
@@ -44,4 +45,5 @@ export * from '@/utils/transferPredicates';
 export * from '@/utils/walkLocalDir';
 export * from '@/utils/withRetries';
 
-export * from '@/types';
+export * from '@/types/shared';
+export * from '@/types/sync';

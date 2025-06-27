@@ -1,4 +1,4 @@
-import type { NetStorageOperation } from '@/types';
+import type { NetStorageOperation } from '@/types/shared';
 
 import { RateLimiter } from 'limiter';
 

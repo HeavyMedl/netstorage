@@ -2,7 +2,7 @@ import { stat as fsStat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { NetStorageStat } from '@/operations/stat';
-import type { NetStorageFile } from '@/types';
+import type { NetStorageFile } from '@/types/shared';
 import type { NetStorageClientContext } from '@/config/createClientContext';
 
 /**
