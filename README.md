@@ -110,7 +110,6 @@ Utilities for working with full directory trees.
 - `syncDirectory` — Sync an entire local directory with a remote path
 - `uploadDirectory` — Upload a local directory and its contents
 - `tree` — Recursively describe the structure of a remote directory
-- `uploadMissing` — Upload only files missing from the remote target
 
 #### File Operations
 
@@ -118,6 +117,7 @@ Simplified helpers for file-level interactions.
 
 - `fileExists` — Check if a remote file exists
 - `syncFile` — Sync a single file between local and remote
+- `uploadMissing` — Upload only files missing from the remote target
 
 #### Advanced Utilities
 
