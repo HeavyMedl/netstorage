@@ -5,7 +5,7 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: ['**/*.d.ts', '**/coverage', '**/dist', '.history'],
+    ignores: ['**/*.d.ts', '**/coverage', '**/dist', '.history', 'docs'],
   },
   // Base JavaScript rules
   eslintPlugin.configs.recommended,

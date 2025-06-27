@@ -37,6 +37,10 @@
   ],
   "scripts": {
     "build": "vite build && tsc && tsc-alias",
+    "docs": "typedoc",
+    "docs:build": "vitepress build docs",
+    "docs:dev": "vitepress dev docs",
+    "docs:preview": "vitepress preview docs",
     "format": "prettier --write .",
     "lint": "eslint .",
     "lint-staged": "lint-staged",
@@ -76,10 +80,13 @@
     "prettier": "^3",
     "prettier-eslint": "^16",
     "tsc-alias": "^1.8.16",
+    "typedoc": "^0.28.6",
+    "typedoc-plugin-markdown": "^4.7.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8",
     "vite": "^6.3.5",
     "vite-plugin-externalize-deps": "^0.9.0",
+    "vitepress": "^1.6.3",
     "vitest": "^3"
   }
 }
