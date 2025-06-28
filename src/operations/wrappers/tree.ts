@@ -5,7 +5,7 @@ import {
   aggregateDirectorySizes,
   type RemoteWalkEntry,
   type RemoteWalkParams,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
 } from '@/index';
 
 /**
@@ -47,12 +47,12 @@ export interface TreeResult {
  *
  * Walks the directory tree and renders a visual layout with optional metadata.
  *
- * @param {NetStorageClientContext} ctx - Authenticated NetStorage client context.
+ * @param {NetStorageClientConfig} config - Authenticated NetStorage client config.
  * @param {TreeParams} params - Tree rendering and traversal options.
  * @returns {Promise<TreeResult>} Resolves with grouped entries and size data.
  */
 export async function tree(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   params: TreeParams,
 ): Promise<TreeResult> {
   const {
@@ -66,10 +66,10 @@ export async function tree(
     showRelativePath,
     showAbsolutePath,
   } = params;
-  ctx.logger.info(`Generating directory tree for ${path}`, {
+  config.logger.info(`Generating directory tree for ${path}`, {
     method: 'tree',
   });
-  const { depthBuckets, totalSize } = await buildAdjacencyList(ctx, {
+  const { depthBuckets, totalSize } = await buildAdjacencyList(config, {
     path,
     maxDepth,
     shouldInclude,

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
-import { createContext, du, uploadDirectory, removeDirectory } from '@/index';
+import { createConfig, du, uploadDirectory, removeDirectory } from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;
@@ -15,7 +15,7 @@ const TEMP_DIR = join(tmpdir(), 'du-test');
 const REMOTE_ROOT = '/34612/du-test';
 
 describe.skipIf(!isConfigured)('du (integration)', () => {
-  const ctx = createContext({
+  const config = createConfig({
     key: NETSTORAGE_API_KEY!,
     keyName: NETSTORAGE_API_KEYNAME!,
     host: NETSTORAGE_HOST!,
@@ -32,7 +32,7 @@ describe.skipIf(!isConfigured)('du (integration)', () => {
       'deeply nested file',
     );
 
-    await uploadDirectory(ctx, {
+    await uploadDirectory(config, {
       localPath: TEMP_DIR,
       remotePath: REMOTE_ROOT,
     });
@@ -40,11 +40,11 @@ describe.skipIf(!isConfigured)('du (integration)', () => {
 
   afterAll(async () => {
     rmSync(TEMP_DIR, { recursive: true, force: true });
-    await removeDirectory(ctx, { remotePath: REMOTE_ROOT });
+    await removeDirectory(config, { remotePath: REMOTE_ROOT });
   });
 
   it('should fetch disk usage metadata for a known file or directory', async () => {
-    const result = await du(ctx, { path: REMOTE_ROOT });
+    const result = await du(config, { path: REMOTE_ROOT });
     expect(result).toBeDefined();
     expect(result.du['du-info']).toBeDefined();
   });

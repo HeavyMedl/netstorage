@@ -5,7 +5,7 @@ import {
   upload,
   walkLocalDir,
   type LocalWalkEntry,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
 } from '@/index';
 
 /**
@@ -52,12 +52,12 @@ export interface UploadDirectoryParams {
  * Traverses the local directory and uploads files to the specified remote path.
  * Respects ignore patterns, symlink behavior, overwrite flag, and concurrency limits.
  *
- * @param ctx - The NetStorage client context.
+ * @param config - The NetStorage client config.
  * @param params - Options controlling upload behavior.
  * @returns A promise that resolves when all eligible files are processed.
  */
 export async function uploadDirectory(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   {
     localPath,
     remotePath,
@@ -71,7 +71,7 @@ export async function uploadDirectory(
     shouldUpload,
   }: UploadDirectoryParams,
 ): Promise<void> {
-  const { logger } = ctx;
+  const { logger } = config;
   const limiter = pLimit(maxConcurrency);
   const tasks: Array<Promise<void>> = [];
 
@@ -114,7 +114,7 @@ export async function uploadDirectory(
         return skip('dryRun');
       }
 
-      if (!overwrite && (await fileExists(ctx, destPath))) {
+      if (!overwrite && (await fileExists(config, destPath))) {
         logger.debug(`Skipping existing file: ${destPath}`, {
           method: 'uploadDirectory',
         });
@@ -122,7 +122,10 @@ export async function uploadDirectory(
       }
 
       try {
-        await upload(ctx, { fromLocal: entry.localPath, toRemote: destPath });
+        await upload(config, {
+          fromLocal: entry.localPath,
+          toRemote: destPath,
+        });
         onUpload?.({ localPath: entry.localPath, remotePath: destPath });
       } catch (error) {
         logger.error(

@@ -3,7 +3,7 @@ import {
   sendRequest,
   withRetries,
   type RequestOptions,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
 } from '@/index';
 
 /**
@@ -32,21 +32,21 @@ export interface RmdirParams {
 /**
  * Sends a request to remove a directory from NetStorage.
  *
- * @param {NetStorageClientContext} ctx - Client configuration and logger.
+ * @param {NetStorageClientConfig} config - Client configuration and logger.
  * @param {RmdirParams} param1 - Object containing the directory path and options.
  * @returns {Promise<NetStorageRmdir>} Parsed response from NetStorage.
  */
 export async function rmdir(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   { path, options }: RmdirParams,
 ): Promise<NetStorageRmdir> {
-  ctx.logger.verbose(path, { method: 'rmdir' });
-  return withRetries(ctx, 'rmdir', async () =>
-    sendRequest<NetStorageRmdir>(ctx, path, {
+  config.logger.verbose(path, { method: 'rmdir' });
+  return withRetries(config, 'rmdir', async () =>
+    sendRequest<NetStorageRmdir>(config, path, {
       request: { method: 'PUT' },
       headers: { action: 'rmdir' },
       options: {
-        signal: resolveAbortSignal(ctx, options),
+        signal: resolveAbortSignal(config, options),
         ...options,
       },
     }),

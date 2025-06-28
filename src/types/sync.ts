@@ -1,4 +1,4 @@
-import type { NetStorageClientContext, NetStorageFile } from '@/index';
+import type { NetStorageClientConfig, NetStorageFile } from '@/index';
 
 /**
  * @constant {Readonly<Record<SyncDirection, string>>} SYNC_DIRECTION_ARROWS
@@ -160,7 +160,7 @@ export interface TransferPermissionInput {
 /**
  * @interface SyncSingleEntryParams
  * Parameters for syncing a single file or directory entry.
- * @property {NetStorageClientContext} ctx - Client context.
+ * @property {NetStorageClientconfig} config - Client config.
  * @property {Extract<SyncDirection, 'upload' | 'download'>} direction - Direction of sync.
  * @property {string} localPath - Local file path.
  * @property {string} remotePath - Remote file path.
@@ -173,7 +173,7 @@ export interface TransferPermissionInput {
  * @property {(params: SyncSkipEvent) => void} [onSkip] - Called when a transfer is skipped.
  */
 export interface SyncSingleEntryParams {
-  ctx: NetStorageClientContext;
+  config: NetStorageClientConfig;
   direction: Extract<SyncDirection, 'upload' | 'download'>;
   localPath: string;
   remotePath: string;
@@ -189,7 +189,7 @@ export interface SyncSingleEntryParams {
 /**
  * @interface DeleteExtraneousFilesParams
  * Parameters for deleting extraneous files during sync.
- * @property {NetStorageClientContext} ctx - Client context.
+ * @property {NetStorageClientconfig} config - Client config.
  * @property {DeleteExtraneous} deleteExtraneous - Which extraneous files to delete.
  * @property {boolean} dryRun - If true, no actual deletions are made.
  * @property {string} localPath - Local directory path.
@@ -200,7 +200,7 @@ export interface SyncSingleEntryParams {
  * @property {(absPath: string) => void} [onDelete] - Called when a file is deleted.
  */
 export interface DeleteExtraneousFilesParams {
-  ctx: NetStorageClientContext;
+  config: NetStorageClientConfig;
   deleteExtraneous: DeleteExtraneous;
   dryRun: boolean;
   localPath: string;
@@ -214,14 +214,14 @@ export interface DeleteExtraneousFilesParams {
 /**
  * @interface ShouldTransferFileInput
  * Input parameters to decide if a file should be transferred.
- * @property {NetStorageClientContext} ctx - Client context.
+ * @property {NetStorageClientconfig} config - Client config.
  * @property {Extract<SyncDirection, 'upload' | 'download'>} direction - Direction of transfer.
  * @property {string} localAbsPath - Absolute local file path.
  * @property {NetStorageFile} [remoteFile] - Metadata of the remote file.
  * @property {CompareStrategy} compareStrategy - Strategy to compare files.
  */
 export interface ShouldTransferFileInput {
-  ctx: NetStorageClientContext;
+  config: NetStorageClientConfig;
   direction: Extract<SyncDirection, 'upload' | 'download'>;
   localAbsPath: string;
   remoteFile?: NetStorageFile;

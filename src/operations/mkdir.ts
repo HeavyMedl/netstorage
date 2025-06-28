@@ -3,7 +3,7 @@ import {
   sendRequest,
   withRetries,
   type RequestOptions,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
 } from '@/index';
 
 /**
@@ -31,21 +31,21 @@ export interface MkdirParams {
 /**
  * Creates a new directory on NetStorage at the specified path.
  *
- * @param ctx - The NetStorage client context.
+ * @param config - The NetStorage client config.
  * @param params - Parameters including the target path and optional request options.
  * @returns A promise resolving to the mkdir operation response.
  */
 export async function mkdir(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   { path, options }: MkdirParams,
 ): Promise<NetStorageMkdir> {
-  ctx.logger.verbose(path, { method: 'mkdir' });
-  return withRetries(ctx, 'mkdir', async () =>
-    sendRequest<NetStorageMkdir>(ctx, path, {
+  config.logger.verbose(path, { method: 'mkdir' });
+  return withRetries(config, 'mkdir', async () =>
+    sendRequest<NetStorageMkdir>(config, path, {
       request: { method: 'PUT' },
       headers: { action: 'mkdir' },
       options: {
-        signal: resolveAbortSignal(ctx, options),
+        signal: resolveAbortSignal(config, options),
         ...options,
       },
     }),

@@ -3,7 +3,7 @@ import {
   sendRequest,
   withRetries,
   type RequestOptions,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
 } from '@/index';
 
 /**
@@ -33,32 +33,32 @@ export interface MtimeParams {
 /**
  * Sets the modification time for a remote file or directory.
  *
- * @param ctx - The NetStorage client context.
+ * @param config - The NetStorage client config.
  * @param params - Object containing the target path, date, and optional request options.
  * @returns The parsed NetStorage response object.
  * @throws {TypeError} If `date` is not a valid Date instance.
  */
 export async function mtime(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   { path, date, options }: MtimeParams,
 ): Promise<NetStorageMtime> {
   if (!(date instanceof Date)) {
     throw new TypeError('The date has to be an instance of Date');
   }
 
-  ctx.logger.verbose(`${path}, date: ${date.toISOString()}`, {
+  config.logger.verbose(`${path}, date: ${date.toISOString()}`, {
     method: 'mtime',
   });
 
-  return withRetries(ctx, 'mtime', async () =>
-    sendRequest(ctx, path, {
+  return withRetries(config, 'mtime', async () =>
+    sendRequest(config, path, {
       request: { method: 'PUT' },
       headers: {
         action: 'mtime',
         mtime: Math.floor(date.getTime() / 1000).toString(),
       },
       options: {
-        signal: resolveAbortSignal(ctx, options),
+        signal: resolveAbortSignal(config, options),
         ...options,
       },
     }),

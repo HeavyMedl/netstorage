@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
 import {
-  createContext,
+  createConfig,
   fileExists,
   removeDirectory,
   uploadDirectory,
@@ -19,7 +19,7 @@ const LOCAL_DIR = './temp-nested-dir';
 const REMOTE_DIR = '/34612/remove-dir-test';
 
 describe.skipIf(!isConfigured)('removeDirectory (integration)', () => {
-  const ctx = createContext({
+  const config = createConfig({
     key: NETSTORAGE_API_KEY!,
     keyName: NETSTORAGE_API_KEYNAME!,
     host: NETSTORAGE_HOST!,
@@ -31,7 +31,7 @@ describe.skipIf(!isConfigured)('removeDirectory (integration)', () => {
     writeFileSync(join(LOCAL_DIR, 'foo', 'file2.txt'), 'nested 1');
     writeFileSync(join(LOCAL_DIR, 'foo', 'bar', 'file3.txt'), 'nested 2');
 
-    await uploadDirectory(ctx, {
+    await uploadDirectory(config, {
       localPath: LOCAL_DIR,
       remotePath: REMOTE_DIR,
     });
@@ -44,7 +44,7 @@ describe.skipIf(!isConfigured)('removeDirectory (integration)', () => {
   it('should simulate removals in dryRun mode', async () => {
     const skipped: string[] = [];
 
-    await removeDirectory(ctx, {
+    await removeDirectory(config, {
       remotePath: REMOTE_DIR,
       dryRun: true,
       onSkip(info) {
@@ -56,9 +56,9 @@ describe.skipIf(!isConfigured)('removeDirectory (integration)', () => {
   });
 
   it('should remove all nested remote files and directories', async () => {
-    await removeDirectory(ctx, { remotePath: REMOTE_DIR });
+    await removeDirectory(config, { remotePath: REMOTE_DIR });
 
-    const removed = await fileExists(ctx, `${REMOTE_DIR}/foo/bar/file3.txt`);
+    const removed = await fileExists(config, `${REMOTE_DIR}/foo/bar/file3.txt`);
     expect(removed).toBe(false);
   });
 });

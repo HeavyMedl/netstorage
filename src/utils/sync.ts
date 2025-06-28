@@ -54,7 +54,7 @@ export function toNetStorageStat(file?: NetStorageFile): NetStorageStat {
  * @returns True if transfer should occur, false otherwise
  */
 export async function shouldTransferFile({
-  ctx,
+  config,
   direction,
   localAbsPath,
   remoteFile,
@@ -64,11 +64,11 @@ export async function shouldTransferFile({
 
   switch (compareStrategy) {
     case 'size':
-      return await isSizeMismatch(ctx, localAbsPath, stat);
+      return await isSizeMismatch(config, localAbsPath, stat);
     case 'mtime':
-      return await isMtimeNewer(ctx, localAbsPath, stat);
+      return await isMtimeNewer(config, localAbsPath, stat);
     case 'checksum':
-      return await isChecksumMismatch(ctx, localAbsPath, stat);
+      return await isChecksumMismatch(config, localAbsPath, stat);
     case 'exists':
       return direction === 'upload'
         ? remoteFile === undefined
@@ -123,7 +123,7 @@ export function formatSyncDirectionLog({
  * @param params - Configuration for syncing a single entry
  */
 export async function syncSingleEntry({
-  ctx,
+  config,
   direction,
   localPath,
   remotePath,
@@ -151,7 +151,7 @@ export async function syncSingleEntry({
   }
 
   const shouldTransfer = await shouldTransferFile({
-    ctx,
+    config,
     direction,
     localAbsPath: localPath,
     remoteFile: remoteFileMeta,
@@ -171,15 +171,15 @@ export async function syncSingleEntry({
   }
 
   if (dryRun) {
-    ctx.logger.info(
+    config.logger.info(
       `[dryRun] Would ${direction} ${localPath} ${direction === 'upload' ? '→' : '←'} ${remotePath}`,
     );
   } else {
     if (direction === 'upload') {
-      await upload(ctx, { fromLocal: localPath, toRemote: remotePath });
+      await upload(config, { fromLocal: localPath, toRemote: remotePath });
     } else {
       await fs.mkdir(path.dirname(localPath), { recursive: true });
-      await download(ctx, { fromRemote: remotePath, toLocal: localPath });
+      await download(config, { fromRemote: remotePath, toLocal: localPath });
     }
   }
 
@@ -191,7 +191,7 @@ export async function syncSingleEntry({
  * @param params - Configuration for comparing and optionally deleting extraneous files
  */
 export async function deleteExtraneous({
-  ctx,
+  config,
   deleteExtraneous,
   dryRun,
   localPath,
@@ -209,7 +209,7 @@ export async function deleteExtraneous({
     : (remoteFiles ?? new Map());
 
   if (deleteExtraneous === 'remote' || deleteExtraneous === 'both') {
-    ctx.logger.verbose('Checking for extraneous remote files to delete', {
+    config.logger.verbose('Checking for extraneous remote files to delete', {
       method: 'deleteExtraneous',
     });
 
@@ -217,9 +217,9 @@ export async function deleteExtraneous({
       if (!localEntries.has(relPath)) {
         const absPath = path.posix.join(remotePath, relPath);
         if (dryRun) {
-          ctx.logger.info(`[dryRun] Would delete remote file at ${absPath}`);
+          config.logger.info(`[dryRun] Would delete remote file at ${absPath}`);
         } else {
-          await rm(ctx, { path: absPath });
+          await rm(config, { path: absPath });
           onDelete?.(absPath);
         }
       }
@@ -227,7 +227,7 @@ export async function deleteExtraneous({
   }
 
   if (deleteExtraneous === 'local' || deleteExtraneous === 'both') {
-    ctx.logger.verbose('Checking for extraneous local files to delete', {
+    config.logger.verbose('Checking for extraneous local files to delete', {
       method: 'deleteExtraneous',
     });
 
@@ -235,7 +235,7 @@ export async function deleteExtraneous({
       if (!remoteEntries.has(relPath)) {
         const absPath = path.join(localPath, relPath);
         if (dryRun) {
-          ctx.logger.info(`[dryRun] Would delete local file at ${absPath}`);
+          config.logger.info(`[dryRun] Would delete local file at ${absPath}`);
         } else {
           await fs.rm(absPath);
           onDelete?.(absPath);

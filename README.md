@@ -23,20 +23,20 @@ npm install netstorage
 ## Programmatic Usage
 
 ```ts
-import { createContext, upload, download, stat } from 'netstorage';
+import { createConfig, upload, download, stat } from 'netstorage';
 
-const ctx = createContext({
+const config = createConfig({
   key: process.env.NETSTORAGE_API_KEY!,
   keyName: process.env.NETSTORAGE_API_KEYNAME!,
   host: process.env.NETSTORAGE_HOST!,
 });
 
-await upload(ctx, {
+await upload(config, {
   localPath: './file.txt',
   remotePath: '/12345/file.txt',
 });
 
-const result = await stat(ctx, '/12345/file.txt');
+const result = await stat(config, '/12345/file.txt');
 console.log(result.stat.file);
 ```
 
@@ -45,7 +45,7 @@ console.log(result.stat.file);
 ```ts
 import { syncDirectory } from 'netstorage';
 
-await syncDirectory(ctx, {
+await syncDirectory(config, {
   localPath: './dist',
   remotePath: '/12345/site-assets',
   syncDirection: 'upload', // 'upload' | 'download' | 'both'
@@ -58,7 +58,7 @@ await syncDirectory(ctx, {
 ```ts
 import { fileExists } from 'netstorage';
 
-const exists = await fileExists(ctx, '/12345/some-file.txt');
+const exists = await fileExists(config, '/12345/some-file.txt');
 ```
 
 ## Remove Remote Directory
@@ -66,7 +66,7 @@ const exists = await fileExists(ctx, '/12345/some-file.txt');
 ```ts
 import { removeDirectory } from 'netstorage';
 
-await removeDirectory(ctx, { remotePath: '/12345/old-assets' });
+await removeDirectory(config, { remotePath: '/12345/old-assets' });
 ```
 
 ## API Docs
@@ -77,9 +77,7 @@ WIP
 
 Essential utilities to authenticate and configure the client.
 
-- `createContext` — Create an API context with credentials
-- `createAuthConfig` — Build a reusable authentication configuration object
-- `createClientContext` — Create a preconfigured client context with built-in limiter support
+- `createConfig` — Unified factory to create a fully resolved client context
 
 ### Core Operations
 
@@ -107,7 +105,7 @@ Utilities for working with full directory trees.
 
 - `downloadDirectory` — Download a remote directory and its contents
 - `removeDirectory` — Recursively remove a remote directory
-- `syncDirectory` — Sync an entire local directory with a remote path
+- `syncDirectory` — Bi-directionally sync local and remote directories (`upload`, `download`, or `both`)
 - `uploadDirectory` — Upload a local directory and its contents
 - `tree` — Recursively describe the structure of a remote directory
 

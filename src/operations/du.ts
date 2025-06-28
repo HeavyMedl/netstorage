@@ -3,7 +3,7 @@ import {
   sendRequest,
   withRetries,
   type RequestOptions,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
 } from '@/index';
 
 /**
@@ -39,21 +39,21 @@ export interface DuParams {
 /**
  * Retrieves disk usage information for a given NetStorage path.
  *
- * @param ctx - NetStorage client context containing credentials and settings.
+ * @param config - NetStorage client config containing credentials and settings.
  * @param params - Disk usage request parameters.
  * @returns A parsed object representing total files and bytes at the path.
  */
 export async function du(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   { path, options }: DuParams,
 ): Promise<NetStorageDu> {
-  ctx.logger.verbose(path, { method: 'du' });
-  return withRetries(ctx, 'du', async () =>
-    sendRequest<NetStorageDu>(ctx, path, {
+  config.logger.verbose(path, { method: 'du' });
+  return withRetries(config, 'du', async () =>
+    sendRequest<NetStorageDu>(config, path, {
       request: { method: 'GET' },
       headers: { action: 'du' },
       options: {
-        signal: resolveAbortSignal(ctx, options),
+        signal: resolveAbortSignal(config, options),
         ...options,
       },
     }),

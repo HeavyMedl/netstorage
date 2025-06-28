@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
 import {
-  createContext,
+  createConfig,
   remoteWalk,
   removeDirectory,
   uploadDirectory,
@@ -21,7 +21,7 @@ const TEMP_DIR = join(tmpdir(), 'remoteWalk-test');
 const REMOTE_DIR = '/34612/remote-walk-test';
 
 describe.skipIf(!isConfigured)('remoteWalk (integration)', () => {
-  const ctx = createContext({
+  const config = createConfig({
     key: NETSTORAGE_API_KEY!,
     keyName: NETSTORAGE_API_KEYNAME!,
     host: NETSTORAGE_HOST!,
@@ -39,17 +39,17 @@ describe.skipIf(!isConfigured)('remoteWalk (integration)', () => {
 
   afterAll(async () => {
     rmSync(TEMP_DIR, { recursive: true, force: true });
-    await removeDirectory(ctx, { remotePath: REMOTE_DIR });
+    await removeDirectory(config, { remotePath: REMOTE_DIR });
   });
 
   it('should walk a deeply nested uploaded directory and yield entries', async () => {
-    await uploadDirectory(ctx, {
+    await uploadDirectory(config, {
       localPath: TEMP_DIR,
       remotePath: REMOTE_DIR,
     });
 
     const entries: RemoteWalkEntry[] = [];
-    for await (const entry of remoteWalk(ctx, { path: REMOTE_DIR })) {
+    for await (const entry of remoteWalk(config, { path: REMOTE_DIR })) {
       entries.push(entry);
     }
 

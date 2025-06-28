@@ -3,7 +3,7 @@ import {
   sendRequest,
   withRetries,
   type RequestOptions,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
 } from '@/index';
 
 /**
@@ -35,24 +35,26 @@ export interface RenameParams {
  *
  * Performs a PUT request with the `rename` action and destination path.
  *
- * @param ctx - NetStorage client context with credentials and configuration.
+ * @param config - NetStorage client config with credentials and configuration.
  * @param param1 - Object containing rename parameters.
  * @returns A promise resolving to a parsed NetStorageRename result.
  */
 export async function rename(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   { pathFrom, pathTo, options }: RenameParams,
 ): Promise<NetStorageRename> {
-  ctx.logger.verbose(`from: ${pathFrom}, to: ${pathTo}`, { method: 'rename' });
-  return withRetries(ctx, 'rename', async () =>
-    sendRequest(ctx, pathFrom, {
+  config.logger.verbose(`from: ${pathFrom}, to: ${pathTo}`, {
+    method: 'rename',
+  });
+  return withRetries(config, 'rename', async () =>
+    sendRequest(config, pathFrom, {
       request: { method: 'PUT' },
       headers: {
         action: 'rename',
         destination: pathTo,
       },
       options: {
-        signal: resolveAbortSignal(ctx, options),
+        signal: resolveAbortSignal(config, options),
         ...options,
       },
     }),

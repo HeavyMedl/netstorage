@@ -7,7 +7,7 @@ import {
   buildAuthHeaders,
   resolveAbortSignal,
   type RequestOptions,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
 } from '@/index';
 
 /**
@@ -39,31 +39,33 @@ export interface DownloadParams {
  * Downloads a file from NetStorage to a local path.
  * Retries the operation if transient errors occur.
  *
- * @param ctx - NetStorage client context containing auth and config.
+ * @param config - NetStorage client config containing auth and config.
  * @param params - Parameters for the download operation.
  * @returns The result status of the download operation.
  */
 export async function download(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   { fromRemote, toLocal, options, shouldDownload }: DownloadParams,
 ): Promise<NetStorageDownload> {
-  ctx.logger.verbose(fromRemote, { method: 'download' });
+  config.logger.verbose(fromRemote, { method: 'download' });
 
   if (shouldDownload && !(await shouldDownload())) {
     return { status: { code: 0 } };
   }
 
-  return withRetries(ctx, 'download', async () => {
+  return withRetries(config, 'download', async () => {
     const outputStream = createWriteStream(toLocal);
-    const url = buildUri(ctx, fromRemote);
-    const headers = buildAuthHeaders(ctx, fromRemote, { action: 'download' });
+    const url = buildUri(config, fromRemote);
+    const headers = buildAuthHeaders(config, fromRemote, {
+      action: 'download',
+    });
 
-    const { statusCode } = await makeStreamRequest(ctx, {
+    const { statusCode } = await makeStreamRequest(config, {
       method: 'GET',
       url,
       headers,
       outputStream,
-      signal: options?.signal ?? resolveAbortSignal(ctx, options),
+      signal: options?.signal ?? resolveAbortSignal(config, options),
     });
 
     return { status: { code: statusCode } };

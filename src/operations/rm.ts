@@ -3,7 +3,7 @@ import {
   sendRequest,
   withRetries,
   type RequestOptions,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
 } from '@/index';
 
 /**
@@ -31,21 +31,21 @@ export interface RmParams {
 /**
  * Deletes a file from NetStorage at the specified remote path.
  *
- * @param ctx - The client context used for authentication and configuration.
+ * @param config - The client config used for authentication and configuration.
  * @param params - Object containing the remote path and optional request options.
  * @returns A promise resolving to the NetStorage delete operation response.
  */
 export async function rm(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   { path, options }: RmParams,
 ): Promise<NetStorageRm> {
-  ctx.logger.verbose(path, { method: 'delete' });
-  return withRetries(ctx, 'rm', async () =>
-    sendRequest<NetStorageRm>(ctx, path, {
+  config.logger.verbose(path, { method: 'delete' });
+  return withRetries(config, 'rm', async () =>
+    sendRequest<NetStorageRm>(config, path, {
       request: { method: 'PUT' },
       headers: { action: 'delete' },
       options: {
-        signal: resolveAbortSignal(ctx, options),
+        signal: resolveAbortSignal(config, options),
         ...options,
       },
     }),

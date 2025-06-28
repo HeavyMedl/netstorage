@@ -3,7 +3,7 @@ import {
   resolveAbortSignal,
   sendRequest,
   type RequestOptions,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
 } from '@/index';
 
 /**
@@ -33,27 +33,27 @@ export interface SymlinkParams {
 /**
  * Creates a symbolic link in NetStorage from `pathSymlink` pointing to `pathFileTo`.
  *
- * @param ctx - The NetStorage client context containing credentials and configuration.
+ * @param config - The NetStorage client config containing credentials and configuration.
  * @param params - Parameters specifying the source and target for the symlink.
  * @returns A response containing status code of the symlink operation.
  */
 export async function symlink(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   { pathFileTo, pathSymlink, options }: SymlinkParams,
 ): Promise<NetStorageSymlink> {
-  ctx.logger.verbose(`fileTo: ${pathFileTo}, symlink: ${pathSymlink}`, {
+  config.logger.verbose(`fileTo: ${pathFileTo}, symlink: ${pathSymlink}`, {
     method: 'symlink',
   });
 
-  return withRetries(ctx, 'symlink', async () =>
-    sendRequest<NetStorageSymlink>(ctx, pathSymlink, {
+  return withRetries(config, 'symlink', async () =>
+    sendRequest<NetStorageSymlink>(config, pathSymlink, {
       request: { method: 'PUT' },
       headers: {
         action: 'symlink',
         target: pathFileTo,
       },
       options: {
-        signal: resolveAbortSignal(ctx, options),
+        signal: resolveAbortSignal(config, options),
         ...options,
       },
     }),

@@ -1,16 +1,16 @@
 import { Command } from 'commander';
 import {
-  loadPersistentContext,
-  savePersistentContext,
-  clearPersistentContext,
-} from '../utils/contextStore';
+  loadPersistentConfig,
+  savePersistentconfig,
+  clearPersistentConfig,
+} from '../utils/configStore';
 
 export default function configCommand(): Command {
   const command = new Command('config');
 
   command
     .command('set')
-    .description('Set a context value')
+    .description('Set a config value')
     .option('--hostname <hostname>', 'Akamai hostname')
     .option('--key <key>', 'Akamai key')
     .option('--keyName <keyName>', 'Akamai key name')
@@ -20,24 +20,24 @@ export default function configCommand(): Command {
       parseInt(v, 10),
     )
     .action((options) => {
-      savePersistentContext(options);
-      console.log('✅ Context saved.');
+      savePersistentconfig(options);
+      console.log('✅ config saved.');
     });
 
   command
     .command('show')
-    .description('Show current context')
+    .description('Show current config')
     .action(() => {
-      const config = loadPersistentContext();
+      const config = loadPersistentConfig();
       console.log(JSON.stringify(config, null, 2));
     });
 
   command
     .command('clear')
-    .description('Clear all saved context')
+    .description('Clear all saved config')
     .action(() => {
-      clearPersistentContext();
-      console.log('🧹 Context cleared.');
+      clearPersistentConfig();
+      console.log('🧹 config cleared.');
     });
 
   return command;

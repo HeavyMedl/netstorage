@@ -4,7 +4,7 @@ import {
   resolveAbortSignal,
   parseXmlResponse,
   HttpError,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
   type RequestOptions,
 } from '@/index';
 
@@ -26,21 +26,21 @@ export interface GenericRequestParams {
 /**
  * Executes a NetStorage API request and parses the XML response.
  *
- * @param ctx - The client context containing credentials and logger.
+ * @param config - The client config containing credentials and logger.
  * @param path - The API path to send the request to.
  * @param params - Optional configuration for method, headers, body, and options.
  * @returns The parsed response body, typed as T.
  * @throws HttpError if the HTTP response status indicates a failure.
  */
 export async function sendRequest<T>(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   path: string,
   params: GenericRequestParams = {},
 ): Promise<T> {
-  const url = buildUri(ctx, path);
-  const headers = buildAuthHeaders(ctx, path, params.headers ?? {});
+  const url = buildUri(config, path);
+  const headers = buildAuthHeaders(config, path, params.headers ?? {});
 
-  ctx.logger.debug(
+  config.logger.debug(
     `Requesting: ${url} (path: ${path}) meta: ${JSON.stringify({
       method: params.request?.method ?? 'GET',
       headers,
@@ -53,7 +53,7 @@ export async function sendRequest<T>(
     method: params.request?.method ?? 'GET',
     headers,
     body: params.body,
-    signal: resolveAbortSignal(ctx, params.options),
+    signal: resolveAbortSignal(config, params.options),
   });
 
   const body = await response.text();
@@ -64,7 +64,7 @@ export async function sendRequest<T>(
     throw new HttpError(msg, response.status);
   }
 
-  ctx.logger.debug(
+  config.logger.debug(
     `Response for path: ${path} meta: ${JSON.stringify({
       status: response.status,
       body,

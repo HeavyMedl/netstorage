@@ -1,7 +1,7 @@
 import { writeFileSync, unlinkSync, existsSync, readFileSync } from 'node:fs';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
-import { createContext, download, rm, upload } from '@/index';
+import { createConfig, download, rm, upload } from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;
@@ -14,7 +14,7 @@ const REMOTE_UPLOAD_PATH = `/34612/download-upload-test.txt`;
 const LOCAL_DOWNLOAD_FILE = './downloaded-file.txt';
 
 describe.skipIf(!isConfigured)('download (integration)', () => {
-  const ctx = createContext({
+  const config = createConfig({
     key: NETSTORAGE_API_KEY!,
     keyName: NETSTORAGE_API_KEYNAME!,
     host: NETSTORAGE_HOST!,
@@ -25,7 +25,7 @@ describe.skipIf(!isConfigured)('download (integration)', () => {
       LOCAL_UPLOAD_FILE,
       'This is the file to upload and download.',
     );
-    await upload(ctx, {
+    await upload(config, {
       fromLocal: LOCAL_UPLOAD_FILE,
       toRemote: REMOTE_UPLOAD_PATH,
     });
@@ -36,11 +36,11 @@ describe.skipIf(!isConfigured)('download (integration)', () => {
     if (existsSync(LOCAL_DOWNLOAD_FILE)) {
       unlinkSync(LOCAL_DOWNLOAD_FILE);
     }
-    await rm(ctx, { path: REMOTE_UPLOAD_PATH });
+    await rm(config, { path: REMOTE_UPLOAD_PATH });
   });
 
   it('should download the remote file to a local path', async () => {
-    const result = await download(ctx, {
+    const result = await download(config, {
       fromRemote: REMOTE_UPLOAD_PATH,
       toLocal: LOCAL_DOWNLOAD_FILE,
     });

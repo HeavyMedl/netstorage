@@ -3,7 +3,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { createContext, removeDirectory, uploadDirectory, tree } from '@/index';
+import { createConfig, removeDirectory, uploadDirectory, tree } from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;
@@ -15,7 +15,7 @@ const TEMP_DIR = join(tmpdir(), 'tree-test');
 const REMOTE_DIR = '/34612/tree-test';
 
 describe.skipIf(!isConfigured)('tree (integration)', () => {
-  const ctx = createContext({
+  const config = createConfig({
     key: NETSTORAGE_API_KEY!,
     keyName: NETSTORAGE_API_KEYNAME!,
     host: NETSTORAGE_HOST!,
@@ -28,7 +28,7 @@ describe.skipIf(!isConfigured)('tree (integration)', () => {
     writeFileSync(join(TEMP_DIR, 'nested', 'file1.txt'), 'nested file 1');
     writeFileSync(join(TEMP_DIR, 'nested', 'deep', 'file2.txt'), 'deep file');
 
-    await uploadDirectory(ctx, {
+    await uploadDirectory(config, {
       localPath: TEMP_DIR,
       remotePath: REMOTE_DIR,
     });
@@ -36,11 +36,11 @@ describe.skipIf(!isConfigured)('tree (integration)', () => {
 
   afterAll(async () => {
     rmSync(TEMP_DIR, { recursive: true, force: true });
-    await removeDirectory(ctx, { remotePath: REMOTE_DIR });
+    await removeDirectory(config, { remotePath: REMOTE_DIR });
   });
 
   it('should generate a tree and return structure data', async () => {
-    const result = await tree(ctx, {
+    const result = await tree(config, {
       path: REMOTE_DIR,
       showSize: true,
     });

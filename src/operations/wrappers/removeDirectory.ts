@@ -3,7 +3,7 @@ import {
   rm,
   rmdir,
   type RemoteWalkEntry,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
 } from '@/index';
 
 /**
@@ -33,11 +33,11 @@ export interface RemoveDirectoryParams {
  * Walks all remote entries under the specified path and deletes them in reverse order.
  * Honors dryRun, filtering, and error handling via callbacks.
  *
- * @param ctx - NetStorage client context.
+ * @param config - NetStorage client config.
  * @param params - Configuration parameters for removal behavior.
  */
 export async function removeDirectory(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   {
     remotePath,
     dryRun = false,
@@ -46,12 +46,12 @@ export async function removeDirectory(
     shouldRemove,
   }: RemoveDirectoryParams,
 ): Promise<void> {
-  const { logger } = ctx;
+  const { logger } = config;
 
   logger.info(`Removing ${remotePath}`, { method: 'removeDirectory' });
 
   const entries: RemoteWalkEntry[] = [];
-  for await (const entry of remoteWalk(ctx, { path: remotePath })) {
+  for await (const entry of remoteWalk(config, { path: remotePath })) {
     entries.push(entry);
   }
 
@@ -80,12 +80,12 @@ export async function removeDirectory(
 
       try {
         if (entry.file.type === 'file' || entry.file.type === 'symlink') {
-          await rm(ctx, { path: entry.path });
+          await rm(config, { path: entry.path });
         } else if (
           entry.file.type === 'dir' &&
           entry.file.implicit !== 'true'
         ) {
-          await rmdir(ctx, { path: entry.path }).catch(() => {});
+          await rmdir(config, { path: entry.path }).catch(() => {});
         }
         onRemove?.({ remotePath: entry.path });
       } catch (error) {

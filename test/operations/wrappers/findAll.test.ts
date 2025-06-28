@@ -1,7 +1,7 @@
 import { writeFileSync, unlinkSync } from 'node:fs';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
-import { createContext, findAll, rm, upload } from '@/index';
+import { createConfig, findAll, rm, upload } from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;
@@ -18,7 +18,7 @@ const REMOTE_MATCH_2 = '/34612/findAll-test/match/file3.txt';
 const REMOTE_SKIP = '/34612/findAll-test/skip/file2.txt';
 
 describe.skipIf(!isConfigured)('findAll (integration)', () => {
-  const ctx = createContext({
+  const config = createConfig({
     key: NETSTORAGE_API_KEY!,
     keyName: NETSTORAGE_API_KEYNAME!,
     host: NETSTORAGE_HOST!,
@@ -29,9 +29,15 @@ describe.skipIf(!isConfigured)('findAll (integration)', () => {
     writeFileSync(LOCAL_MATCH_2, 'match 3');
     writeFileSync(LOCAL_SKIP, 'skip 2');
 
-    await upload(ctx, { fromLocal: LOCAL_MATCH_1, toRemote: REMOTE_MATCH_1 });
-    await upload(ctx, { fromLocal: LOCAL_MATCH_2, toRemote: REMOTE_MATCH_2 });
-    await upload(ctx, { fromLocal: LOCAL_SKIP, toRemote: REMOTE_SKIP });
+    await upload(config, {
+      fromLocal: LOCAL_MATCH_1,
+      toRemote: REMOTE_MATCH_1,
+    });
+    await upload(config, {
+      fromLocal: LOCAL_MATCH_2,
+      toRemote: REMOTE_MATCH_2,
+    });
+    await upload(config, { fromLocal: LOCAL_SKIP, toRemote: REMOTE_SKIP });
   });
 
   afterAll(async () => {
@@ -39,13 +45,13 @@ describe.skipIf(!isConfigured)('findAll (integration)', () => {
     unlinkSync(LOCAL_MATCH_2);
     unlinkSync(LOCAL_SKIP);
 
-    await rm(ctx, { path: REMOTE_MATCH_1 });
-    await rm(ctx, { path: REMOTE_MATCH_2 });
-    await rm(ctx, { path: REMOTE_SKIP });
+    await rm(config, { path: REMOTE_MATCH_1 });
+    await rm(config, { path: REMOTE_MATCH_2 });
+    await rm(config, { path: REMOTE_SKIP });
   });
 
   it('should return all entries matching the predicate', async () => {
-    const results = await findAll(ctx, {
+    const results = await findAll(config, {
       path: '/34612/findAll-test',
       predicate: (entry) => entry.path.includes('/match/'),
     });

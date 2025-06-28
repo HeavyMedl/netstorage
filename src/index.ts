@@ -1,6 +1,4 @@
-export * from '@/config/createAuthConfig';
-export * from '@/config/createClientContext';
-export * from '@/config/createContext';
+export * from '@/config/createConfig';
 
 export * from '@/errors/httpError';
 

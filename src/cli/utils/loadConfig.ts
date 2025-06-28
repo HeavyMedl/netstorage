@@ -3,13 +3,9 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import dotenv from 'dotenv';
 
-import {
-  createContext,
-  type ClientContext,
-  type NetStorageClientContext,
-} from '@/index';
+import { createConfig, type NetStorageClientConfig } from '@/index';
 
-import { loadPersistentContext } from './contextStore';
+import { loadPersistentConfig } from './configStore';
 
 /**
  * Attempts to load CLI configuration from supported config files in the current working directory.
@@ -19,9 +15,9 @@ import { loadPersistentContext } from './contextStore';
  * 2. netstorage.config.json
  * 3. .netstoragerc
  *
- * @returns {Promise<Partial<ClientContext>>} Parsed config object or an empty object if none found.
+ * @returns {Promise<Partial<NetStorageClientConfig>>} Parsed config object or an empty object if none found.
  */
-async function loadFileConfig(): Promise<Partial<ClientContext>> {
+async function loadFileConfig(): Promise<Partial<NetStorageClientConfig>> {
   const tsConfigPath = path.resolve(process.cwd(), 'netstorage.config.ts');
   if (fs.existsSync(tsConfigPath)) {
     try {
@@ -47,7 +43,7 @@ async function loadFileConfig(): Promise<Partial<ClientContext>> {
 }
 
 /**
- * Resolves a complete NetStorage client context from layered configuration sources.
+ * Resolves a complete NetStorage client config from layered configuration sources.
  *
  * Supported resolution order (highest to lowest priority):
  * 1. CLI options (explicit flags passed to CLI command)
@@ -57,19 +53,19 @@ async function loadFileConfig(): Promise<Partial<ClientContext>> {
  *
  * All layers are merged, with higher-priority values overriding lower-priority ones.
  *
- * @param {Partial<ClientContext>} [cliOptions] - Optional config overrides from CLI flags.
- * @returns {Promise<NetStorageClientContext>} Fully resolved configuration object.
+ * @param {Partial<NetStorageClientConfig>} [cliOptions] - Optional config overrides from CLI flags.
+ * @returns {Promise<NetStorageClientConfig>} Fully resolved configuration object.
  */
-export async function loadClientContext(
-  cliOptions: Partial<ClientContext> = {},
-): Promise<NetStorageClientContext> {
+export async function loadClientConfig(
+  cliOptions: Partial<NetStorageClientConfig> = {},
+): Promise<NetStorageClientConfig> {
   // Load environment variables from .env file if it exists
   const envPath = path.resolve(process.cwd(), '.env');
   if (fs.existsSync(envPath)) {
     dotenv.config({ path: envPath });
   }
 
-  const envConfig: Partial<ClientContext> = {
+  const envConfig: Partial<NetStorageClientConfig> = {
     key: process.env.NETSTORAGE_API_KEY,
     keyName: process.env.NETSTORAGE_API_KEYNAME,
     host: process.env.NETSTORAGE_HOST,
@@ -80,15 +76,15 @@ export async function loadClientContext(
   const fileConfig = await loadFileConfig();
 
   // Load persistent CLI config
-  const persistentConfig = loadPersistentContext();
+  const persistentConfig = loadPersistentConfig();
 
   // Merge: CLI > Env > File > Persistent
-  const merged: Partial<ClientContext> = {
+  const merged: Partial<NetStorageClientConfig> = {
     ...persistentConfig,
     ...fileConfig,
     ...envConfig,
     ...cliOptions,
   };
 
-  return createContext(merged as ClientContext);
+  return createConfig(merged as NetStorageClientConfig);
 }

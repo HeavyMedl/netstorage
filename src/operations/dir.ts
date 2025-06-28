@@ -3,7 +3,7 @@ import {
   sendRequest,
   withRetries,
   type RequestOptions,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
   type NetStorageFile,
 } from '@/index';
 
@@ -36,21 +36,21 @@ export interface DirParams {
  * Sends a `dir` request to the specified path and returns the directory structure,
  * including files and optional directory metadata.
  *
- * @param ctx - The NetStorage client context containing configuration and logger.
+ * @param config - The NetStorage client config containing configuration and logger.
  * @param params - The parameters for the request, including path and options.
  * @returns A promise that resolves to the parsed directory structure.
  */
 export async function dir(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   { path, options }: DirParams,
 ): Promise<NetStorageDir> {
-  ctx.logger.verbose(path, { method: 'dir' });
-  return withRetries(ctx, 'dir', async () =>
-    sendRequest<NetStorageDir>(ctx, path, {
+  config.logger.verbose(path, { method: 'dir' });
+  return withRetries(config, 'dir', async () =>
+    sendRequest<NetStorageDir>(config, path, {
       request: { method: 'GET' },
       headers: { action: 'dir' },
       options: {
-        signal: resolveAbortSignal(ctx, options),
+        signal: resolveAbortSignal(config, options),
         ...options,
       },
     }),

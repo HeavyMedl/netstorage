@@ -8,7 +8,7 @@ import { request as httpsRequest } from 'node:https';
 import { promisify } from 'node:util';
 import { URLSearchParams } from 'node:url';
 
-import { HttpError, type NetStorageClientContext } from '@/index';
+import { HttpError, type NetStorageClientConfig } from '@/index';
 
 /**
  * Configuration options for the makeStreamRequest function.
@@ -168,13 +168,13 @@ function createStreamRequestError(
 /**
  * Makes an HTTP or HTTPS request with streaming support for request and response bodies.
  * Supports timeouts, abort signals, query parameters, progress tracking, and optional logging.
- * @param ctx - The NetStorageContext containing logger and other context info.
+ * @param config - The NetStorageconfig containing logger and other config info.
  * @param options - Configuration options for the request.
  * @param options.url - Optional full URL to override protocol/host/path/query resolution.
  * @returns Promise resolving to an object with statusCode and optional body.
  */
 export async function makeStreamRequest(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   {
     method = 'GET',
     headers = {},
@@ -208,7 +208,7 @@ export async function makeStreamRequest(
         }
 
         // Log the response details
-        ctx.logger.verbose(`Received ${res.statusCode} from ${url.href}`, {
+        config.logger.verbose(`Received ${res.statusCode} from ${url.href}`, {
           method,
         });
 
@@ -241,7 +241,7 @@ export async function makeStreamRequest(
     signal?.addEventListener('abort', abortHandler);
     req.on('close', () => signal?.removeEventListener('abort', abortHandler));
 
-    ctx.logger.verbose(`Requesting ${url.href}`, { method });
+    config.logger.verbose(`Requesting ${url.href}`, { method });
 
     req.on('error', reject);
 

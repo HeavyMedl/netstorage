@@ -1,7 +1,7 @@
 import {
   HttpError,
   selectLimiter,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
   type NetStorageOperation,
 } from '@/index';
 
@@ -48,13 +48,13 @@ export function calculateDelay(
 /**
  * Determines if a system-level error is transient and retryable.
  *
- * @param ctx - NetStorage client context for logging.
+ * @param config - NetStorage client config for logging.
  * @param err - The error to evaluate.
- * @param method - The method or operation name for context.
+ * @param method - The method or operation name for config.
  * @returns True if the error should be retried; otherwise, false.
  */
 export function shouldRetrySystemError(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   err: Error,
   method = 'unknown',
 ): boolean {
@@ -62,9 +62,12 @@ export function shouldRetrySystemError(
   const shouldRetry = retryableCodes.some((code) => err.message.includes(code));
 
   if (!shouldRetry) {
-    ctx.logger.debug(`Non-retryable system error encountered: ${err.message}`, {
-      method,
-    });
+    config.logger.debug(
+      `Non-retryable system error encountered: ${err.message}`,
+      {
+        method,
+      },
+    );
   }
 
   return shouldRetry;
@@ -73,19 +76,19 @@ export function shouldRetrySystemError(
 /**
  * Executes a function with retry logic using exponential backoff and optional jitter.
  *
- * @param ctx - NetStorage client context for logging and rate limiting.
+ * @param config - NetStorage client config for logging and rate limiting.
  * @param method - The NetStorage operation being executed.
  * @param fn - The asynchronous function to execute with retry logic.
  * @param overrides - Optional overrides for retry behavior.
  * @returns A promise that resolves with the function's result or rejects after final failure.
  */
 export async function withRetries<T>(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   method: NetStorageOperation,
   fn: () => Promise<T>,
   overrides?: Partial<Pick<WithRetriesOptions, 'shouldRetry' | 'onRetry'>>,
 ): Promise<T> {
-  const limiter = selectLimiter(method, ctx.rateLimiters);
+  const limiter = selectLimiter(method, config.rateLimiters);
   const retries = 3;
   const baseDelayMs = 300;
   const maxDelayMs = 2000;
@@ -99,7 +102,7 @@ export async function withRetries<T>(
     overrides?.shouldRetry ??
     ((err) => {
       if (err instanceof Error) {
-        return shouldRetrySystemError(ctx, err, method);
+        return shouldRetrySystemError(config, err, method);
       }
       if (err instanceof HttpError) {
         return [429, 500, 502, 503, 504].includes(err.code);
@@ -111,7 +114,7 @@ export async function withRetries<T>(
     overrides?.onRetry ??
     ((err, attempt, delay) => {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      ctx.logger.warn(
+      config.logger.warn(
         `Retry ${attempt} due to error: ${message}. Retrying in ${delay}ms.`,
         { method },
       );

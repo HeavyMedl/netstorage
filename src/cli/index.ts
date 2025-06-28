@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import uploadCommand from './commands/upload';
-import configCommand from './commands/context';
+import configCommand from './commands/config';
 import { version } from '../../package.json';
-import { loadClientContext } from './utils/loadContext';
+import { loadClientConfig } from './utils/loadConfig';
 
 const program = new Command();
 
@@ -14,9 +14,9 @@ program
 
 async function main() {
   try {
-    const ctx = await loadClientContext();
+    const config = await loadClientConfig();
     program.addCommand(configCommand());
-    program.addCommand(uploadCommand(ctx));
+    program.addCommand(uploadCommand(config));
     return program.parseAsync(process.argv);
   } catch (error) {
     console.error(error);

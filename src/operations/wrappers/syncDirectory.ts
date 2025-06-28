@@ -8,7 +8,7 @@ import {
   remoteWalk,
   syncSingleEntry,
   walkLocalDir,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
   type NetStorageFile,
   type SyncDirectoryParams,
   type SyncResult,
@@ -19,7 +19,7 @@ import {
 /**
  * Synchronizes files between a local directory and a NetStorage remote directory.
  *
- * @param ctx - Authenticated NetStorage client context
+ * @param config - Authenticated NetStorage client config
  * @param localPath - Absolute or relative path to the local directory
  * @param remotePath - Remote NetStorage directory path
  * @param dryRun - If true, simulates operations without making changes
@@ -35,7 +35,7 @@ import {
  * @returns Summary result of transferred, skipped, and deleted entries
  */
 export async function syncDirectory(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   {
     localPath,
     remotePath,
@@ -72,7 +72,7 @@ export async function syncDirectory(
     },
   };
 
-  ctx.logger.info(
+  config.logger.info(
     formatSyncDirectionLog({ localPath, remotePath, syncDirection }),
     { method: 'syncDirectory' },
   );
@@ -91,7 +91,7 @@ export async function syncDirectory(
     }
   }
 
-  for await (const entry of remoteWalk(ctx, { path: remotePath })) {
+  for await (const entry of remoteWalk(config, { path: remotePath })) {
     if (entry.file.type !== 'dir') {
       remoteFiles.set(entry.relativePath, entry.file);
     }
@@ -100,7 +100,9 @@ export async function syncDirectory(
   const limiter = pLimit(maxConcurrency);
 
   if (syncDirection === 'upload' || syncDirection === 'both') {
-    ctx.logger.verbose('Beginning upload phase', { method: 'syncDirectory' });
+    config.logger.verbose('Beginning upload phase', {
+      method: 'syncDirectory',
+    });
     const uploadTasks: Array<Promise<void>> = [];
 
     for (const [relPath, localAbsPath] of localFiles) {
@@ -110,7 +112,7 @@ export async function syncDirectory(
       uploadTasks.push(
         limiter(() =>
           syncSingleEntry({
-            ctx,
+            config,
             direction: 'upload',
             localPath: localAbsPath,
             remotePath: remoteAbsPath,
@@ -130,7 +132,9 @@ export async function syncDirectory(
   }
 
   if (syncDirection === 'download' || syncDirection === 'both') {
-    ctx.logger.verbose('Beginning download phase', { method: 'syncDirectory' });
+    config.logger.verbose('Beginning download phase', {
+      method: 'syncDirectory',
+    });
     const downloadTasks: Array<Promise<void>> = [];
 
     for (const [relPath, remoteFile] of remoteFiles) {
@@ -140,7 +144,7 @@ export async function syncDirectory(
       downloadTasks.push(
         limiter(() =>
           syncSingleEntry({
-            ctx,
+            config,
             direction: 'download',
             localPath: localAbsPath,
             remotePath: remoteAbsPath,
@@ -160,7 +164,7 @@ export async function syncDirectory(
   }
 
   await deleteExtraneous({
-    ctx,
+    config,
     deleteExtraneous: deleteExtraneousParam,
     dryRun,
     localPath,

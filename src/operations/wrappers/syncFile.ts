@@ -2,7 +2,7 @@ import {
   formatSyncDirectionLog,
   syncSingleEntry,
   deleteExtraneous,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
   type SyncFileParams,
   type SyncResult,
   type SyncResultAccumulator,
@@ -12,12 +12,12 @@ import {
 /**
  * Synchronizes a single local file with a remote NetStorage path.
  *
- * @param ctx - The NetStorage client context.
+ * @param config - The NetStorage client config.
  * @param params - Configuration options for the sync operation.
  * @returns A SyncResult summarizing transferred, skipped, and deleted files.
  */
 export async function syncFile(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   {
     localPath,
     remotePath,
@@ -33,7 +33,7 @@ export async function syncFile(
     onDelete,
   }: SyncFileParams,
 ): Promise<SyncResult> {
-  ctx.logger.info(
+  config.logger.info(
     formatSyncDirectionLog({ localPath, remotePath, syncDirection }),
     {
       method: 'syncFile',
@@ -74,7 +74,7 @@ export async function syncFile(
   };
 
   await syncSingleEntry({
-    ctx,
+    config,
     direction: syncDirection,
     localPath,
     remotePath,
@@ -88,7 +88,7 @@ export async function syncFile(
   });
 
   await deleteExtraneous({
-    ctx,
+    config,
     deleteExtraneous: deleteExtraneousParam,
     dryRun,
     localPath,

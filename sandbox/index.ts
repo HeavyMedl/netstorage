@@ -1,5 +1,5 @@
 import {
-  createContext,
+  createConfig,
   syncDirectory,
   fileExists,
   removeDirectory,
@@ -11,7 +11,7 @@ import { join } from 'path';
 const LOCAL_DIR = './temp-sync-dir';
 const REMOTE_DIR = '/34612/sync-dir-test';
 
-const ctx = createContext({
+const config = createConfig({
   key: process.env.NETSTORAGE_API_KEY!,
   keyName: process.env.NETSTORAGE_API_KEYNAME!,
   host: process.env.NETSTORAGE_HOST!,
@@ -19,7 +19,7 @@ const ctx = createContext({
 });
 
 (async () => {
-  await removeDirectory(ctx, { remotePath: REMOTE_DIR }).catch(() => {});
+  await removeDirectory(config, { remotePath: REMOTE_DIR }).catch(() => {});
   rmSync(LOCAL_DIR, { recursive: true, force: true });
   mkdirSync(join(LOCAL_DIR, 'nested'), { recursive: true });
   writeFileSync(join(LOCAL_DIR, 'file1.txt'), 'one');
@@ -32,7 +32,7 @@ const ctx = createContext({
   }> = [];
 
   // First, upload files to remote
-  await uploadDirectory(ctx, {
+  await uploadDirectory(config, {
     localPath: LOCAL_DIR,
     remotePath: REMOTE_DIR,
   });
@@ -43,7 +43,7 @@ const ctx = createContext({
   // Remove a file locally to simulate one present only on remote
   rmSync(join(LOCAL_DIR, 'file1.txt'));
 
-  await syncDirectory(ctx, {
+  await syncDirectory(config, {
     localPath: LOCAL_DIR,
     remotePath: REMOTE_DIR,
     syncDirection: 'both',
@@ -52,7 +52,7 @@ const ctx = createContext({
 
   // Expect file1.txt to be re-downloaded, and file3.txt to be uploaded
   const file1Restored = existsSync(join(LOCAL_DIR, 'file1.txt'));
-  const file3Uploaded = await fileExists(ctx, `${REMOTE_DIR}/file3.txt`);
+  const file3Uploaded = await fileExists(config, `${REMOTE_DIR}/file3.txt`);
 
   if (file1Restored && file3Uploaded) {
     console.log('Sync successful');

@@ -5,7 +5,7 @@ import pLimit from 'p-limit';
 import {
   download,
   remoteWalk,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
   type RemoteWalkEntry,
 } from '@/index';
 
@@ -55,11 +55,11 @@ async function fileExistsLocal(path: string): Promise<boolean> {
 /**
  * Downloads all files from a remote directory to a local path, respecting filters and concurrency.
  *
- * @param ctx NetStorage client context.
+ * @param config NetStorage client config.
  * @param params Download options.
  */
 export async function downloadDirectory(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   params: DownloadDirectoryParams,
 ): Promise<void> {
   const {
@@ -73,7 +73,7 @@ export async function downloadDirectory(
     shouldDownload,
   } = params;
 
-  ctx.logger.info(`Downloading ${remotePath} → ${path.resolve(localPath)}`, {
+  config.logger.info(`Downloading ${remotePath} → ${path.resolve(localPath)}`, {
     method: 'downloadDirectory',
   });
 
@@ -81,7 +81,7 @@ export async function downloadDirectory(
 
   const tasks: Array<Promise<void>> = [];
 
-  for await (const entry of remoteWalk(ctx, { path: remotePath })) {
+  for await (const entry of remoteWalk(config, { path: remotePath })) {
     const dest = path.join(localPath, entry.relativePath);
 
     if (entry.file.type === 'dir') {
@@ -90,7 +90,7 @@ export async function downloadDirectory(
 
     const task = limit(async () => {
       if (shouldDownload && !(await shouldDownload(entry))) {
-        ctx.logger.debug(`Skipping via shouldDownload: ${entry.path}`, {
+        config.logger.debug(`Skipping via shouldDownload: ${entry.path}`, {
           method: 'downloadDirectory',
         });
         onSkip?.({
@@ -102,7 +102,7 @@ export async function downloadDirectory(
       }
 
       if (!overwrite && (await fileExistsLocal(dest))) {
-        ctx.logger.debug(`Skipping existing file: ${dest}`, {
+        config.logger.debug(`Skipping existing file: ${dest}`, {
           method: 'downloadDirectory',
         });
         onSkip?.({ remotePath: entry.path, localPath: dest, reason: 'exists' });
@@ -110,7 +110,7 @@ export async function downloadDirectory(
       }
 
       if (dryRun) {
-        ctx.logger.info(`[dryRun] Would download ${entry.path} → ${dest}`, {
+        config.logger.info(`[dryRun] Would download ${entry.path} → ${dest}`, {
           method: 'downloadDirectory',
         });
         onSkip?.({ remotePath: entry.path, localPath: dest, reason: 'dryRun' });
@@ -118,14 +118,14 @@ export async function downloadDirectory(
       }
 
       try {
-        ctx.logger.verbose(`Downloading ${entry.path} → ${dest}`, {
+        config.logger.verbose(`Downloading ${entry.path} → ${dest}`, {
           method: 'downloadDirectory',
         });
         await mkdir(path.dirname(dest), { recursive: true });
-        await download(ctx, { fromRemote: entry.path, toLocal: dest });
+        await download(config, { fromRemote: entry.path, toLocal: dest });
         onDownload?.({ remotePath: entry.path, localPath: dest });
       } catch (error) {
-        ctx.logger.error(
+        config.logger.error(
           `Failed to download ${entry.path} → ${dest}; error: ${error}`,
           {
             method: 'downloadDirectory',

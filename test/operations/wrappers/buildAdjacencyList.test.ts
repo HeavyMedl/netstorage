@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
 import {
-  createContext,
+  createConfig,
   buildAdjacencyList,
   removeDirectory,
   uploadDirectory,
@@ -20,7 +20,7 @@ const TEMP_DIR = join(tmpdir(), 'buildAdjacencyList-test');
 const REMOTE_DIR = '/34612/build-adjacency-list-test';
 
 describe.skipIf(!isConfigured)('buildAdjacencyList (integration)', () => {
-  const ctx = createContext({
+  const config = createConfig({
     key: NETSTORAGE_API_KEY!,
     keyName: NETSTORAGE_API_KEYNAME!,
     host: NETSTORAGE_HOST!,
@@ -33,7 +33,7 @@ describe.skipIf(!isConfigured)('buildAdjacencyList (integration)', () => {
     writeFileSync(join(TEMP_DIR, 'nested', 'b.txt'), 'B');
     writeFileSync(join(TEMP_DIR, 'nested/inner', 'c.txt'), 'C');
 
-    await uploadDirectory(ctx, {
+    await uploadDirectory(config, {
       localPath: TEMP_DIR,
       remotePath: REMOTE_DIR,
     });
@@ -41,11 +41,11 @@ describe.skipIf(!isConfigured)('buildAdjacencyList (integration)', () => {
 
   afterAll(async () => {
     rmSync(TEMP_DIR, { recursive: true, force: true });
-    await removeDirectory(ctx, { remotePath: REMOTE_DIR });
+    await removeDirectory(config, { remotePath: REMOTE_DIR });
   });
 
   it('should group entries by depth and calculate total size', async () => {
-    const { depthBuckets, totalSize } = await buildAdjacencyList(ctx, {
+    const { depthBuckets, totalSize } = await buildAdjacencyList(config, {
       path: REMOTE_DIR,
     });
 

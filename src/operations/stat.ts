@@ -2,7 +2,7 @@ import {
   resolveAbortSignal,
   sendRequest,
   withRetries,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
   type NetStorageFile,
   type RequestOptions,
 } from '@/index';
@@ -34,21 +34,21 @@ export interface StatParams {
 /**
  * Retrieves metadata for a file or directory in NetStorage.
  *
- * @param ctx - Context including credentials, configuration, and logger.
+ * @param config - config including credentials, configuration, and logger.
  * @param params - Object with the target path and optional request options.
  * @returns A promise resolving to file or directory metadata.
  */
 export async function stat(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   { path, options }: StatParams,
 ): Promise<NetStorageStat> {
-  ctx.logger.verbose(path, { method: 'stat' });
-  return withRetries(ctx, 'stat', async () =>
-    sendRequest<NetStorageStat>(ctx, path, {
+  config.logger.verbose(path, { method: 'stat' });
+  return withRetries(config, 'stat', async () =>
+    sendRequest<NetStorageStat>(config, path, {
       request: { method: 'GET' },
       headers: { action: 'stat' },
       options: {
-        signal: resolveAbortSignal(ctx, options),
+        signal: resolveAbortSignal(config, options),
         ...options,
       },
     }),

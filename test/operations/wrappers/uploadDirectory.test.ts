@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
-import { createContext, removeDirectory, uploadDirectory } from '@/index';
+import { createConfig, removeDirectory, uploadDirectory } from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;
@@ -15,7 +15,7 @@ const TEMP_DIR = join(tmpdir(), 'uploadDirectory-test');
 const REMOTE_DIR = '/34612/upload-directory-test';
 
 describe.skipIf(!isConfigured)('uploadDirectory (integration)', () => {
-  const ctx = createContext({
+  const config = createConfig({
     key: NETSTORAGE_API_KEY!,
     keyName: NETSTORAGE_API_KEYNAME!,
     host: NETSTORAGE_HOST!,
@@ -35,14 +35,14 @@ describe.skipIf(!isConfigured)('uploadDirectory (integration)', () => {
 
   afterAll(async () => {
     rmSync(TEMP_DIR, { recursive: true, force: true });
-    await removeDirectory(ctx, { remotePath: REMOTE_DIR });
+    await removeDirectory(config, { remotePath: REMOTE_DIR });
   });
 
   it('should upload all files in a local directory to NetStorage', async () => {
     const uploaded: string[] = [];
     const skipped: string[] = [];
 
-    await uploadDirectory(ctx, {
+    await uploadDirectory(config, {
       localPath: TEMP_DIR,
       remotePath: REMOTE_DIR,
       onUpload: ({ remotePath }) => uploaded.push(remotePath),

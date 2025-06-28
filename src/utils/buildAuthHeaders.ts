@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 
-// Contains Akamai NetStorage API credentials and configuration
-import { generateUniqueId, type NetStorageClientContext } from '@/index';
+import { generateUniqueId, type NetStorageClientConfig } from '@/index';
 
 /**
  * Represents a set of HTTP headers.
@@ -13,13 +12,13 @@ export type HeadersMap = Record<string, string>;
 /**
  * Builds authentication headers for a NetStorage API request.
  *
- * @param context - The NetStorage client context containing credentials.
+ * @param config - The NetStorage client config containing credentials.
  * @param path - The request URI path.
  * @param queryObj - Optional query parameters to include in the action header.
  * @returns A map of headers including Akamai auth data and signature.
  */
 export function buildAuthHeaders(
-  context: NetStorageClientContext,
+  config: NetStorageClientConfig,
   path: string,
   queryObj: Record<string, string> = {},
 ): HeadersMap {
@@ -36,7 +35,7 @@ export function buildAuthHeaders(
     '0.0.0.0',
     Math.floor(Date.now() / 1000),
     generateUniqueId(),
-    context.keyName,
+    config.keyName,
   ].join(', ');
 
   const signatureInput = [
@@ -46,7 +45,7 @@ export function buildAuthHeaders(
   ].join('\n');
 
   const authSign = crypto
-    .createHmac('sha256', context.key)
+    .createHmac('sha256', config.key)
     .update(signatureInput)
     .digest('base64');
 

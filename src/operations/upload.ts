@@ -4,7 +4,7 @@ import {
   buildAuthHeaders,
   withRetries,
   resolveAbortSignal,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
   type RequestOptions,
   makeStreamRequest,
   parseXmlResponse,
@@ -40,7 +40,7 @@ export interface UploadParams {
 /**
  * Uploads a local file to the specified remote NetStorage path.
  *
- * @param ctx - Client context containing credentials and configuration.
+ * @param config - Client config containing credentials and configuration.
  * @param fromLocal - Absolute path to the local file to upload.
  * @param toRemote - Destination path in NetStorage.
  * @param options - Optional request configuration (e.g., timeout, signal).
@@ -48,29 +48,29 @@ export interface UploadParams {
  * @returns A promise resolving to the NetStorage upload response.
  */
 export async function upload(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   { fromLocal, toRemote, options, shouldUpload }: UploadParams,
 ): Promise<NetStorageUpload> {
-  ctx.logger.verbose(toRemote, { method: 'upload' });
+  config.logger.verbose(toRemote, { method: 'upload' });
 
   if (shouldUpload && !(await shouldUpload())) {
     return { status: { code: 0 } };
   }
 
-  return withRetries<NetStorageUpload>(ctx, 'upload', async () => {
+  return withRetries<NetStorageUpload>(config, 'upload', async () => {
     const inputStream = createReadStream(fromLocal);
-    const url = buildUri(ctx, toRemote);
-    const headers = buildAuthHeaders(ctx, toRemote, {
+    const url = buildUri(config, toRemote);
+    const headers = buildAuthHeaders(config, toRemote, {
       action: 'upload',
       'upload-type': 'binary',
     });
 
-    const { body, statusCode } = await makeStreamRequest(ctx, {
+    const { body, statusCode } = await makeStreamRequest(config, {
       method: 'PUT',
       url,
       headers,
       inputStream,
-      signal: options?.signal ?? resolveAbortSignal(ctx, options),
+      signal: options?.signal ?? resolveAbortSignal(config, options),
     });
 
     return parseXmlResponse<NetStorageUpload>(body ?? '', statusCode);

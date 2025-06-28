@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
 import {
-  createContext,
+  createConfig,
   fileExists,
   removeDirectory,
   syncDirectory,
@@ -19,7 +19,7 @@ const LOCAL_DIR = './temp-sync-dir';
 const REMOTE_DIR = '/34612/sync-dir-test';
 
 describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
-  const ctx = createContext({
+  const config = createConfig({
     key: NETSTORAGE_API_KEY!,
     keyName: NETSTORAGE_API_KEYNAME!,
     host: NETSTORAGE_HOST!,
@@ -34,12 +34,12 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
   });
 
   beforeEach(async () => {
-    await removeDirectory(ctx, { remotePath: REMOTE_DIR }).catch(() => {});
+    await removeDirectory(config, { remotePath: REMOTE_DIR }).catch(() => {});
   });
 
   afterAll(async () => {
     rmSync(LOCAL_DIR, { recursive: true, force: true });
-    await removeDirectory(ctx, { remotePath: REMOTE_DIR }).catch(() => {});
+    await removeDirectory(config, { remotePath: REMOTE_DIR }).catch(() => {});
   });
 
   it('should sync local files to remote using default settings', async () => {
@@ -49,7 +49,7 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
       remotePath: string;
     }> = [];
 
-    await syncDirectory(ctx, {
+    await syncDirectory(config, {
       localPath: LOCAL_DIR,
       remotePath: REMOTE_DIR,
       onTransfer: (entry) => transferred.push(entry),
@@ -57,8 +57,8 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
 
     expect(transferred.length).toBeGreaterThan(0);
 
-    const file1 = await fileExists(ctx, `${REMOTE_DIR}/file1.txt`);
-    const file2 = await fileExists(ctx, `${REMOTE_DIR}/nested/file2.txt`);
+    const file1 = await fileExists(config, `${REMOTE_DIR}/file1.txt`);
+    const file2 = await fileExists(config, `${REMOTE_DIR}/nested/file2.txt`);
 
     expect(file1).toBe(true);
     expect(file2).toBe(true);
@@ -71,7 +71,7 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
       remotePath: string;
     }> = [];
 
-    await syncDirectory(ctx, {
+    await syncDirectory(config, {
       localPath: LOCAL_DIR,
       remotePath: REMOTE_DIR,
       dryRun: true,
@@ -80,8 +80,8 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
 
     expect(transferred.length).toBeGreaterThan(0);
 
-    const file1 = await fileExists(ctx, `${REMOTE_DIR}/file1.txt`);
-    const file2 = await fileExists(ctx, `${REMOTE_DIR}/nested/file2.txt`);
+    const file1 = await fileExists(config, `${REMOTE_DIR}/file1.txt`);
+    const file2 = await fileExists(config, `${REMOTE_DIR}/nested/file2.txt`);
     // Since dryRun is true, files should not exist on remote
     expect(file1).toBe(false);
     expect(file2).toBe(false);
@@ -95,7 +95,7 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
     }> = [];
 
     // First, upload files to remote
-    await syncDirectory(ctx, {
+    await syncDirectory(config, {
       localPath: LOCAL_DIR,
       remotePath: REMOTE_DIR,
     });
@@ -104,7 +104,7 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
     rmSync(LOCAL_DIR, { recursive: true, force: true });
 
     // Perform download-only sync
-    await syncDirectory(ctx, {
+    await syncDirectory(config, {
       localPath: LOCAL_DIR,
       remotePath: REMOTE_DIR,
       syncDirection: 'download',
@@ -126,7 +126,7 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
     }> = [];
 
     // First, upload files to remote
-    await syncDirectory(ctx, {
+    await syncDirectory(config, {
       localPath: LOCAL_DIR,
       remotePath: REMOTE_DIR,
     });
@@ -137,7 +137,7 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
     // Remove a file locally to simulate one present only on remote
     rmSync(join(LOCAL_DIR, 'file1.txt'));
 
-    await syncDirectory(ctx, {
+    await syncDirectory(config, {
       localPath: LOCAL_DIR,
       remotePath: REMOTE_DIR,
       syncDirection: 'both',
@@ -148,7 +148,7 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
 
     // Expect file1.txt to be re-downloaded, and file3.txt to be uploaded
     const file1Restored = existsSync(join(LOCAL_DIR, 'file1.txt'));
-    const file3Uploaded = await fileExists(ctx, `${REMOTE_DIR}/file3.txt`);
+    const file3Uploaded = await fileExists(config, `${REMOTE_DIR}/file3.txt`);
 
     expect(file1Restored).toBe(true);
     expect(file3Uploaded).toBe(true);

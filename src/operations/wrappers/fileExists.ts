@@ -1,19 +1,19 @@
-import { stat, HttpError, type NetStorageClientContext } from '@/index';
+import { stat, HttpError, type NetStorageClientConfig } from '@/index';
 
 /**
  * Check if a file exists at the specified NetStorage path.
  *
- * @param ctx - NetStorage client context
+ * @param config - NetStorage client config
  * @param path - Remote file path to verify
  * @returns Promise resolving to true if file exists, false otherwise
  */
 export async function fileExists(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   path: string,
 ): Promise<boolean> {
-  ctx.logger.verbose(path, { method: 'fileExists' });
+  config.logger.verbose(path, { method: 'fileExists' });
   try {
-    const result = await stat(ctx, { path });
+    const result = await stat(config, { path });
     return Boolean(result?.stat?.file);
   } catch (err) {
     if (err instanceof HttpError && err.code === 404) return false;

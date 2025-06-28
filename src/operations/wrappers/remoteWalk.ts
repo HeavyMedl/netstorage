@@ -1,6 +1,6 @@
 import {
   dir,
-  type NetStorageClientContext,
+  type NetStorageClientConfig,
   type NetStorageFile,
   type NetStorageStat,
 } from '@/index';
@@ -39,17 +39,17 @@ export interface RemoteWalkParams {
 /**
  * Initiates a depth-first walk of a NetStorage directory.
  *
- * @param {NetStorageClientContext} ctx - The NetStorage client context.
+ * @param {NetStorageClientConfig} config - The NetStorage client config.
  * @param {RemoteWalkParams} params - Walk parameters.
  * @returns {AsyncGenerator<RemoteWalkEntry>} Generator yielding entries found.
  */
 export async function* remoteWalk(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   { path, maxDepth, shouldInclude }: RemoteWalkParams,
 ): AsyncGenerator<RemoteWalkEntry> {
   const rootPath = path.replace(/\/+$/, '');
   yield* remoteWalkRecursive(
-    ctx,
+    config,
     rootPath,
     rootPath,
     maxDepth,
@@ -61,7 +61,7 @@ export async function* remoteWalk(
 /**
  * Recursively traverses a NetStorage directory in depth-first order.
  *
- * @param {NetStorageClientContext} ctx - The NetStorage client context.
+ * @param {NetStorageClientConfig} config - The NetStorage client config.
  * @param {string} currentPath - Current path in traversal.
  * @param {string} rootPath - Initial root path.
  * @param {number | undefined} maxDepth - Maximum depth limit.
@@ -71,7 +71,7 @@ export async function* remoteWalk(
  * @internal
  */
 async function* remoteWalkRecursive(
-  ctx: NetStorageClientContext,
+  config: NetStorageClientConfig,
   currentPath: string,
   rootPath: string,
   maxDepth: number | undefined,
@@ -82,9 +82,9 @@ async function* remoteWalkRecursive(
 
   let result: NetStorageStat;
   try {
-    result = await dir(ctx, { path: currentPath });
+    result = await dir(config, { path: currentPath });
   } catch (err) {
-    ctx.logger.debug(`Failed to walk ${currentPath}: ${err}`, {
+    config.logger.debug(`Failed to walk ${currentPath}: ${err}`, {
       method: 'remoteWalk',
     });
     return;
@@ -115,7 +115,7 @@ async function* remoteWalkRecursive(
 
     if (entry.type === 'dir') {
       yield* remoteWalkRecursive(
-        ctx,
+        config,
         fullPath,
         rootPath,
         maxDepth,

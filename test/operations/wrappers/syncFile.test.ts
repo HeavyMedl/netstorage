@@ -7,7 +7,7 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { createContext, removeDirectory, syncFile, fileExists } from '@/index';
+import { createConfig, removeDirectory, syncFile, fileExists } from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;
@@ -20,7 +20,7 @@ const REMOTE_DIR = '/34612/sync-file-test';
 const FILE_NAME = 'file1.txt';
 
 describe.skipIf(!isConfigured)('syncFile (integration)', () => {
-  const ctx = createContext({
+  const config = createConfig({
     key: NETSTORAGE_API_KEY!,
     keyName: NETSTORAGE_API_KEYNAME!,
     host: NETSTORAGE_HOST!,
@@ -36,12 +36,12 @@ describe.skipIf(!isConfigured)('syncFile (integration)', () => {
   });
 
   beforeEach(async () => {
-    await removeDirectory(ctx, { remotePath: REMOTE_DIR }).catch(() => {});
+    await removeDirectory(config, { remotePath: REMOTE_DIR }).catch(() => {});
   });
 
   afterAll(async () => {
     rmSync(LOCAL_DIR, { recursive: true, force: true });
-    await removeDirectory(ctx, { remotePath: REMOTE_DIR }).catch(() => {});
+    await removeDirectory(config, { remotePath: REMOTE_DIR }).catch(() => {});
   });
 
   it('should sync a single file from local to remote', async () => {
@@ -51,14 +51,14 @@ describe.skipIf(!isConfigured)('syncFile (integration)', () => {
       remotePath: string;
     }> = [];
 
-    await syncFile(ctx, {
+    await syncFile(config, {
       localPath,
       remotePath,
       onTransfer: (entry) => transferred.push(entry),
     });
 
     expect(transferred.length).toBe(1);
-    const exists = await fileExists(ctx, remotePath);
+    const exists = await fileExists(config, remotePath);
     expect(exists).toBe(true);
   });
 
@@ -69,7 +69,7 @@ describe.skipIf(!isConfigured)('syncFile (integration)', () => {
       remotePath: string;
     }> = [];
 
-    await syncFile(ctx, {
+    await syncFile(config, {
       localPath,
       remotePath,
       dryRun: true,
@@ -78,12 +78,12 @@ describe.skipIf(!isConfigured)('syncFile (integration)', () => {
 
     expect(transferred.length).toBe(1);
 
-    const exists = await fileExists(ctx, remotePath);
+    const exists = await fileExists(config, remotePath);
     expect(exists).toBe(false);
   });
 
   it('should sync file from remote to local using syncDirection: download', async () => {
-    await syncFile(ctx, {
+    await syncFile(config, {
       localPath,
       remotePath,
     });
@@ -96,7 +96,7 @@ describe.skipIf(!isConfigured)('syncFile (integration)', () => {
       remotePath: string;
     }> = [];
 
-    await syncFile(ctx, {
+    await syncFile(config, {
       localPath,
       remotePath,
       syncDirection: 'download',
