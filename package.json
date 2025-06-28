@@ -32,6 +32,9 @@
   },
   "module": "./dist/index.js",
   "types": "./dist/src/index.d.ts",
+  "bin": {
+    "netstorage": "dist/cli.js"
+  },
   "files": [
     "dist"
   ],
@@ -42,12 +45,14 @@
     "docs:dev": "vitepress dev docs",
     "docs:preview": "vitepress preview docs",
     "format": "prettier --write .",
+    "link:cli": "npm run build && chmod +x dist/cli.js && npm link",
     "lint": "eslint .",
     "lint-staged": "lint-staged",
     "lint:fix": "eslint . --fix",
     "open-coverage": "npm run test && open ./coverage/index.html",
     "prepare": "husky",
-    "sandbox": "vite-node sandbox/index.ts",
+    "sandbox:api": "vite-node sandbox/index.ts",
+    "sandbox:cli": "vite-node src/cli/index.ts",
     "test": "vitest run --coverage"
   },
   "lint-staged": {
@@ -59,7 +64,6 @@
   },
   "dependencies": {
     "commander": "^14.0.0",
-    "dotenv": "^17.0.0",
     "fast-xml-parser": "^5.2.5",
     "klaw": "^4.1.0",
     "limiter": "^3.0.0",

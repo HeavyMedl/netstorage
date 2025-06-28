@@ -11,9 +11,11 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: 'src/index.ts',
+      entry: {
+        index: path.resolve(__dirname, 'src/index.ts'),
+        cli: path.resolve(__dirname, 'src/cli/index.ts'),
+      },
       formats: ['es'],
-      fileName: 'index',
     },
   },
 });
