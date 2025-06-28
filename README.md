@@ -73,11 +73,11 @@ await removeDirectory(config, { remotePath: '/12345/old-assets' });
 
 WIP
 
-### Context and Configuration
+### Configuration
 
 Essential utilities to authenticate and configure the client.
 
-- `createConfig` — Unified factory to create a fully resolved client context
+- `createConfig` — Unified factory to create a fully resolved client configuration.
 
 ### Core Operations
 
