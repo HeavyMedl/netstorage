@@ -58,6 +58,8 @@
     ]
   },
   "dependencies": {
+    "commander": "^14.0.0",
+    "dotenv": "^17.0.0",
     "fast-xml-parser": "^5.2.5",
     "klaw": "^4.1.0",
     "limiter": "^3.0.0",

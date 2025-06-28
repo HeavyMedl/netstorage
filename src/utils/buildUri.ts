@@ -15,5 +15,7 @@ export function buildUri(
 ): string {
   const protocol = context.ssl ? 'https' : 'http';
   const base = `${protocol}://${context.host}`;
-  return new URL(path, base).toString();
+  const cpCodePrefix = context.cpCode ? `/${context.cpCode}` : '';
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return new URL(`${cpCodePrefix}${normalizedPath}`, base).toString();
 }

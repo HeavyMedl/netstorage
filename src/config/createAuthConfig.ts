@@ -8,11 +8,16 @@ import { name as packageName } from '../../package.json';
  * @property {string} host - The NetStorage hostname (without protocol).
  * @property {boolean} [ssl] - Whether to use SSL (HTTPS). Defaults to false.
  */
+/**
+ * Optional CP code to inform remote path construction (e.g., /123456/...)
+ * @property {string} [cpCode]
+ */
 export interface NetStorageAuthConfig {
   key: string;
   keyName: string;
   host: string;
   ssl?: boolean;
+  cpCode?: string;
 }
 
 /**
@@ -39,7 +44,7 @@ function assertNonEmpty(value: string, name: string): void {
 export function createAuthConfig(
   params: NetStorageAuthConfig,
 ): NetStorageAuthConfig {
-  const { key, keyName, host, ssl = false } = params;
+  const { key, keyName, host, cpCode, ssl = false } = params;
 
   assertNonEmpty(key, 'key');
   assertNonEmpty(keyName, 'keyName');
@@ -50,5 +55,6 @@ export function createAuthConfig(
     keyName,
     host,
     ssl,
+    cpCode,
   };
 }
