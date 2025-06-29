@@ -17,7 +17,10 @@ export function createDownloadCommand(
     .description('Download a file from NetStorage to a local path')
     .usage('<remotePath> [localPath] [options]')
     .argument('<remotePath>', 'Remote path to download from')
-    .argument('[localPath]', 'Local file path to save content to')
+    .argument(
+      '[localPath]',
+      'Local file path to save content to (inferred if omitted)',
+    )
     .option(
       '--timeout <ms>',
       'Request timeout in milliseconds',
@@ -64,17 +67,15 @@ export function createDownloadCommand(
           localPathArg ||
           path.resolve(process.cwd(), path.basename(remotePath));
 
-        const signal = resolveAbortSignal(cancelAfter);
-        const shouldDownload = dryRun ? async () => false : undefined;
         const result = await download(config, {
           fromRemote: remotePath,
           toLocal: localPath,
-          options: { timeout, signal },
-          shouldDownload,
+          options: { timeout, signal: resolveAbortSignal(cancelAfter) },
+          shouldDownload: dryRun ? async () => false : undefined,
         });
         if (dryRun) {
           logger.info(
-            `[Dry Run] Skipped download: ${remotePath} → ${localPath}`,
+            `[Dry Run] Skipped download: ${config.uri(remotePath)} → ${localPath}`,
           );
           return;
         }

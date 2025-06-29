@@ -6,6 +6,7 @@ import { createLogger } from '@/index';
 import { createRemoteInspectCommand } from './commands/createRemoteInspectCommand';
 import { createConfigCommand } from './commands/createConfigCommand';
 import { createDownloadCommand } from './commands/createDownloadCommand';
+import { createUploadCommand } from './commands/createUploadCommand';
 
 const logger = createLogger('info', `netstorage/cli`);
 
@@ -41,4 +42,5 @@ program.addCommand(
 );
 program.addCommand(createConfigCommand(logger));
 program.addCommand(createDownloadCommand(logger));
+program.addCommand(createUploadCommand(logger));
 program.parseAsync(process.argv);

@@ -1,5 +1,6 @@
 import { ConfigValidationError } from '@/errors/configValidationError';
 import { name as packageName } from '../../package.json';
+import { buildUri } from '@/utils/buildUri';
 
 import {
   createLogger,
@@ -21,6 +22,7 @@ import {
  * @property {{ timeout?: number }} [request] - Optional request config (e.g., request timeout in ms).
  * @property {ReturnType<typeof createLogger>} logger - Logger instance to use for internal logging.
  * @property {ReturnType<typeof createRateLimiters>} rateLimiters - Rate limiter instance to use for request throttling.
+ * @property {(path?: string) => string} uri - Method to build a URI with an optional path.
  */
 export interface NetStorageClientConfig {
   key: string;
@@ -35,6 +37,7 @@ export interface NetStorageClientConfig {
   };
   logger: ReturnType<typeof createLogger>;
   rateLimiters: ReturnType<typeof createRateLimiters>;
+  uri(path?: string): string;
 }
 
 /**
@@ -85,6 +88,9 @@ export function createConfig(
     request: {
       ...input.request,
       timeout,
+    },
+    uri(path = '') {
+      return buildUri(this, path);
     },
   };
 }
