@@ -5,7 +5,7 @@ import {
   clearPersistentConfig,
   getPersistentConfigPath,
 } from '../utils/configStore';
-import { parseTimeout } from '../utils';
+import { validateTimeout } from '../utils';
 
 export function createConfigCommand(
   logger: ReturnType<typeof import('@/index').createLogger>,
@@ -36,7 +36,7 @@ export function createConfigCommand(
         .option(
           '--timeout <ms>',
           'Request timeout in milliseconds',
-          parseTimeout,
+          validateTimeout,
         )
         .action((options) => {
           savePersistentconfig(options);

@@ -5,17 +5,16 @@ import { version } from '../../package.json';
 import { createLogger } from '@/index';
 import { createRemoteInspectCommand } from './commands/createRemoteInspectCommand';
 import { createConfigCommand } from './commands/createConfigCommand';
+import { createDownloadCommand } from './commands/createDownloadCommand';
 
 const logger = createLogger('info', `netstorage/cli`);
 
 const program = new Command();
-
 program
   .name('netstorage')
   .description(`Unofficial Akamai NetStorage CLI`)
   .version(version)
   .usage('[command] [options]');
-
 program.addCommand(
   createRemoteInspectCommand({
     name: 'stat',
@@ -24,7 +23,6 @@ program.addCommand(
     logger,
   }),
 );
-
 program.addCommand(
   createRemoteInspectCommand({
     name: 'dir',
@@ -33,7 +31,6 @@ program.addCommand(
     logger,
   }),
 );
-
 program.addCommand(
   createRemoteInspectCommand({
     name: 'du',
@@ -42,7 +39,6 @@ program.addCommand(
     logger,
   }),
 );
-
 program.addCommand(createConfigCommand(logger));
-
+program.addCommand(createDownloadCommand(logger));
 program.parseAsync(process.argv);

@@ -1,13 +1,14 @@
 import { ConfigValidationError, createLogger, HttpError } from '@/index';
 import { getReasonPhrase } from 'http-status-codes';
+import type { WinstonLogLevel } from '@/index';
 
-export function parseTimeout(v: string): number {
+export function validateTimeout(v: string): number {
   const n = parseInt(v, 10);
   if (isNaN(n)) throw new Error('Invalid timeout value');
   return n;
 }
 
-export function parseCancelAfter(v: string): number {
+export function validateCancelAfter(v: string): number {
   const n = parseInt(v, 10);
   if (isNaN(n)) throw new Error('Invalid cancel-after value');
   return n;
@@ -41,4 +42,22 @@ export function handleCliError(
     console.error(err);
   }
   process.exit(1);
+}
+
+export function getLogLevelOverride(
+  logLevel?: string,
+  verbose?: boolean,
+): Partial<{ logLevel: WinstonLogLevel }> | undefined {
+  const allowedLevels: WinstonLogLevel[] = [
+    'error',
+    'warn',
+    'info',
+    'verbose',
+    'debug',
+    'silly',
+  ];
+  const resolved = logLevel ?? (verbose ? 'verbose' : undefined);
+  return allowedLevels.includes(resolved as WinstonLogLevel)
+    ? { logLevel: resolved as WinstonLogLevel }
+    : undefined;
 }
