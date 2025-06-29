@@ -13,7 +13,18 @@ const logger = createLogger('info', `netstorage/cli`);
 const program = new Command();
 program
   .name('netstorage')
-  .description(`Unofficial Akamai NetStorage CLI`)
+  .description(
+    [
+      'An unofficial CLI for Akamai NetStorage that makes it easy to inspect,',
+      'manage, and transfer files or directories using familiar commands.',
+      'Supported operations include stat, dir, du, mkdir, rmdir, rm, upload,',
+      'and download — with options for timeouts, dry runs, and output formatting.',
+      '',
+      'Persistent config management and verbose logging are supported to enhance',
+      'flexibility. Built-in rate limiting, retry logic, and concurrency controls',
+      'ensure robust and efficient execution.',
+    ].join('\n'),
+  )
   .version(version)
   .usage('[command] [options]');
 program.addCommand(

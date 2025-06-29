@@ -19,7 +19,7 @@ export function createConfigCommand(
       [
         '',
         'Examples:',
-        '  $ npx netstorage config set --host example.akamai.net --key abc123 --key-name xyz',
+        '  $ npx netstorage config set --host example.akamai.net --key abc123 --key-name xyz --cp-code 123456',
         '  $ npx netstorage config show',
         '  $ npx netstorage config clear',
         '  $ npx netstorage config path',

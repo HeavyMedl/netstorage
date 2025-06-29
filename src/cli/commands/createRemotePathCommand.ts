@@ -64,10 +64,7 @@ export function createRemotePathCommand(
       [
         '',
         'Examples:',
-        `  $ npx netstorage ${name} ${examplePath}`,
-        `  $ npx netstorage ${name} --timeout 5000`,
-        `  $ npx netstorage ${name} --cancel-after 3000`,
-        `  $ npx netstorage ${name} --pretty`,
+        `  $ npx netstorage ${name} ${examplePath} --timeout 5000 --cancel-after 3000 --pretty --verbose --dry-run`,
         '',
         'Options:',
         '  --timeout <ms>        Set request timeout in milliseconds',

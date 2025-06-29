@@ -40,10 +40,7 @@ export function createDownloadCommand(
       [
         '',
         'Examples:',
-        '  $ npx netstorage download /remote/path /local/file.txt',
-        '  $ npx netstorage download /remote/path /local/file.txt --timeout 5000',
-        '  $ npx netstorage download /remote/path /local/file.txt --cancel-after 3000',
-        '  $ npx netstorage download /remote/path /local/file.txt --pretty',
+        '  $ npx netstorage download /remote/path /local/file.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
         '',
         'Options:',
         '  --timeout <ms>        Set request timeout in milliseconds',

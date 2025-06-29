@@ -40,9 +40,7 @@ export function createUploadCommand(
       [
         '',
         'Examples:',
-        '  $ npx netstorage upload ./file.txt /123456/file.txt',
-        '  $ npx netstorage upload ./file.txt /123456/file.txt --timeout 5000',
-        '  $ npx netstorage upload ./file.txt /123456/file.txt --dry-run',
+        '  $ npx netstorage upload ./file.txt /123456/file.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
         '',
         'Options:',
         '  --timeout <ms>        Set request timeout in milliseconds',
