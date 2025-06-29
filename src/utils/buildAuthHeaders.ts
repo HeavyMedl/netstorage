@@ -38,8 +38,13 @@ export function buildAuthHeaders(
     config.keyName,
   ].join(', ');
 
+  const normalizedPath =
+    config.cpCode && !path.startsWith(`/${config.cpCode}`)
+      ? `/${config.cpCode}${path.startsWith('/') ? path : `/${path}`}`
+      : path;
+
   const signatureInput = [
-    authData + path.replace(/\/$/, ''),
+    authData + normalizedPath.replace(/\/$/, ''),
     `x-akamai-acs-action:${query}`,
     '',
   ].join('\n');

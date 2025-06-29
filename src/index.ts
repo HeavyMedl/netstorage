@@ -1,6 +1,7 @@
 export * from '@/config/createConfig';
 
 export * from '@/errors/httpError';
+export * from '@/errors/configValidationError';
 
 export * from '@/operations/dir';
 export * from '@/operations/download';

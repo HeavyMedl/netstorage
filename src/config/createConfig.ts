@@ -1,4 +1,6 @@
+import { ConfigValidationError } from '@/errors/configValidationError';
 import { name as packageName } from '../../package.json';
+
 import {
   createLogger,
   createRateLimiters,
@@ -36,16 +38,15 @@ export interface NetStorageClientConfig {
 }
 
 /**
- * Throws a TypeError if the provided string is missing or contains only whitespace.
+ * Throws a ConfigValidationError if the provided string is missing or contains only whitespace.
  *
  * @param value - The string to validate.
- * @param name - A human-readable name for the config key (used in error messages).
+ * @param field - The name of the field being validated.
+ * @throws {ConfigValidationError} If the string is missing or contains only whitespace.
  */
-function assertNonEmpty(value: string, name: string): void {
+function assertNonEmpty(value: string, field: string): void {
   if (typeof value !== 'string' || !value.trim()) {
-    throw new TypeError(
-      `[${packageName}]: Missing or invalid \`${name}\` in configuration`,
-    );
+    throw new ConfigValidationError(field);
   }
 }
 
@@ -55,7 +56,7 @@ function assertNonEmpty(value: string, name: string): void {
  *
  * @param input - A partial configuration object provided by the consumer.
  * @returns A complete NetStorageClientConfig with defaults applied and values validated.
- * @throws {TypeError} If any required fields (`key`, `keyName`, `host`) are missing or invalid.
+ * @throws {ConfigValidationError} If a required field is missing or invalid.
  */
 export function createConfig(
   input: Partial<NetStorageClientConfig>,

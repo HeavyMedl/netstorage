@@ -24,6 +24,23 @@ async function loadFileConfig(): Promise<Partial<NetStorageClientConfig>> {
 }
 
 /**
+ * Removes any properties from the given object that have an undefined value.
+ *
+ * @example
+ * const input = { foo: 'bar', baz: undefined };
+ * const output = removeUndefined(input);
+ * // output is { foo: 'bar' }
+ *
+ * @param obj The object to filter.
+ * @returns A new object missing any properties with undefined values from the input object.
+ */
+function removeUndefined<T extends object>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined),
+  ) as Partial<T>;
+}
+
+/**
  * Resolves a complete NetStorage client config from layered configuration sources.
  *
  * Resolution order (highest to lowest priority):
@@ -45,18 +62,15 @@ export async function loadClientConfig(
     ssl: process.env.NETSTORAGE_SSL === 'true',
     cpCode: process.env.NETSTORAGE_CP_CODE,
   };
-
   const fileConfig = await loadFileConfig();
-
-  // Load persistent CLI config
   const persistentConfig = loadPersistentConfig();
 
   // Merge: CLI > Env > File > Persistent
   const merged: Partial<NetStorageClientConfig> = {
-    ...persistentConfig,
-    ...fileConfig,
-    ...envConfig,
-    ...cliOptions,
+    ...removeUndefined(persistentConfig),
+    ...removeUndefined(fileConfig),
+    ...removeUndefined(envConfig),
+    ...removeUndefined(cliOptions),
   };
 
   return createConfig(merged as NetStorageClientConfig);
