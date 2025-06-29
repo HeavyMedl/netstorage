@@ -1,9 +1,9 @@
 import { Command } from 'commander';
-import { stat, dir, createLogger } from '@/index';
+import { stat, dir, createLogger, du } from '@/index';
 import { loadClientConfig } from '../utils/loadConfig';
 import { handleCliError, resolveAbortSignal } from '../utils';
 
-const operations = { stat, dir };
+const operations = { stat, dir, du };
 
 type InspectCommandName = keyof typeof operations;
 

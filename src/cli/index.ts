@@ -34,6 +34,15 @@ program.addCommand(
   }),
 );
 
+program.addCommand(
+  createRemoteInspectCommand({
+    name: 'du',
+    description: 'Retrieve disk usage for a remote path',
+    examplePath: '/some/folder',
+    logger,
+  }),
+);
+
 program.addCommand(createConfigCommand(logger));
 
 program.parseAsync(process.argv);
