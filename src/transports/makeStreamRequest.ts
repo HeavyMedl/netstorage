@@ -162,7 +162,7 @@ function createStreamRequestError(
     .filter(Boolean)
     .join('');
   const code = statusCode ?? 500;
-  return new HttpError(message, code);
+  return new HttpError(message, code, method, url);
 }
 
 /**

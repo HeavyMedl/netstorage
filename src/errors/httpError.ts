@@ -5,6 +5,8 @@
  */
 export class HttpError extends Error {
   code: number;
+  method: string;
+  url: string;
 
   /**
    * Creates a new HttpError instance.
@@ -12,8 +14,10 @@ export class HttpError extends Error {
    * @param {string} message - The error message.
    * @param {number} code - The HTTP status code.
    */
-  constructor(message: string, code: number) {
+  constructor(message: string, code: number, method?: string, url?: string) {
     super(message);
     this.code = code;
+    this.method = method ?? '';
+    this.url = url ?? '';
   }
 }

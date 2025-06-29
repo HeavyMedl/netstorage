@@ -11,8 +11,17 @@ import type { NetStorageClientConfig } from '@/index';
  */
 export function buildUri(config: NetStorageClientConfig, path: string): string {
   const protocol = config.ssl ? 'https' : 'http';
-  const base = `${protocol}://${config.host}`;
-  const cpCodePrefix = config.cpCode ? `/${config.cpCode}` : '';
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return new URL(`${cpCodePrefix}${normalizedPath}`, base).toString();
+  const url = new URL(`${protocol}://${config.host}`);
+
+  const segments = [];
+  if (config.cpCode) segments.push(config.cpCode);
+  if (path) segments.push(path.replace(/^\/+/, ''));
+
+  url.pathname = segments.join('/');
+
+  if (url.pathname !== '/') {
+    url.pathname = url.pathname.replace(/\/$/, '');
+  }
+
+  return url.toString();
 }

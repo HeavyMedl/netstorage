@@ -1,0 +1,44 @@
+import { ConfigValidationError, createLogger, HttpError } from '@/index';
+import { getReasonPhrase } from 'http-status-codes';
+
+export function parseTimeout(v: string): number {
+  const n = parseInt(v, 10);
+  if (isNaN(n)) throw new Error('Invalid timeout value');
+  return n;
+}
+
+export function parseCancelAfter(v: string): number {
+  const n = parseInt(v, 10);
+  if (isNaN(n)) throw new Error('Invalid cancel-after value');
+  return n;
+}
+
+export function resolveAbortSignal(
+  cancelAfter?: number,
+): AbortSignal | undefined {
+  if (cancelAfter != null) {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), cancelAfter);
+    return controller.signal;
+  }
+  return undefined;
+}
+
+export function handleCliError(
+  err: unknown,
+  logger: ReturnType<typeof createLogger>,
+): void {
+  if (err instanceof ConfigValidationError) {
+    logger.error(err.message);
+    logger.info(`$ npx netstorage config set [${err.field}] [value]`);
+  } else if (err instanceof HttpError) {
+    const reason = getReasonPhrase(err.code) || 'Unknown';
+    logger.error(
+      `HTTP ${err.code} ${reason} (${err.method?.toUpperCase()} ${err.url})`,
+    );
+  } else {
+    logger.error('Unexpected error');
+    console.error(err);
+  }
+  process.exit(1);
+}

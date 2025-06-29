@@ -39,10 +39,11 @@ export async function sendRequest<T>(
 ): Promise<T> {
   const url = buildUri(config, path);
   const headers = buildAuthHeaders(config, path, params.headers ?? {});
+  const method = params.request?.method ?? 'GET';
 
   config.logger.debug(
     `Requesting: ${url} (path: ${path}) meta: ${JSON.stringify({
-      method: params.request?.method ?? 'GET',
+      method: method,
       headers,
       body: params.body,
     })}`,
@@ -50,7 +51,7 @@ export async function sendRequest<T>(
   );
 
   const response = await fetch(url, {
-    method: params.request?.method ?? 'GET',
+    method: method,
     headers,
     body: params.body,
     signal: resolveAbortSignal(config, params.options),
@@ -61,7 +62,7 @@ export async function sendRequest<T>(
   if (response.status >= 300) {
     let msg = `Unexpected HTTP ${response.status} received from server for request to: ${path}`;
     msg += `. Body: ${body}`;
-    throw new HttpError(msg, response.status);
+    throw new HttpError(msg, response.status, method, url);
   }
 
   config.logger.debug(
