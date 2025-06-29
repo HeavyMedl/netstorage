@@ -76,7 +76,7 @@ export function createUploadCommand(
           });
           if (dryRun) {
             config.logger.info(
-              `Dry run: would upload ${fromLocal} to ${config.uri(inferredToRemote)}`,
+              `[Dry Run] would upload ${fromLocal} to ${config.uri(inferredToRemote)}`,
             );
             return;
           }
