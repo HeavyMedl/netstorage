@@ -7,6 +7,7 @@ import {
   type LocalWalkEntry,
   type NetStorageClientConfig,
 } from '@/index';
+import type { NetStorageUpload } from '@/operations/upload';
 
 /**
  * Parameters for uploading a local directory to a NetStorage destination.
@@ -47,6 +48,18 @@ export interface UploadDirectoryParams {
 }
 
 /**
+ * Represents the result of uploading a single file in a directory upload operation.
+ *
+ * @property localPath - Absolute or relative local path to the uploaded file.
+ * @property remotePath - The corresponding NetStorage destination path.
+ * @property status - Response status returned by the NetStorage API, including the HTTP-style status code.
+ */
+export interface UploadResult extends NetStorageUpload {
+  localPath: string;
+  remotePath: string;
+}
+
+/**
  * Uploads files from a local directory to NetStorage.
  *
  * Traverses the local directory and uploads files to the specified remote path.
@@ -70,12 +83,13 @@ export async function uploadDirectory(
     onSkip,
     shouldUpload,
   }: UploadDirectoryParams,
-): Promise<void> {
+): Promise<UploadResult[]> {
   const { logger } = config;
   const limiter = pLimit(maxConcurrency);
   const tasks: Array<Promise<void>> = [];
+  const results: UploadResult[] = [];
 
-  logger.info(`Uploading ${localPath} → ${remotePath}`, {
+  logger.verbose(`Uploading ${localPath} → ${remotePath}`, {
     method: 'uploadDirectory',
   });
 
@@ -122,11 +136,17 @@ export async function uploadDirectory(
       }
 
       try {
-        await upload(config, {
+        const uploadResult = await upload(config, {
           fromLocal: entry.localPath,
           toRemote: destPath,
         });
         onUpload?.({ localPath: entry.localPath, remotePath: destPath });
+
+        results.push({
+          localPath: entry.localPath,
+          remotePath: destPath,
+          status: uploadResult.status,
+        });
       } catch (error) {
         logger.error(
           `Failed to upload ${entry.localPath} → ${destPath}; error: ${error}`,
@@ -140,4 +160,5 @@ export async function uploadDirectory(
   }
 
   await Promise.all(tasks);
+  return results;
 }
