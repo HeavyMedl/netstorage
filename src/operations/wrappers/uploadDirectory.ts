@@ -89,7 +89,7 @@ export async function uploadDirectory(
   const tasks: Array<Promise<void>> = [];
   const results: UploadResult[] = [];
 
-  logger.verbose(`Uploading ${localPath} → ${remotePath}`, {
+  logger.verbose(`Uploading ${localPath} → ${config.uri(remotePath)}`, {
     method: 'uploadDirectory',
   });
 
