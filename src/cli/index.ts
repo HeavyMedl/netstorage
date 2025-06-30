@@ -7,6 +7,10 @@ import { createRemotePathCommand } from './commands/createRemotePathCommand';
 import { createConfigCommand } from './commands/createConfigCommand';
 import { createDownloadCommand } from './commands/createDownloadCommand';
 import { createUploadCommand } from './commands/createUploadCommand';
+import { createSymlinkCommand } from './commands/createSymlinkCommand';
+import { createRenameCommand } from './commands/createRenameCommand';
+import { createMtimeCommand } from './commands/createMtimeCommand';
+import { createTreeCommand } from './commands/createTreeCommand';
 
 const logger = createLogger('info', `netstorage/cli`);
 
@@ -102,4 +106,8 @@ program.addCommand(
 program.addCommand(createConfigCommand(logger));
 program.addCommand(createDownloadCommand(logger));
 program.addCommand(createUploadCommand(logger));
+program.addCommand(createSymlinkCommand(logger));
+program.addCommand(createRenameCommand(logger));
+program.addCommand(createMtimeCommand(logger));
+program.addCommand(createTreeCommand(logger));
 program.parseAsync(process.argv);

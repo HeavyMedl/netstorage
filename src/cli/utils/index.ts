@@ -61,3 +61,8 @@ export function getLogLevelOverride(
     ? { logLevel: resolved as WinstonLogLevel }
     : undefined;
 }
+
+export function printJson(data: unknown, pretty = false) {
+  const payload = pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data);
+  process.stdout.write(payload + '\n');
+}

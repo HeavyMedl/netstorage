@@ -66,7 +66,7 @@ export async function tree(
     showRelativePath,
     showAbsolutePath,
   } = params;
-  config.logger.info(`Generating directory tree for ${path}`, {
+  config.logger.verbose(`Generating directory tree for ${path}`, {
     method: 'tree',
   });
   const { depthBuckets, totalSize } = await buildAdjacencyList(config, {
@@ -74,6 +74,19 @@ export async function tree(
     maxDepth,
     shouldInclude,
   });
+  if (
+    depthBuckets.length === 0 ||
+    (depthBuckets[0]?.entries.length ?? 0) === 0
+  ) {
+    config.logger.warn(`No directory entries found at ${config.uri(path)}`, {
+      method: 'tree',
+    });
+    return {
+      depthBuckets: [],
+      directorySizeMap: new Map(),
+      totalSize: 0,
+    };
+  }
   // Flatten all entries for aggregation
   const allEntries: RemoteWalkEntry[] = depthBuckets.flatMap(
     (bucket) => bucket.entries,

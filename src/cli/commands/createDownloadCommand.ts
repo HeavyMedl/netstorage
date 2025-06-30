@@ -7,6 +7,7 @@ import {
   handleCliError,
   resolveAbortSignal,
   getLogLevelOverride,
+  printJson,
 } from '../utils';
 import { loadClientConfig } from '../utils/loadConfig';
 
@@ -55,15 +56,12 @@ export function createDownloadCommand(
       try {
         const { timeout, cancelAfter, logLevel, dryRun, pretty, verbose } =
           this.opts();
-
         const config = await loadClientConfig(
           getLogLevelOverride(logLevel, verbose),
         );
-
         const localPath =
           localPathArg ||
           path.resolve(process.cwd(), path.basename(remotePath));
-
         const result = await download(config, {
           fromRemote: remotePath,
           toLocal: localPath,
@@ -76,9 +74,7 @@ export function createDownloadCommand(
           );
           return;
         }
-        process.stdout.write(
-          pretty ? JSON.stringify(result, null, 2) : JSON.stringify(result),
-        );
+        printJson(result, pretty);
       } catch (err) {
         handleCliError(err, logger);
       }

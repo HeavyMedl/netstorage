@@ -1,0 +1,82 @@
+import { Command } from 'commander';
+import { basename } from 'node:path';
+import { createLogger, rename } from '@/index';
+import {
+  getLogLevelOverride,
+  handleCliError,
+  printJson,
+  resolveAbortSignal,
+  validateCancelAfter,
+  validateTimeout,
+} from '../utils';
+import { loadClientConfig } from '../utils/loadConfig';
+
+export function createRenameCommand(
+  logger: ReturnType<typeof createLogger>,
+): Command {
+  return new Command('rename')
+    .description('Rename a file or directory in NetStorage')
+    .argument('<from>', 'Current path of the file or directory')
+    .argument(
+      '[to]',
+      'New path for the file or directory (inferred from source if omitted)',
+    )
+    .usage('<from> [to] [options]')
+    .option(
+      '--timeout <ms>',
+      'Set request timeout in milliseconds',
+      validateTimeout,
+    )
+    .option(
+      '--cancel-after <ms>',
+      'Automatically abort the request after a given time',
+      validateCancelAfter,
+    )
+    .option('--log-level <level>', 'Override the log level')
+    .option('-v, --verbose', 'Enable verbose logging')
+    .option('--dry-run', 'Print the planned rename operation without executing')
+    .option('--pretty', 'Pretty-print the JSON output')
+    .addHelpText(
+      'after',
+      [
+        '',
+        'Examples:',
+        '  $ npx netstorage rename /old/path.txt /new/path.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
+        '',
+        'Options:',
+        '  --timeout <ms>        Set request timeout in milliseconds',
+        '  --cancel-after <ms>   Automatically abort the request after a given time',
+        '  --log-level <level>   Override the log level',
+        '  -v, --verbose         Enable verbose logging',
+        '  --dry-run             Print the planned rename operation without executing',
+        '  --pretty              Pretty-print the JSON output',
+      ].join('\n'),
+    )
+    .action(async (from: string, to: string | undefined, options) => {
+      const { timeout, cancelAfter, pretty, dryRun, logLevel, verbose } =
+        options;
+      try {
+        const config = await loadClientConfig(
+          getLogLevelOverride(logLevel, verbose),
+        );
+        const inferredTo = to ?? basename(from);
+        if (dryRun) {
+          config.logger.info(
+            `[Dry Run] would rename ${config.uri(from)} -> ${config.uri(inferredTo)}`,
+          );
+          return;
+        }
+        const result = await rename(config, {
+          pathFrom: from,
+          pathTo: inferredTo,
+          options: {
+            timeout,
+            signal: resolveAbortSignal(cancelAfter),
+          },
+        });
+        printJson(result, pretty);
+      } catch (err) {
+        handleCliError(err, logger);
+      }
+    });
+}

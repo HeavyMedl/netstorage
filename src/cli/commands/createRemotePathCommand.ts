@@ -4,6 +4,7 @@ import { loadClientConfig } from '../utils/loadConfig';
 import {
   getLogLevelOverride,
   handleCliError,
+  printJson,
   resolveAbortSignal,
   validateCancelAfter,
   validateTimeout,
@@ -80,18 +81,15 @@ export function createRemotePathCommand(
       try {
         const { timeout, cancelAfter, pretty, logLevel, verbose, dryRun } =
           this.opts();
-
         const config = await loadClientConfig(
           getLogLevelOverride(logLevel, verbose),
         );
-
         if (dryRun) {
           config.logger.info(
             `[Dry Run] would execute '${name}' on ${config.uri(remotePath || '/')}`,
           );
           return;
         }
-
         const result = await operations[name](config, {
           path: remotePath || '/',
           options: {
@@ -99,9 +97,7 @@ export function createRemotePathCommand(
             signal: resolveAbortSignal(cancelAfter),
           },
         });
-        process.stdout.write(
-          pretty ? JSON.stringify(result, null, 2) : JSON.stringify(result),
-        );
+        printJson(result, pretty);
       } catch (err) {
         handleCliError(err, logger);
       }
