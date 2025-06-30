@@ -92,19 +92,23 @@ export async function removeDirectory(
         continue;
       }
 
+      let didRemove = false;
+
       if (entry.file.type === 'file' || entry.file.type === 'symlink') {
         await rm(config, { path: entry.path });
+        didRemove = true;
       } else if (entry.file.type === 'dir' && entry.file.implicit !== 'true') {
-        await rmdir(config, { path: entry.path }).catch((e) => {
-          console.error(e);
-        });
+        await rmdir(config, { path: entry.path });
+        didRemove = true;
       }
 
-      onRemove?.({ remotePath: entry.path });
-      results.push({
-        remotePath: entry.path,
-        status: { code: 200 },
-      });
+      if (didRemove) {
+        onRemove?.({ remotePath: entry.path });
+        results.push({
+          remotePath: entry.path,
+          status: { code: 200 },
+        });
+      }
     } catch (error) {
       logger.error(`Failed to remove ${entry.path}; error: ${error}`, {
         method: 'removeDirectory',
