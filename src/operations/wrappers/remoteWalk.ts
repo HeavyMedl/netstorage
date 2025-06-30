@@ -28,11 +28,13 @@ export interface RemoteWalkEntry {
  * @property {string} path - The root NetStorage path to begin traversal from.
  * @property {number} [maxDepth] - Optional maximum recursion depth.
  * @property {(entry: RemoteWalkEntry) => boolean | Promise<boolean>} [shouldInclude] - Predicate to filter entries.
+ * @property {boolean} [addSyntheticRoot] - Whether to add a synthetic root entry.
  */
 export interface RemoteWalkParams {
   path: string;
   maxDepth?: number;
   shouldInclude?: (entry: RemoteWalkEntry) => boolean | Promise<boolean>;
+  addSyntheticRoot?: boolean;
   // followSymlinks?: boolean;
 }
 
@@ -45,7 +47,7 @@ export interface RemoteWalkParams {
  */
 export async function* remoteWalk(
   config: NetStorageClientConfig,
-  { path, maxDepth, shouldInclude }: RemoteWalkParams,
+  { path, maxDepth, shouldInclude, addSyntheticRoot }: RemoteWalkParams,
 ): AsyncGenerator<RemoteWalkEntry> {
   const rootPath = path.replace(/\/+$/, '');
   yield* remoteWalkRecursive(
@@ -55,6 +57,7 @@ export async function* remoteWalk(
     maxDepth,
     shouldInclude,
     0,
+    addSyntheticRoot,
   );
 }
 
@@ -67,6 +70,7 @@ export async function* remoteWalk(
  * @param {number | undefined} maxDepth - Maximum depth limit.
  * @param {RemoteWalkParams['shouldInclude']} shouldInclude - Optional filter predicate.
  * @param {number} depth - Current recursion depth.
+ * @param {boolean} [addSyntheticRoot] - Whether to add a synthetic root entry.
  * @returns {AsyncGenerator<RemoteWalkEntry>} Generator yielding walk entries.
  * @internal
  */
@@ -77,6 +81,7 @@ async function* remoteWalkRecursive(
   maxDepth: number | undefined,
   shouldInclude: RemoteWalkParams['shouldInclude'],
   depth: number = 0,
+  addSyntheticRoot?: boolean,
 ): AsyncGenerator<RemoteWalkEntry> {
   if (typeof maxDepth === 'number' && depth > maxDepth) return;
 
@@ -88,6 +93,27 @@ async function* remoteWalkRecursive(
       method: 'remoteWalk',
     });
     return;
+  }
+
+  if (addSyntheticRoot && depth === 0 && result.stat?.directory) {
+    const syntheticEntry: RemoteWalkEntry = {
+      file: {
+        name: '__synthetic_root__',
+        type: 'dir',
+        implicit: 'false',
+        bytes: '0',
+        files: '0',
+        mtime: '',
+      },
+      path: rootPath,
+      parent: '',
+      relativePath: '',
+      depth: 0,
+    };
+    const shouldYield = shouldInclude
+      ? await shouldInclude(syntheticEntry)
+      : true;
+    if (shouldYield) yield syntheticEntry;
   }
 
   const fileList: NetStorageFile[] = Array.isArray(result.stat?.file)
@@ -121,6 +147,7 @@ async function* remoteWalkRecursive(
         maxDepth,
         shouldInclude,
         depth + 1,
+        addSyntheticRoot,
       );
     }
   }

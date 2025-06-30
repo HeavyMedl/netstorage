@@ -61,10 +61,13 @@ export async function removeDirectory(
 ): Promise<RemoveResult[]> {
   const { logger } = config;
 
-  logger.info(`Removing ${remotePath}`, { method: 'removeDirectory' });
+  logger.verbose(`Removing ${remotePath}`, { method: 'removeDirectory' });
 
   const entries: RemoteWalkEntry[] = [];
-  for await (const entry of remoteWalk(config, { path: remotePath })) {
+  for await (const entry of remoteWalk(config, {
+    path: remotePath,
+    addSyntheticRoot: true,
+  })) {
     entries.push(entry);
   }
 
@@ -72,48 +75,50 @@ export async function removeDirectory(
   const results: RemoveResult[] = [];
 
   for (const entry of reversedEntries) {
-    try {
-      if (shouldRemove && !(await shouldRemove(entry))) {
-        logger.debug(`Skipping via shouldRemove: ${entry.path}`, {
-          method: 'removeDirectory',
-        });
-        onSkip?.({
-          remotePath: entry.path,
-          reason: 'filtered',
-        });
-        continue;
-      }
+    const { path, file } = entry;
 
-      if (dryRun) {
-        logger.info(`[dryRun] Would remove ${entry.path}`, {
-          method: 'removeDirectory',
-        });
-        onSkip?.({ remotePath: entry.path, reason: 'dryRun' });
-        continue;
-      }
-
-      let didRemove = false;
-
-      if (entry.file.type === 'file' || entry.file.type === 'symlink') {
-        await rm(config, { path: entry.path });
-        didRemove = true;
-      } else if (entry.file.type === 'dir' && entry.file.implicit !== 'true') {
-        await rmdir(config, { path: entry.path });
-        didRemove = true;
-      }
-
-      if (didRemove) {
-        onRemove?.({ remotePath: entry.path });
-        results.push({
-          remotePath: entry.path,
-          status: { code: 200 },
-        });
-      }
-    } catch (error) {
-      logger.error(`Failed to remove ${entry.path}; error: ${error}`, {
+    if (shouldRemove && !(await shouldRemove(entry))) {
+      logger.debug(`Skipping via shouldRemove: ${path}`, {
         method: 'removeDirectory',
       });
-      onSkip?.({ remotePath: entry.path, reason: 'error', error });
+      onSkip?.({ remotePath: path, reason: 'filtered' });
+      continue;
+    }
+
+    if (dryRun) {
+      logger.info(`[dryRun] Would remove ${path}`, {
+        method: 'removeDirectory',
+      });
+      onSkip?.({ remotePath: path, reason: 'dryRun' });
+      continue;
+    }
+
+    try {
+      if (file.type === 'file' || file.type === 'symlink') {
+        await rm(config, { path });
+      } else if (file.type === 'dir') {
+        if (file.implicit === 'true') continue;
+
+        try {
+          await rmdir(config, { path });
+        } catch (error) {
+          logger.debug(`Ignoring rmdir error for ${path}`, {
+            method: 'removeDirectory',
+            error,
+          });
+          continue;
+        }
+      } else {
+        continue;
+      }
+
+      onRemove?.({ remotePath: path });
+      results.push({ remotePath: path, status: { code: 200 } });
+    } catch (error) {
+      logger.error(`Failed to remove ${path}; error: ${error}`, {
+        method: 'removeDirectory',
+      });
+      onSkip?.({ remotePath: path, reason: 'error', error });
     }
   }
   return results;
