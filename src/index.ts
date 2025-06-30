@@ -19,7 +19,8 @@ export * from '@/transports/sendRequest';
 export * from '@/transports/makeStreamRequest';
 
 export * from '@/operations/wrappers/buildAdjacencyList';
-export * from '@/operations/wrappers/fileExists';
+export * from '@/operations/wrappers/isFile';
+export * from '@/operations/wrappers/inspectDirectory';
 export * from '@/operations/wrappers/findAll';
 export * from '@/operations/wrappers/remoteWalk';
 export * from '@/operations/wrappers/removeDirectory';

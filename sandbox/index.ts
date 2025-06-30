@@ -1,7 +1,7 @@
 import {
   createConfig,
   syncDirectory,
-  fileExists,
+  isFile,
   removeDirectory,
   uploadDirectory,
 } from '@/index';
@@ -52,7 +52,7 @@ const config = createConfig({
 
   // Expect file1.txt to be re-downloaded, and file3.txt to be uploaded
   const file1Restored = existsSync(join(LOCAL_DIR, 'file1.txt'));
-  const file3Uploaded = await fileExists(config, `${REMOTE_DIR}/file3.txt`);
+  const file3Uploaded = await isFile(config, `${REMOTE_DIR}/file3.txt`);
 
   if (file1Restored && file3Uploaded) {
     console.log('Sync successful');

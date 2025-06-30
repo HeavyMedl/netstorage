@@ -4,7 +4,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
 import {
   createConfig,
-  fileExists,
+  isFile,
   removeDirectory,
   uploadDirectory,
 } from '@/index';
@@ -58,7 +58,7 @@ describe.skipIf(!isConfigured)('removeDirectory (integration)', () => {
   it('should remove all nested remote files and directories', async () => {
     await removeDirectory(config, { remotePath: REMOTE_DIR });
 
-    const removed = await fileExists(config, `${REMOTE_DIR}/foo/bar/file3.txt`);
+    const removed = await isFile(config, `${REMOTE_DIR}/foo/bar/file3.txt`);
     expect(removed).toBe(false);
   });
 });

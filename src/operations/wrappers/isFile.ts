@@ -7,7 +7,7 @@ import { stat, HttpError, type NetStorageClientConfig } from '@/index';
  * @param path - Remote file path to verify
  * @returns Promise resolving to true if file exists, false otherwise
  */
-export async function fileExists(
+export async function isFile(
   config: NetStorageClientConfig,
   path: string,
 ): Promise<boolean> {

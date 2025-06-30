@@ -2,12 +2,7 @@ import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
-import {
-  createConfig,
-  fileExists,
-  removeDirectory,
-  syncDirectory,
-} from '@/index';
+import { createConfig, isFile, removeDirectory, syncDirectory } from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;
@@ -57,8 +52,8 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
 
     expect(transferred.length).toBeGreaterThan(0);
 
-    const file1 = await fileExists(config, `${REMOTE_DIR}/file1.txt`);
-    const file2 = await fileExists(config, `${REMOTE_DIR}/nested/file2.txt`);
+    const file1 = await isFile(config, `${REMOTE_DIR}/file1.txt`);
+    const file2 = await isFile(config, `${REMOTE_DIR}/nested/file2.txt`);
 
     expect(file1).toBe(true);
     expect(file2).toBe(true);
@@ -80,8 +75,8 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
 
     expect(transferred.length).toBeGreaterThan(0);
 
-    const file1 = await fileExists(config, `${REMOTE_DIR}/file1.txt`);
-    const file2 = await fileExists(config, `${REMOTE_DIR}/nested/file2.txt`);
+    const file1 = await isFile(config, `${REMOTE_DIR}/file1.txt`);
+    const file2 = await isFile(config, `${REMOTE_DIR}/nested/file2.txt`);
     // Since dryRun is true, files should not exist on remote
     expect(file1).toBe(false);
     expect(file2).toBe(false);
@@ -148,7 +143,7 @@ describe.skipIf(!isConfigured)('syncDirectory (integration)', () => {
 
     // Expect file1.txt to be re-downloaded, and file3.txt to be uploaded
     const file1Restored = existsSync(join(LOCAL_DIR, 'file1.txt'));
-    const file3Uploaded = await fileExists(config, `${REMOTE_DIR}/file3.txt`);
+    const file3Uploaded = await isFile(config, `${REMOTE_DIR}/file3.txt`);
 
     expect(file1Restored).toBe(true);
     expect(file3Uploaded).toBe(true);

@@ -20,7 +20,7 @@ A modern, ESM-native TypeScript client for the [Akamai NetStorage REST API](http
 npm install netstorage
 ```
 
-## Programmatic Usage
+## API Usage
 
 ```ts
 import { createConfig, upload, download, stat } from 'netstorage';
@@ -56,9 +56,9 @@ await syncDirectory(config, {
 ## Check if File Exists
 
 ```ts
-import { fileExists } from 'netstorage';
+import { isFile } from 'netstorage';
 
-const exists = await fileExists(config, '/12345/some-file.txt');
+const exists = await isFile(config, '/12345/some-file.txt');
 ```
 
 ## Remove Remote Directory
@@ -113,7 +113,7 @@ Utilities for working with full directory trees.
 
 Simplified helpers for file-level interactions.
 
-- `fileExists` — Check if a remote file exists
+- `isFile` — Check if a remote file exists
 - `syncFile` — Sync a single file between local and remote
 - `uploadMissing` — Upload only files missing from the remote target
 

@@ -7,7 +7,7 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { createConfig, removeDirectory, syncFile, fileExists } from '@/index';
+import { createConfig, removeDirectory, syncFile, isFile } from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;
@@ -58,7 +58,7 @@ describe.skipIf(!isConfigured)('syncFile (integration)', () => {
     });
 
     expect(transferred.length).toBe(1);
-    const exists = await fileExists(config, remotePath);
+    const exists = await isFile(config, remotePath);
     expect(exists).toBe(true);
   });
 
@@ -78,7 +78,7 @@ describe.skipIf(!isConfigured)('syncFile (integration)', () => {
 
     expect(transferred.length).toBe(1);
 
-    const exists = await fileExists(config, remotePath);
+    const exists = await isFile(config, remotePath);
     expect(exists).toBe(false);
   });
 

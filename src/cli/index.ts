@@ -11,6 +11,7 @@ import { createSymlinkCommand } from './commands/createSymlinkCommand';
 import { createRenameCommand } from './commands/createRenameCommand';
 import { createMtimeCommand } from './commands/createMtimeCommand';
 import { createTreeCommand } from './commands/createTreeCommand';
+import { createRemoveCommand } from './commands/createRemoveCommand';
 
 const logger = createLogger('info', `netstorage/cli`);
 
@@ -91,18 +92,6 @@ program.addCommand(
     },
   }),
 );
-program.addCommand(
-  createRemotePathCommand({
-    name: 'rm',
-    description: 'Delete a remote file',
-    examplePath: '/some/file.txt',
-    logger,
-    remotePathArg: {
-      description: 'Remote file path to delete',
-      required: true,
-    },
-  }),
-);
 program.addCommand(createConfigCommand(logger));
 program.addCommand(createDownloadCommand(logger));
 program.addCommand(createUploadCommand(logger));
@@ -110,4 +99,5 @@ program.addCommand(createSymlinkCommand(logger));
 program.addCommand(createRenameCommand(logger));
 program.addCommand(createMtimeCommand(logger));
 program.addCommand(createTreeCommand(logger));
+program.addCommand(createRemoveCommand(logger));
 program.parseAsync(process.argv);

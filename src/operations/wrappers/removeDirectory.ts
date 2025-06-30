@@ -7,6 +7,19 @@ import {
 } from '@/index';
 
 /**
+ * Represents the result of a single remove operation (file or directory).
+ *
+ * @property remotePath - The full NetStorage path of the removed entry.
+ * @property status - Status metadata from the NetStorage API response.
+ */
+export interface RemoveResult {
+  remotePath: string;
+  status: {
+    code: number;
+  };
+}
+
+/**
  * Parameters for removing a directory from NetStorage.
  *
  * @property remotePath - Remote directory path to remove.
@@ -45,7 +58,7 @@ export async function removeDirectory(
     onSkip,
     shouldRemove,
   }: RemoveDirectoryParams,
-): Promise<void> {
+): Promise<RemoveResult[]> {
   const { logger } = config;
 
   logger.info(`Removing ${remotePath}`, { method: 'removeDirectory' });
@@ -56,9 +69,10 @@ export async function removeDirectory(
   }
 
   const reversedEntries = [...entries].reverse();
-  const tasks = [];
+  const results: RemoveResult[] = [];
+
   for (const entry of reversedEntries) {
-    const task = (async () => {
+    try {
       if (shouldRemove && !(await shouldRemove(entry))) {
         logger.debug(`Skipping via shouldRemove: ${entry.path}`, {
           method: 'removeDirectory',
@@ -67,7 +81,7 @@ export async function removeDirectory(
           remotePath: entry.path,
           reason: 'filtered',
         });
-        return;
+        continue;
       }
 
       if (dryRun) {
@@ -75,27 +89,28 @@ export async function removeDirectory(
           method: 'removeDirectory',
         });
         onSkip?.({ remotePath: entry.path, reason: 'dryRun' });
-        return;
+        continue;
       }
 
-      try {
-        if (entry.file.type === 'file' || entry.file.type === 'symlink') {
-          await rm(config, { path: entry.path });
-        } else if (
-          entry.file.type === 'dir' &&
-          entry.file.implicit !== 'true'
-        ) {
-          await rmdir(config, { path: entry.path }).catch(() => {});
-        }
-        onRemove?.({ remotePath: entry.path });
-      } catch (error) {
-        logger.error(`Failed to remove ${entry.path}; error: ${error}`, {
-          method: 'removeDirectory',
+      if (entry.file.type === 'file' || entry.file.type === 'symlink') {
+        await rm(config, { path: entry.path });
+      } else if (entry.file.type === 'dir' && entry.file.implicit !== 'true') {
+        await rmdir(config, { path: entry.path }).catch((e) => {
+          console.error(e);
         });
-        onSkip?.({ remotePath: entry.path, reason: 'error', error });
       }
-    })();
-    tasks.push(task);
+
+      onRemove?.({ remotePath: entry.path });
+      results.push({
+        remotePath: entry.path,
+        status: { code: 200 },
+      });
+    } catch (error) {
+      logger.error(`Failed to remove ${entry.path}; error: ${error}`, {
+        method: 'removeDirectory',
+      });
+      onSkip?.({ remotePath: entry.path, reason: 'error', error });
+    }
   }
-  await Promise.all(tasks);
+  return results;
 }

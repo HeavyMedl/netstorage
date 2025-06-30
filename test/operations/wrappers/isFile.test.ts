@@ -1,7 +1,7 @@
 import { writeFileSync, unlinkSync } from 'node:fs';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
-import { createConfig, fileExists, rm, upload } from '@/index';
+import { createConfig, isFile, rm, upload } from '@/index';
 
 const { NETSTORAGE_API_KEY, NETSTORAGE_API_KEYNAME, NETSTORAGE_HOST } =
   process.env;
@@ -31,12 +31,12 @@ describe.skipIf(!isConfigured)('fileExists (integration)', () => {
   });
 
   it('should return true for an existing file', async () => {
-    const result = await fileExists(config, REMOTE_FILE);
+    const result = await isFile(config, REMOTE_FILE);
     expect(result).toBe(true);
   });
 
   it('should return false for a non-existent file', async () => {
-    const result = await fileExists(config, REMOTE_MISSING_FILE);
+    const result = await isFile(config, REMOTE_MISSING_FILE);
     expect(result).toBe(false);
   });
 });

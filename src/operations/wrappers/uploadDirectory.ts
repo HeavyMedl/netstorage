@@ -1,7 +1,7 @@
 import path from 'node:path';
 import pLimit from 'p-limit';
 import {
-  fileExists,
+  isFile,
   upload,
   walkLocalDir,
   type LocalWalkEntry,
@@ -128,7 +128,7 @@ export async function uploadDirectory(
         return skip('dryRun');
       }
 
-      if (!overwrite && (await fileExists(config, destPath))) {
+      if (!overwrite && (await isFile(config, destPath))) {
         logger.debug(`Skipping existing file: ${destPath}`, {
           method: 'uploadDirectory',
         });
