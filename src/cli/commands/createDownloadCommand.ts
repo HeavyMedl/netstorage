@@ -51,7 +51,8 @@ export function createDownloadCommand(
       [
         '',
         'Examples:',
-        '  $ nst download /remote/path /local/file.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
+        '  $ nst download remote/file.txt',
+        '  $ nst download -o remote/directory',
       ].join('\n'),
     )
     .action(async function (this: Command, remotePath, localPathArg) {

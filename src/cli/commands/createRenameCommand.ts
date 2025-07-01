@@ -43,7 +43,8 @@ export function createRenameCommand(
       [
         '',
         'Examples:',
-        '  $ npx nst rename /old/path.txt /new/path.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
+        '  $ npx nst rename old.txt new.txt',
+        '  $ npx nst rename -d -p old.txt new.txt',
       ].join('\n'),
     )
     .action(async (from: string, to: string | undefined, options) => {

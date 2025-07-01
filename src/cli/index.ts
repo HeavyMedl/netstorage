@@ -34,8 +34,7 @@ program
       'ensure robust and efficient execution.',
     ].join('\n'),
   )
-  .version(version)
-  .usage('[command] [options]');
+  .version(version);
 program.addCommand(createConfigCommand(logger));
 program.addCommand(
   createRemotePathCommand({

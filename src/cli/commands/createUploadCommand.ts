@@ -65,12 +65,8 @@ export function createUploadCommand(
       [
         '',
         'Examples:',
-        '  $ npx nst upload ./file.txt /123456/file.txt \\',
-        '      --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
-        '',
-        '  $ npx nst upload ./local-dir /123456/remote-dir \\',
-        '      --ignore "**/*.tmp" "node_modules" --max-concurrency 10 \\',
-        '      --no-overwrite --follow-symlinks',
+        '  $ npx nst upload -v ./file.txt file.txt',
+        '  $ npx nst upload ./local-dir remote-dir',
       ].join('\n'),
     )
     .action(

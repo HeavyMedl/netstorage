@@ -18,10 +18,8 @@ export function createConfigCommand(
       [
         '',
         'Examples:',
-        '  $ nst config set --host example.akamai.net --key abc123 --key-name xyz --cp-code 123456',
+        '  $ nst config set -h example.akamai.net -k abc123 -n xyz',
         '  $ nst config show',
-        '  $ nst config clear',
-        '  $ nst config path',
       ].join('\n'),
     )
     .addCommand(

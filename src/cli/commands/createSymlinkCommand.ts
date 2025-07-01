@@ -43,7 +43,8 @@ export function createSymlinkCommand(
       [
         '',
         'Examples:',
-        '  $ npx nst symlink /remote/target.txt /remote/link.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
+        '  $ npx nst symlink remote/target.txt',
+        '  $ npx nst symlink -d -p remote/target.txt remote/link.txt',
       ].join('\n'),
     )
     .action(

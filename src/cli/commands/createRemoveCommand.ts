@@ -45,8 +45,8 @@ export function createRemoveCommand(
       [
         '',
         'Examples:',
-        '  $ nst rm /path/to/file.txt --dry-run --pretty',
-        '  $ nst rm /path/to/dir -r --dry-run --pretty',
+        '  $ nst rm -p -d path/to/file.txt',
+        '  $ nst rm -r path/to/dir',
       ].join('\n'),
     )
     .action(async function (this: Command, remotePath: string) {

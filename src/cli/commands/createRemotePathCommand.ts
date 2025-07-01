@@ -64,7 +64,8 @@ export function createRemotePathCommand(
       [
         '',
         'Examples:',
-        `  $ nst ${name} ${examplePath} --timeout 5000 --cancel-after 3000 --pretty --verbose --dry-run`,
+        `  $ nst ${name} ${examplePath}`,
+        `  $ nst ${name} -p ${examplePath}`,
       ].join('\n'),
     )
     .action(async function (this: Command, remotePath?: string) {

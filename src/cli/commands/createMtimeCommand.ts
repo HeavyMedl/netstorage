@@ -41,7 +41,8 @@ export function createMtimeCommand(
       [
         '',
         'Examples:',
-        '  $ nst mtime /remote/file.txt 2024-01-01T12:00:00Z -t 5000 -c 3000 -v -d -p',
+        '  $ nst mtime remote/file.txt 2024-01-01T12:00:00Z',
+        '  $ nst mtime -p remote/file.txt 2024-01-01T12:00:00Z',
       ].join('\n'),
     )
     .action(async (remotePath: string, date: string, options) => {

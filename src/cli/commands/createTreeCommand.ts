@@ -27,7 +27,8 @@ export function createTreeCommand(
       [
         '',
         'Examples:',
-        '  $ npx nst tree /123456/assets --show-size --show-mtime --verbose',
+        '  $ npx nst tree',
+        '  $ npx nst tree -s -M assets',
       ].join('\n'),
     )
     .action(async (path: string | undefined, options) => {
