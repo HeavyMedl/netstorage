@@ -141,7 +141,6 @@ export async function uploadDirectory(
           toRemote: destPath,
         });
         onUpload?.({ localPath: entry.localPath, remotePath: destPath });
-
         results.push({
           localPath: entry.localPath,
           remotePath: destPath,
@@ -149,7 +148,7 @@ export async function uploadDirectory(
         });
       } catch (error) {
         logger.error(
-          `Failed to upload ${entry.localPath} → ${destPath}; error: ${error}`,
+          `Failed to upload ${entry.localPath} → ${config.uri(destPath)}; error: ${error}`,
           { method: 'uploadDirectory' },
         );
         await skip('error');

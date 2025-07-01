@@ -6,6 +6,7 @@ import {
   download,
   remoteWalk,
   type NetStorageClientConfig,
+  type NetStorageDownload,
   type RemoteWalkEntry,
 } from '@/index';
 
@@ -38,6 +39,17 @@ export interface DownloadDirectoryParams {
 }
 
 /**
+ * Represents the result of downloading a single file in a directory download operation.
+ *
+ * @property remotePath - Absolute path to the remote file in NetStorage.
+ * @property localPath - Local filesystem path where the file was saved.
+ */
+export interface DownloadResult extends NetStorageDownload {
+  remotePath: string;
+  localPath: string;
+}
+
+/**
  * Checks if a local file exists and is a file (not directory).
  *
  * @param path Local file path.
@@ -61,7 +73,7 @@ async function fileExistsLocal(path: string): Promise<boolean> {
 export async function downloadDirectory(
   config: NetStorageClientConfig,
   params: DownloadDirectoryParams,
-): Promise<void> {
+): Promise<DownloadResult[]> {
   const {
     remotePath,
     localPath,
@@ -73,13 +85,17 @@ export async function downloadDirectory(
     shouldDownload,
   } = params;
 
-  config.logger.info(`Downloading ${remotePath} → ${path.resolve(localPath)}`, {
-    method: 'downloadDirectory',
-  });
+  config.logger.verbose(
+    `Downloading ${config.uri(remotePath)} → ${path.resolve(localPath)}`,
+    {
+      method: 'downloadDirectory',
+    },
+  );
 
   const limit = pLimit(maxConcurrency);
 
   const tasks: Array<Promise<void>> = [];
+  const results: DownloadResult[] = [];
 
   for await (const entry of remoteWalk(config, { path: remotePath })) {
     const dest = path.join(localPath, entry.relativePath);
@@ -122,8 +138,16 @@ export async function downloadDirectory(
           method: 'downloadDirectory',
         });
         await mkdir(path.dirname(dest), { recursive: true });
-        await download(config, { fromRemote: entry.path, toLocal: dest });
+        const downloadResult = await download(config, {
+          fromRemote: entry.path,
+          toLocal: dest,
+        });
         onDownload?.({ remotePath: entry.path, localPath: dest });
+        results.push({
+          remotePath: entry.path,
+          localPath: dest,
+          status: downloadResult.status,
+        });
       } catch (error) {
         config.logger.error(
           `Failed to download ${entry.path} → ${dest}; error: ${error}`,
@@ -144,4 +168,5 @@ export async function downloadDirectory(
   }
 
   await Promise.all(tasks);
+  return results;
 }

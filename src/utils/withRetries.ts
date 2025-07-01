@@ -101,11 +101,14 @@ export async function withRetries<T>(
   const shouldRetry =
     overrides?.shouldRetry ??
     ((err) => {
+      if (
+        err instanceof HttpError &&
+        [429, 500, 502, 503, 504].includes(err.code)
+      ) {
+        return true;
+      }
       if (err instanceof Error) {
         return shouldRetrySystemError(config, err, method);
-      }
-      if (err instanceof HttpError) {
-        return [429, 500, 502, 503, 504].includes(err.code);
       }
       return false;
     });
