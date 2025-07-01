@@ -75,7 +75,7 @@ export function createRemoveCommand(
 
         if (isDir && !recursive) {
           config.logger.warn(
-            `Refusing to remove directory '${remotePath}' without --recursive flag.`,
+            `Refusing to remove directory '${config.uri(remotePath)}' without --recursive flag.`,
           );
           return;
         }

@@ -16,6 +16,7 @@ export function createDownloadCommand(
   logger: ReturnType<typeof createLogger>,
 ): Command {
   return new Command('download')
+    .alias('dl')
     .description('Download a file or directory from NetStorage to a local path')
     .argument('<remotePath>', 'Remote path to download from')
     .argument(

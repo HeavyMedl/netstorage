@@ -32,18 +32,7 @@ program
   )
   .version(version)
   .usage('[command] [options]');
-program.addCommand(
-  createRemotePathCommand({
-    name: 'stat',
-    description: 'Inspect a remote file or directory',
-    examplePath: '/some/file.txt',
-    logger,
-    remotePathArg: {
-      required: false,
-      description: 'Remote file or directory to inspect',
-    },
-  }),
-);
+program.addCommand(createConfigCommand(logger));
 program.addCommand(
   createRemotePathCommand({
     name: 'dir',
@@ -56,6 +45,7 @@ program.addCommand(
     },
   }),
 );
+program.addCommand(createDownloadCommand(logger));
 program.addCommand(
   createRemotePathCommand({
     name: 'du',
@@ -68,6 +58,7 @@ program.addCommand(
     },
   }),
 );
+program.addCommand(createMtimeCommand(logger));
 program.addCommand(
   createRemotePathCommand({
     name: 'mkdir',
@@ -80,6 +71,8 @@ program.addCommand(
     },
   }),
 );
+program.addCommand(createRenameCommand(logger));
+program.addCommand(createRemoveCommand(logger));
 program.addCommand(
   createRemotePathCommand({
     name: 'rmdir',
@@ -92,12 +85,19 @@ program.addCommand(
     },
   }),
 );
-program.addCommand(createConfigCommand(logger));
-program.addCommand(createDownloadCommand(logger));
-program.addCommand(createUploadCommand(logger));
+program.addCommand(
+  createRemotePathCommand({
+    name: 'stat',
+    description: 'Inspect a remote file or directory',
+    examplePath: '/some/file.txt',
+    logger,
+    remotePathArg: {
+      required: false,
+      description: 'Remote file or directory to inspect',
+    },
+  }),
+);
 program.addCommand(createSymlinkCommand(logger));
-program.addCommand(createRenameCommand(logger));
-program.addCommand(createMtimeCommand(logger));
 program.addCommand(createTreeCommand(logger));
-program.addCommand(createRemoveCommand(logger));
+program.addCommand(createUploadCommand(logger));
 program.parseAsync(process.argv);

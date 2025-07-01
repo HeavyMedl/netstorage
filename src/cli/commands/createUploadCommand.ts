@@ -22,6 +22,7 @@ export function createUploadCommand(
   logger: ReturnType<typeof createLogger>,
 ): Command {
   return new Command('upload')
+    .alias('up')
     .description('Upload a local file or directory to NetStorage')
     .argument('<fromLocal>', 'Path to the local file or directory to upload')
     .argument(

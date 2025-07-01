@@ -33,7 +33,8 @@
   "module": "./dist/index.js",
   "types": "./dist/src/index.d.ts",
   "bin": {
-    "netstorage": "dist/cli.js"
+    "netstorage": "dist/cli.js",
+    "nst": "dist/cli.js"
   },
   "files": [
     "dist"
