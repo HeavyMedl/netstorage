@@ -9,19 +9,18 @@ export function createTreeCommand(
   return new Command('tree')
     .description('Render a directory tree of a remote NetStorage path')
     .argument('[path]', 'Remote path to walk (inferred from CWD if omitted)')
-    .usage('<path> [options]')
-    .option('--max-depth <n>', 'Maximum traversal depth', Number)
+    .option('-a, --show-absolute-path', 'Display full absolute path')
+    .option('-c, --show-checksum', 'Display MD5 checksums if available')
+    .option('-l, --log-level <level>', 'Override the log level')
+    .option('-m, --max-depth <n>', 'Maximum traversal depth', Number)
+    .option('-M, --show-mtime', 'Display last modified timestamps')
+    .option('-p, --show-relative-path', 'Display relative path instead of name')
     .option(
       '-r, --recursive',
       'Recursively walk the full directory tree (sets max-depth to null)',
     )
-    .option('--show-size', 'Display file or aggregated directory sizes')
-    .option('--show-mtime', 'Display last modified timestamps')
-    .option('--show-checksum', 'Display MD5 checksums if available')
-    .option('--show-symlink-target', 'Display symlink targets')
-    .option('--show-relative-path', 'Display relative path instead of name')
-    .option('--show-absolute-path', 'Display full absolute path')
-    .option('--log-level <level>', 'Override the log level')
+    .option('-s, --show-size', 'Display file or aggregated directory sizes')
+    .option('-t, --show-symlink-target', 'Display symlink targets')
     .option('-v, --verbose', 'Enable verbose logging')
     .addHelpText(
       'after',
@@ -29,18 +28,6 @@ export function createTreeCommand(
         '',
         'Examples:',
         '  $ npx netstorage tree /123456/assets --show-size --show-mtime --verbose',
-        '',
-        'Options:',
-        '  --max-depth <n>             Maximum traversal depth (default: 0, use "null" for no limit)',
-        '  -r, --recursive             Recursively walk the full directory tree (same as max-depth: null)',
-        '  --show-size                 Display file or aggregated directory sizes',
-        '  --show-mtime                Display last modified timestamps',
-        '  --show-checksum             Display MD5 checksums if available',
-        '  --show-symlink-target       Display symlink targets',
-        '  --show-relative-path        Display relative path instead of name',
-        '  --show-absolute-path        Display full absolute path',
-        '  --log-level <level>         Override the log level',
-        '  -v, --verbose               Enable verbose logging',
       ].join('\n'),
     )
     .action(async (path: string | undefined, options) => {

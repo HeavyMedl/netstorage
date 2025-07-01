@@ -13,7 +13,6 @@ export function createConfigCommand(
   return new Command('config')
     .alias('cfg')
     .description('Manage NetStorage CLI configuration')
-    .usage('[command] [options]')
     .addHelpText(
       'after',
       [
@@ -28,13 +27,13 @@ export function createConfigCommand(
     .addCommand(
       new Command('set')
         .description('Set a config value')
-        .option('--host <host>', 'Akamai host')
-        .option('--key <key>', 'Akamai key')
-        .option('--key-name <keyName>', 'Akamai key name')
-        .option('--cp-code <cpCode>', 'Optional Akamai CP code')
-        .option('--log-level <level>', 'Log level (e.g., info, debug)')
+        .option('-c, --cp-code <cpCode>', 'Optional Akamai CP code')
+        .option('-h, --host <host>', 'Akamai host')
+        .option('-k, --key <key>', 'Akamai key')
+        .option('-n, --key-name <keyName>', 'Akamai key name')
+        .option('-l, --log-level <level>', 'Log level (e.g., info, debug)')
         .option(
-          '--timeout <ms>',
+          '-t, --timeout <ms>',
           'Request timeout in milliseconds',
           validateTimeout,
         )

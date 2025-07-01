@@ -21,35 +21,29 @@ export function createRenameCommand(
       '[to]',
       'New path for the file or directory (inferred from source if omitted)',
     )
-    .usage('<from> [to] [options]')
     .option(
-      '--timeout <ms>',
-      'Set request timeout in milliseconds',
-      validateTimeout,
-    )
-    .option(
-      '--cancel-after <ms>',
+      '-c, --cancel-after <ms>',
       'Automatically abort the request after a given time',
       validateCancelAfter,
     )
-    .option('--log-level <level>', 'Override the log level')
+    .option(
+      '-d, --dry-run',
+      'Print the planned rename operation without executing',
+    )
+    .option('-l, --log-level <level>', 'Override the log level')
+    .option('-p, --pretty', 'Pretty-print the JSON output')
+    .option(
+      '-t, --timeout <ms>',
+      'Set request timeout in milliseconds',
+      validateTimeout,
+    )
     .option('-v, --verbose', 'Enable verbose logging')
-    .option('--dry-run', 'Print the planned rename operation without executing')
-    .option('--pretty', 'Pretty-print the JSON output')
     .addHelpText(
       'after',
       [
         '',
         'Examples:',
         '  $ npx netstorage rename /old/path.txt /new/path.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
-        '',
-        'Options:',
-        '  --timeout <ms>        Set request timeout in milliseconds',
-        '  --cancel-after <ms>   Automatically abort the request after a given time',
-        '  --log-level <level>   Override the log level',
-        '  -v, --verbose         Enable verbose logging',
-        '  --dry-run             Print the planned rename operation without executing',
-        '  --pretty              Pretty-print the JSON output',
       ].join('\n'),
     )
     .action(async (from: string, to: string | undefined, options) => {

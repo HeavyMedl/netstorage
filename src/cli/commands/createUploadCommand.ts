@@ -28,38 +28,37 @@ export function createUploadCommand(
       '[toRemote]',
       'Target NetStorage path (defaults to the basename of the local path)',
     )
-    .usage('<fromLocal> [toRemote] [options]')
     .option(
-      '--timeout <ms>',
-      'Set request timeout in milliseconds',
-      validateTimeout,
-    )
-    .option(
-      '--cancel-after <ms>',
+      '-c, --cancel-after <ms>',
       'Automatically abort the request after a given time',
       validateCancelAfter,
     )
-    .option('--log-level <level>', 'Override the log level')
-    .option('-v, --verbose', 'Enable verbose logging')
-    .option('--dry-run', 'Print the planned upload without executing')
-    .option('--pretty', 'Pretty-print the JSON output')
+    .option('-d, --dry-run', 'Print the planned upload without executing')
     .option(
-      '--no-overwrite',
-      'Do not overwrite remote files if they already exist (default: overwrite)',
-    )
-    .option(
-      '--follow-symlinks',
+      '-f, --follow-symlinks',
       'Follow symlinks when walking the local directory (default: false)',
     )
     .option(
-      '--ignore <patterns...>',
+      '-i, --ignore <patterns...>',
       'Glob patterns to exclude from upload (e.g., "**/*.log" "node_modules")',
     )
+    .option('--log-level <level>', 'Override the log level')
     .option(
-      '--max-concurrency <number>',
+      '-m, --max-concurrency <number>',
       'Maximum number of concurrent uploads (default: 5)',
       parseInt,
     )
+    .option(
+      '-n, --no-overwrite',
+      'Do not overwrite remote files if they already exist (default: overwrite)',
+    )
+    .option('-p, --pretty', 'Pretty-print the JSON output')
+    .option(
+      '-t, --timeout <ms>',
+      'Set request timeout in milliseconds',
+      validateTimeout,
+    )
+    .option('-v, --verbose', 'Enable verbose logging')
     .addHelpText(
       'after',
       [
@@ -71,18 +70,6 @@ export function createUploadCommand(
         '  $ npx netstorage upload ./local-dir /123456/remote-dir \\',
         '      --ignore "**/*.tmp" "node_modules" --max-concurrency 10 \\',
         '      --no-overwrite --follow-symlinks',
-        '',
-        'Options:',
-        '  --timeout <ms>             Set request timeout in milliseconds',
-        '  --cancel-after <ms>        Automatically abort the request after a given time',
-        '  --log-level <level>        Override the log level',
-        '  -v, --verbose              Enable verbose logging',
-        '  --dry-run                  Print the planned upload without executing',
-        '  --pretty                   Pretty-print the JSON output',
-        '  --no-overwrite             Do not overwrite remote files if they already exist',
-        '  --follow-symlinks          Follow symlinks when walking the local directory',
-        '  --ignore <patterns...>     Glob patterns to exclude from upload (e.g., "**/*.log" "node_modules")',
-        '  --max-concurrency <number> Maximum number of concurrent uploads (default: 5)',
       ].join('\n'),
     )
     .action(

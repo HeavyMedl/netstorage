@@ -19,35 +19,29 @@ export function createMtimeCommand(
     )
     .argument('<remotePath>', 'The remote file or directory to update')
     .argument('<date>', 'The modification date in ISO format')
-    .usage('<remotePath> <date> [options]')
     .option(
-      '--timeout <ms>',
-      'Set request timeout in milliseconds',
-      validateTimeout,
-    )
-    .option(
-      '--cancel-after <ms>',
+      '-c, --cancel-after <ms>',
       'Automatically abort the request after a given time',
       validateCancelAfter,
     )
-    .option('--log-level <level>', 'Override the log level')
+    .option(
+      '-d, --dry-run',
+      'Print the planned mtime operation without executing',
+    )
+    .option('-l, --log-level <level>', 'Override the log level')
+    .option('-p, --pretty', 'Pretty-print the JSON output')
+    .option(
+      '-t, --timeout <ms>',
+      'Set request timeout in milliseconds',
+      validateTimeout,
+    )
     .option('-v, --verbose', 'Enable verbose logging')
-    .option('--dry-run', 'Print the planned mtime operation without executing')
-    .option('--pretty', 'Pretty-print the JSON output')
     .addHelpText(
       'after',
       [
         '',
         'Examples:',
-        '  $ npx netstorage mtime /remote/file.txt 2024-01-01T12:00:00Z --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
-        '',
-        'Options:',
-        '  --timeout <ms>        Set request timeout in milliseconds',
-        '  --cancel-after <ms>   Automatically abort the request after a given time',
-        '  --log-level <level>   Override the log level',
-        '  -v, --verbose         Enable verbose logging',
-        '  --dry-run             Print the planned mtime operation without executing',
-        '  --pretty              Pretty-print the JSON output',
+        '  $ npx netstorage mtime /remote/file.txt 2024-01-01T12:00:00Z -t 5000 -c 3000 -v -d -p',
       ].join('\n'),
     )
     .action(async (remotePath: string, date: string, options) => {
