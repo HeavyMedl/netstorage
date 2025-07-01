@@ -43,7 +43,7 @@ export function createRenameCommand(
       [
         '',
         'Examples:',
-        '  $ npx netstorage rename /old/path.txt /new/path.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
+        '  $ npx nst rename /old/path.txt /new/path.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
       ].join('\n'),
     )
     .action(async (from: string, to: string | undefined, options) => {

@@ -7,7 +7,7 @@ export function createTreeCommand(
   logger: ReturnType<typeof createLogger>,
 ): Command {
   return new Command('tree')
-    .description('Render a directory tree of a remote NetStorage path')
+    .description('Render a directory tree of a remote path')
     .argument('[path]', 'Remote path to walk (inferred from CWD if omitted)')
     .option('-a, --show-absolute-path', 'Display full absolute path')
     .option('-c, --show-checksum', 'Display MD5 checksums if available')
@@ -27,7 +27,7 @@ export function createTreeCommand(
       [
         '',
         'Examples:',
-        '  $ npx netstorage tree /123456/assets --show-size --show-mtime --verbose',
+        '  $ npx nst tree /123456/assets --show-size --show-mtime --verbose',
       ].join('\n'),
     )
     .action(async (path: string | undefined, options) => {

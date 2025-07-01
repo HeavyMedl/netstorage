@@ -51,7 +51,7 @@ export function createDownloadCommand(
       [
         '',
         'Examples:',
-        '  $ npx netstorage download /remote/path /local/file.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
+        '  $ nst download /remote/path /local/file.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
       ].join('\n'),
     )
     .action(async function (this: Command, remotePath, localPathArg) {

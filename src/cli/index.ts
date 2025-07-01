@@ -18,12 +18,16 @@ const logger = createLogger('info', `netstorage/cli`);
 const program = new Command();
 program
   .name('netstorage')
+  .alias('nst')
   .description(
     [
       'An unofficial CLI for Akamai NetStorage that makes it easy to inspect,',
       'manage, and transfer files or directories using familiar commands.',
-      'Supported operations include stat, dir, du, mkdir, rmdir, rm, upload,',
-      'and download — with options for timeouts, dry runs, and output formatting.',
+      '',
+      'Examples:',
+      '  nst upload ./local-file.txt remote-file.txt',
+      '  nst download remote-dir',
+      '  nst rm remote-file.txt',
       '',
       'Persistent config management and verbose logging are supported to enhance',
       'flexibility. Built-in rate limiting, retry logic, and concurrency controls',

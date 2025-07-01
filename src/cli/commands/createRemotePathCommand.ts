@@ -64,7 +64,7 @@ export function createRemotePathCommand(
       [
         '',
         'Examples:',
-        `  $ npx netstorage ${name} ${examplePath} --timeout 5000 --cancel-after 3000 --pretty --verbose --dry-run`,
+        `  $ nst ${name} ${examplePath} --timeout 5000 --cancel-after 3000 --pretty --verbose --dry-run`,
       ].join('\n'),
     )
     .action(async function (this: Command, remotePath?: string) {

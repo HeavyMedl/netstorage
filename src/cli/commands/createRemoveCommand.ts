@@ -45,8 +45,8 @@ export function createRemoveCommand(
       [
         '',
         'Examples:',
-        '  $ npx netstorage rm /path/to/file.txt --dry-run --pretty',
-        '  $ npx netstorage rm /path/to/dir -r --dry-run --pretty',
+        '  $ nst rm /path/to/file.txt --dry-run --pretty',
+        '  $ nst rm /path/to/dir -r --dry-run --pretty',
       ].join('\n'),
     )
     .action(async function (this: Command, remotePath: string) {

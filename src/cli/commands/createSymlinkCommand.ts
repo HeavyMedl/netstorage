@@ -15,7 +15,7 @@ export function createSymlinkCommand(
   logger: ReturnType<typeof createLogger>,
 ): Command {
   return new Command('symlink')
-    .description('Create a symbolic link in NetStorage')
+    .description('Interact with NetStorage symbolic links')
     .argument('<target>', 'The remote file the symlink will point to')
     .argument(
       '[symlinkPath]',
@@ -43,7 +43,7 @@ export function createSymlinkCommand(
       [
         '',
         'Examples:',
-        '  $ npx netstorage symlink /remote/target.txt /remote/link.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
+        '  $ npx nst symlink /remote/target.txt /remote/link.txt --timeout 5000 --cancel-after 3000 --verbose --dry-run --pretty',
       ].join('\n'),
     )
     .action(
