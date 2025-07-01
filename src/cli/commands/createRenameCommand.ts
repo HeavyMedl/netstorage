@@ -15,6 +15,7 @@ export function createRenameCommand(
   logger: ReturnType<typeof createLogger>,
 ): Command {
   return new Command('rename')
+    .alias('mv')
     .description('Rename a file or directory in NetStorage')
     .argument('<from>', 'Current path of the file or directory')
     .argument(
