@@ -89,7 +89,7 @@ async function* remoteWalkRecursive(
   try {
     result = await dir(config, { path: currentPath });
   } catch (err) {
-    config.logger.debug(`Failed to walk ${currentPath}: ${err}`, {
+    config.logger.debug(`Failed to walk ${config.uri(currentPath)}: ${err}`, {
       method: 'remoteWalk',
     });
     return;

@@ -11,7 +11,7 @@ export async function isFile(
   config: NetStorageClientConfig,
   path: string,
 ): Promise<boolean> {
-  config.logger.verbose(path, { method: 'fileExists' });
+  config.logger.verbose(config.uri(path), { method: 'fileExists' });
   try {
     const result = await stat(config, { path });
     return Boolean(result?.stat?.file);

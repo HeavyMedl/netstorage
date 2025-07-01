@@ -44,7 +44,7 @@ export async function dir(
   config: NetStorageClientConfig,
   { path, options }: DirParams,
 ): Promise<NetStorageDir> {
-  config.logger.verbose(path, { method: 'dir' });
+  config.logger.verbose(config.uri(path), { method: 'dir' });
   return withRetries(config, 'dir', async () =>
     sendRequest<NetStorageDir>(config, path, {
       request: { method: 'GET' },

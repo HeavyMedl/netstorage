@@ -41,9 +41,12 @@ export async function symlink(
   config: NetStorageClientConfig,
   { pathFileTo, pathSymlink, options }: SymlinkParams,
 ): Promise<NetStorageSymlink> {
-  config.logger.verbose(`fileTo: ${pathFileTo}, symlink: ${pathSymlink}`, {
-    method: 'symlink',
-  });
+  config.logger.verbose(
+    `fileTo: ${config.uri(pathFileTo)}, symlink: ${config.uri(pathSymlink)}`,
+    {
+      method: 'symlink',
+    },
+  );
 
   return withRetries(config, 'symlink', async () =>
     sendRequest<NetStorageSymlink>(config, pathSymlink, {

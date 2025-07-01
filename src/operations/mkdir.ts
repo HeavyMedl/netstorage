@@ -39,7 +39,7 @@ export async function mkdir(
   config: NetStorageClientConfig,
   { path, options }: MkdirParams,
 ): Promise<NetStorageMkdir> {
-  config.logger.verbose(path, { method: 'mkdir' });
+  config.logger.verbose(config.uri(path), { method: 'mkdir' });
   return withRetries(config, 'mkdir', async () =>
     sendRequest<NetStorageMkdir>(config, path, {
       request: { method: 'PUT' },

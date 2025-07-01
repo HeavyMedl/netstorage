@@ -61,7 +61,9 @@ export async function removeDirectory(
 ): Promise<RemoveResult[]> {
   const { logger } = config;
 
-  logger.verbose(`Removing ${remotePath}`, { method: 'removeDirectory' });
+  logger.verbose(`Removing ${config.uri(remotePath)}`, {
+    method: 'removeDirectory',
+  });
 
   const entries: RemoteWalkEntry[] = [];
   for await (const entry of remoteWalk(config, {

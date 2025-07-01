@@ -46,7 +46,7 @@ export async function mtime(
     throw new TypeError('The date has to be an instance of Date');
   }
 
-  config.logger.verbose(`${path}, date: ${date.toISOString()}`, {
+  config.logger.verbose(`${config.uri(path)}, date: ${date.toISOString()}`, {
     method: 'mtime',
   });
 

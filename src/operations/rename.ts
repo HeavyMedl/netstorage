@@ -43,9 +43,12 @@ export async function rename(
   config: NetStorageClientConfig,
   { pathFrom, pathTo, options }: RenameParams,
 ): Promise<NetStorageRename> {
-  config.logger.verbose(`from: ${pathFrom}, to: ${pathTo}`, {
-    method: 'rename',
-  });
+  config.logger.verbose(
+    `from: ${config.uri(pathFrom)}, to: ${config.uri(pathTo)}`,
+    {
+      method: 'rename',
+    },
+  );
   return withRetries(config, 'rename', async () =>
     sendRequest(config, pathFrom, {
       request: { method: 'PUT' },

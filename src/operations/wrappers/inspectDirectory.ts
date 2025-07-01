@@ -31,7 +31,7 @@ export async function getDirectoryInfo(
   config: NetStorageClientConfig,
   path: string,
 ): Promise<DirectoryInfo> {
-  config.logger.verbose(path, { method: 'getDirectoryInfo' });
+  config.logger.verbose(config.uri(path), { method: 'getDirectoryInfo' });
   try {
     const result = await du(config, { path });
     const files = parseInt(result.du?.['du-info']?.files ?? '0', 10);

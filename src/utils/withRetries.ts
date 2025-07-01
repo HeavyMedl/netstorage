@@ -117,7 +117,7 @@ export async function withRetries<T>(
     overrides?.onRetry ??
     ((err, attempt, delay) => {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      config.logger.warn(
+      config.logger.verbose(
         `Retry ${attempt} due to error: ${message}. Retrying in ${delay}ms.`,
         { method },
       );

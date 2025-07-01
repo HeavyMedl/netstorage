@@ -51,7 +51,7 @@ export async function upload(
   config: NetStorageClientConfig,
   { fromLocal, toRemote, options, shouldUpload }: UploadParams,
 ): Promise<NetStorageUpload> {
-  config.logger.verbose(toRemote, { method: 'upload' });
+  config.logger.verbose(config.uri(toRemote), { method: 'upload' });
 
   if (shouldUpload && !(await shouldUpload())) {
     return { status: { code: 0 } };

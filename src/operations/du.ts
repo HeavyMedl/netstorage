@@ -47,7 +47,7 @@ export async function du(
   config: NetStorageClientConfig,
   { path, options }: DuParams,
 ): Promise<NetStorageDu> {
-  config.logger.verbose(path, { method: 'du' });
+  config.logger.verbose(config.uri(path), { method: 'du' });
   return withRetries(config, 'du', async () =>
     sendRequest<NetStorageDu>(config, path, {
       request: { method: 'GET' },

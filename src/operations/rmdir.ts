@@ -40,7 +40,7 @@ export async function rmdir(
   config: NetStorageClientConfig,
   { path, options }: RmdirParams,
 ): Promise<NetStorageRmdir> {
-  config.logger.verbose(path, { method: 'rmdir' });
+  config.logger.verbose(config.uri(path), { method: 'rmdir' });
   return withRetries(config, 'rmdir', async () =>
     sendRequest<NetStorageRmdir>(config, path, {
       request: { method: 'PUT' },

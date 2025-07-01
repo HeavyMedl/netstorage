@@ -42,7 +42,7 @@ export async function stat(
   config: NetStorageClientConfig,
   { path, options }: StatParams,
 ): Promise<NetStorageStat> {
-  config.logger.verbose(path, { method: 'stat' });
+  config.logger.verbose(config.uri(path), { method: 'stat' });
   return withRetries(config, 'stat', async () =>
     sendRequest<NetStorageStat>(config, path, {
       request: { method: 'GET' },

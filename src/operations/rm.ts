@@ -39,7 +39,7 @@ export async function rm(
   config: NetStorageClientConfig,
   { path, options }: RmParams,
 ): Promise<NetStorageRm> {
-  config.logger.verbose(path, { method: 'delete' });
+  config.logger.verbose(config.uri(path), { method: 'delete' });
   return withRetries(config, 'rm', async () =>
     sendRequest<NetStorageRm>(config, path, {
       request: { method: 'PUT' },

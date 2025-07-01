@@ -47,7 +47,7 @@ export async function download(
   config: NetStorageClientConfig,
   { fromRemote, toLocal, options, shouldDownload }: DownloadParams,
 ): Promise<NetStorageDownload> {
-  config.logger.verbose(fromRemote, { method: 'download' });
+  config.logger.verbose(config.uri(fromRemote), { method: 'download' });
 
   if (shouldDownload && !(await shouldDownload())) {
     return { status: { code: 0 } };
