@@ -1,7 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import micromatch from 'micromatch';
-import { walkLocalDir } from '@/index';
 
 import {
   isSizeMismatch,
@@ -10,6 +9,8 @@ import {
   upload,
   download,
   rm,
+  inspectRemotePath,
+  rmdir,
   type NetStorageStat,
   type NetStorageFile,
   type TransferPermissionInput,
@@ -21,9 +22,9 @@ import {
 } from '@/index';
 
 /**
- * Determines if a transfer is allowed based on the provided strategy, direction, action, and resolution.
- * @param input - Transfer permission configuration
- * @returns Whether the file transfer should proceed
+ * Determines whether a file transfer is permitted based on strategy and conflict settings.
+ * @param input - Transfer permission parameters including strategy, direction, action, and conflict resolution
+ * @returns True if the transfer is permitted, false otherwise
  */
 export function isTransferAllowed({
   compareStrategy,
@@ -46,18 +47,18 @@ export function isTransferAllowed({
 }
 
 /**
- * Wraps a NetStorageFile in a NetStorageStat structure.
- * @param file - The remote file metadata
- * @returns A NetStorageStat object
+ * Wraps a NetStorageFile object into a NetStorageStat structure for compatibility.
+ * @param file - Remote file metadata from NetStorage
+ * @returns A NetStorageStat-compliant object
  */
 export function toNetStorageStat(file?: NetStorageFile): NetStorageStat {
   return { stat: { file } };
 }
 
 /**
- * Determines whether a file should be transferred based on the compare strategy and direction.
- * @param input - Parameters including paths, direction, and compare strategy
- * @returns True if transfer should occur, false otherwise
+ * Evaluates whether a file should be transferred based on the configured comparison strategy.
+ * @param input - Object containing paths, strategy, direction, and remote metadata
+ * @returns Promise resolving to true if transfer is needed, false otherwise
  */
 export async function shouldTransferFile({
   config,
@@ -92,9 +93,9 @@ export async function shouldTransferFile({
 }
 
 /**
- * Resolves the transfer action (upload, download, or skip) based on conflict resolution rules.
- * @param input - Relative path and conflict rules mapping
- * @returns The resolved transfer action or 'skip'
+ * Resolves how to handle file conflicts using the specified conflict rules.
+ * @param input - Relative path and optional conflict rules mapping
+ * @returns The resolved action ('upload', 'download', 'skip') or undefined
  */
 export function resolveConflictAction({
   relativePath,
@@ -110,9 +111,9 @@ export function resolveConflictAction({
 }
 
 /**
- * Formats a sync operation into a directional log message.
- * @param input - Sync direction and file paths
- * @returns A formatted string describing the sync operation
+ * Generates a human-readable string describing a file sync direction.
+ * @param input - Object containing local/remote paths and sync direction
+ * @returns A formatted log string representing the sync operation
  */
 export function formatSyncDirectionLog({
   localPath,
@@ -129,8 +130,9 @@ export function formatSyncDirectionLog({
 }
 
 /**
- * Performs a one-to-one sync operation for a single file, supporting dry-run and transfer logging.
- * @param params - Configuration for syncing a single entry
+ * Synchronizes a single file entry based on direction, comparison strategy, and conflict rules.
+ * Handles dry-run mode and emits transfer/skip events as appropriate.
+ * @param params - Sync configuration and callbacks for a single file
  */
 export async function syncSingleEntry({
   config,
@@ -203,8 +205,9 @@ export async function syncSingleEntry({
 }
 
 /**
- * Deletes files that exist in one location (local or remote) but not in the other.
- * @param params - Configuration for comparing and optionally deleting extraneous files
+ * Removes files and directories that are no longer present on the opposite side of sync.
+ * Can optionally perform dry-run and emit deletion events. Handles both local and remote clean-up.
+ * @param params - Configuration including paths, maps of files and directories, and control flags
  */
 export async function deleteExtraneous({
   config,
@@ -216,6 +219,8 @@ export async function deleteExtraneous({
   remoteFiles,
   onDelete,
   singleFile = false,
+  localDirs,
+  remoteDirs,
 }: DeleteExtraneousFilesParams) {
   const localEntries = singleFile
     ? new Map([[path.basename(localPath), true]])
@@ -231,6 +236,18 @@ export async function deleteExtraneous({
       method: 'deleteExtraneous',
     });
 
+    // Aggregate cleanup candidates: parent dirs of deleted files and empty remote dirs
+    const cleanupCandidates = new Set<string>(
+      [...(remoteDirs?.entries() ?? [])]
+        .filter(
+          ([, file]) =>
+            file.type === 'dir' &&
+            (file.implicit === undefined || file.implicit === 'false') &&
+            file.bytes === '0',
+        )
+        .map(([relPath]) => relPath),
+    );
+
     for (const [relPath] of remoteEntries) {
       if (!localEntries.has(relPath)) {
         const absPath = path.posix.join(remotePath, relPath);
@@ -240,6 +257,49 @@ export async function deleteExtraneous({
           await rm(config, { path: absPath });
           if (!singleFile) remoteFiles?.delete(relPath);
           onDelete?.(absPath);
+        }
+        cleanupCandidates.add(path.posix.dirname(relPath));
+      }
+    }
+
+    const sortedDirs = [...cleanupCandidates].sort(
+      (a, b) => b.split('/').length - a.split('/').length,
+    );
+
+    for (const relPath of sortedDirs) {
+      const absPath = path.posix.join(remotePath, relPath);
+
+      const dirMeta = remoteDirs?.get(relPath);
+      if (dirMeta?.implicit === 'true') continue;
+
+      let isEmpty = dirMeta?.bytes === '0';
+
+      if (!isEmpty) {
+        try {
+          const { du } = await inspectRemotePath(config, {
+            path: absPath,
+            kind: 'directory',
+          });
+          isEmpty = du?.du?.['du-info']?.bytes === '0';
+        } catch {
+          continue;
+        }
+      }
+
+      if (isEmpty) {
+        if (dryRun) {
+          config.logger.info(
+            `[dryRun] Would remove empty remote directory ${absPath}`,
+          );
+        } else {
+          try {
+            await rmdir(config, { path: absPath });
+            onDelete?.(absPath);
+          } catch {
+            config.logger.verbose(
+              `Failed to remove empty remote directory ${absPath}`,
+            );
+          }
         }
       }
     }
@@ -264,32 +324,30 @@ export async function deleteExtraneous({
     }
 
     // Remove empty local directories
-    const dirs: string[] = [];
+    if (localDirs?.size) {
+      // Sort deepest directories first by directory depth (platform-agnostic)
+      const dirs = [...localDirs.keys()].sort(
+        (a, b) => b.split('/').length - a.split('/').length,
+      );
 
-    for await (const entry of walkLocalDir(localPath, { includeDirs: true })) {
-      if (entry.isDirectory) {
-        dirs.push(entry.localPath);
-      }
-    }
-
-    // Sort deepest directories first
-    dirs.sort((a, b) => b.length - a.length);
-
-    for (const dir of dirs) {
-      try {
-        const contents = await fs.readdir(dir);
-        if (contents.length === 0) {
-          if (dryRun) {
-            config.logger.info(
-              `[dryRun] Would remove empty local directory ${dir}`,
-            );
-          } else {
-            await fs.rmdir(dir);
-            onDelete?.(dir);
+      for (const relPath of dirs) {
+        const absPath = localDirs.get(relPath);
+        if (!absPath) continue;
+        try {
+          const contents = await fs.readdir(absPath);
+          if (contents.length === 0) {
+            if (dryRun) {
+              config.logger.info(
+                `[dryRun] Would remove empty local directory ${absPath}`,
+              );
+            } else {
+              await fs.rmdir(absPath);
+              onDelete?.(absPath);
+            }
           }
+        } catch {
+          // ignore errors like ENOENT or ENOTDIR
         }
-      } catch {
-        // ignore errors like ENOENT or ENOTDIR
       }
     }
   }

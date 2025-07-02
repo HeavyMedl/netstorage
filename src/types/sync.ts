@@ -196,6 +196,8 @@ export interface SyncSingleEntryParams {
  * @property {string} remotePath - Remote directory path.
  * @property {Map<string, string>} [localFiles] - Map of local files.
  * @property {Map<string, NetStorageFile>} [remoteFiles] - Map of remote files.
+ * @property {string[]} [localDirs] - List of local directories, used to remove empty directories before sync.
+ * @property {string[]} [remoteDirs] - List of remote directories, used to remove empty directories before sync.
  * @property {boolean} [singleFile] - Indicates if operation is for a single file.
  * @property {(absPath: string) => void} [onDelete] - Called when a file is deleted.
  */
@@ -207,6 +209,8 @@ export interface DeleteExtraneousFilesParams {
   remotePath: string;
   localFiles?: Map<string, string>;
   remoteFiles?: Map<string, NetStorageFile>;
+  localDirs?: Map<string, string>;
+  remoteDirs?: Map<string, NetStorageFile>;
   singleFile?: boolean;
   onDelete?: (absPath: string) => void;
 }

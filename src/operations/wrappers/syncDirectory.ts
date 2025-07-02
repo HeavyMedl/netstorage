@@ -83,16 +83,22 @@ export async function syncDirectory(
 
   const localFiles = new Map<string, string>();
   const remoteFiles = new Map<string, NetStorageFile>();
+  const remoteDirs = new Map<string, NetStorageFile>();
+  const localDirs = new Map<string, string>();
 
-  for await (const entry of walkLocalDir(localPath)) {
-    if (!entry.isDirectory) {
-      const rel = entry.relativePath.split(path.sep).join('/');
+  for await (const entry of walkLocalDir(localPath, { includeDirs: true })) {
+    const rel = entry.relativePath.split(path.sep).join('/');
+    if (entry.isDirectory) {
+      localDirs.set(rel, entry.localPath);
+    } else {
       localFiles.set(rel, entry.localPath);
     }
   }
 
   for await (const entry of remoteWalk(config, { path: remotePath })) {
-    if (entry.file.type !== 'dir') {
+    if (entry.file.type === 'dir') {
+      remoteDirs.set(entry.relativePath, entry.file);
+    } else {
       remoteFiles.set(entry.relativePath, entry.file);
     }
   }
@@ -105,6 +111,8 @@ export async function syncDirectory(
     remotePath,
     localFiles,
     remoteFiles,
+    localDirs,
+    remoteDirs,
     onDelete: handlers.onDelete,
   });
 
