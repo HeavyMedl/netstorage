@@ -97,6 +97,17 @@ export async function syncDirectory(
     }
   }
 
+  await deleteExtraneous({
+    config,
+    deleteExtraneous: deleteExtraneousParam,
+    dryRun,
+    localPath,
+    remotePath,
+    localFiles,
+    remoteFiles,
+    onDelete: handlers.onDelete,
+  });
+
   const limiter = pLimit(maxConcurrency);
 
   if (syncDirection === 'upload' || syncDirection === 'both') {
@@ -162,17 +173,6 @@ export async function syncDirectory(
 
     await Promise.all(downloadTasks);
   }
-
-  await deleteExtraneous({
-    config,
-    deleteExtraneous: deleteExtraneousParam,
-    dryRun,
-    localPath,
-    remotePath,
-    localFiles,
-    remoteFiles,
-    onDelete: handlers.onDelete,
-  });
-
+  // Note: localFiles and remoteFiles now reflect post-sync state.
   return results;
 }

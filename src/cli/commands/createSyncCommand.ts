@@ -13,6 +13,13 @@ import {
 import { getLogLevelOverride, handleCliError, printJson } from '../utils';
 import { loadClientConfig } from '../utils/loadConfig';
 
+class SyncPathInferenceError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SyncPathInferenceError';
+  }
+}
+
 /**
  * Infers the kind of sync operation (file or directory) based on local file system stats
  * and remote NetStorage metadata.
@@ -44,13 +51,32 @@ async function getSyncPathKind(
   const localStats = await stat(localPath).catch(() => null);
   const isRemoteFile = remoteInfo?.file?.type === 'file';
   const isRemoteDir = remoteInfo?.du?.du?.directory;
-
+  if (localStats?.isFile() && isRemoteDir) {
+    throw new SyncPathInferenceError(
+      [
+        `Cannot sync a local file (${localPath}) to a remote directory.`,
+        `Sync direction "${direction}" creates ambiguity.`,
+      ].join(' '),
+    );
+  }
+  if (localStats?.isDirectory() && isRemoteFile) {
+    throw new SyncPathInferenceError(
+      [
+        `Cannot sync a local directory (${localPath}) to a remote file.`,
+        `Sync direction "${direction}" creates ambiguity.`,
+      ].join(' '),
+    );
+  }
   if (!localStats && !isRemoteDir && !isRemoteFile) {
-    throw new Error(`Neither local nor remote path exists. Cannot sync.`);
+    throw new SyncPathInferenceError(
+      `Neither local nor remote path exists. Cannot sync.`,
+    );
   }
   if (direction === 'upload') {
     if (!localStats) {
-      throw new Error(`Local path does not exist. Cannot sync in upload mode.`);
+      throw new SyncPathInferenceError(
+        `Local path does not exist. Cannot sync in upload mode.`,
+      );
     }
     return localStats.isDirectory() ? 'directory' : 'file';
   }
@@ -74,22 +100,22 @@ export function createSyncCommand(
       '-c, --conflict-resolution <mode>',
       'Conflict resolution strategy: "preferLocal", "preferRemote", or "manual"',
     )
-    .option('-d, --dry-run', 'Print the planned sync without executing')
     .option(
-      '-x, --delete <mode>',
-      'Delete extraneous files: "remote", "local", "both", or "none"',
-    )
-    .option(
-      '-r, --direction <dir>',
-      'Sync direction: "upload", "download", or "both"',
-    )
-    .option('-l, --log-level <level>', 'Override log level')
-    .option(
-      '-m, --max-concurrency <number>',
+      '-C, --max-concurrency <number>',
       'Maximum number of concurrent operations (default: 5)',
       parseInt,
     )
-    .option('-p, --pretty', 'Pretty-print JSON output')
+    .option('-d, --dry-run', 'Print the planned sync without executing')
+    .option('-l, --log-level <level>', 'Override log level')
+    .option(
+      '-m, --mode <upload|download|both>',
+      'Set sync mode directionality (default: "both")',
+    )
+    .option(
+      '-p, --prune <scope>',
+      'Prune extraneous files: "remote", "local", "both", or "none"',
+    )
+    .option('--pretty', 'Pretty-print JSON output')
     .option(
       '-s, --strategy <mode>',
       'Comparison strategy: "size", "mtime", "checksum", or "exists"',
@@ -100,8 +126,8 @@ export function createSyncCommand(
       [
         '',
         'Examples:',
-        '  $ npx nst sync ./local-folder',
-        '  $ npx nst sync -d --delete both ./local-folder remote-folder',
+        '  $ nst sync folder/',
+        '  $ nst sync -m download -P local ./downloads/ photos/',
       ].join('\n'),
     )
     .action(
@@ -109,8 +135,8 @@ export function createSyncCommand(
         const {
           dryRun,
           strategy,
-          direction = 'both',
-          deleteMode,
+          mode = 'both',
+          prune: deleteMode,
           conflictResolution,
           maxConcurrency,
           logLevel,
@@ -126,11 +152,7 @@ export function createSyncCommand(
           const remoteInfo = await inspectRemotePath(config, {
             path: inferredRemote,
           });
-          const syncKind = await getSyncPathKind(
-            localPath,
-            direction,
-            remoteInfo,
-          );
+          const syncKind = await getSyncPathKind(localPath, mode, remoteInfo);
           const isDir = syncKind === 'directory';
 
           let result: SyncResult;
@@ -148,7 +170,7 @@ export function createSyncCommand(
               remotePath: inferredRemote,
               dryRun,
               compareStrategy: strategy,
-              syncDirection: direction,
+              syncDirection: mode,
               deleteExtraneous: deleteMode,
               conflictResolution,
               maxConcurrency,
@@ -159,7 +181,7 @@ export function createSyncCommand(
               remotePath: inferredRemote,
               dryRun,
               compareStrategy: strategy,
-              syncDirection: direction,
+              syncDirection: mode,
               deleteExtraneous: deleteMode,
               conflictResolution,
               remoteFileMeta: remoteInfo.file,

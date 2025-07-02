@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import micromatch from 'micromatch';
+import { walkLocalDir } from '@/index';
 
 import {
   isSizeMismatch,
@@ -223,6 +224,8 @@ export async function deleteExtraneous({
     ? new Map([[path.basename(localPath), true]])
     : (remoteFiles ?? new Map());
 
+  if (!localEntries.size && !remoteEntries.size) return;
+
   if (deleteExtraneous === 'remote' || deleteExtraneous === 'both') {
     config.logger.verbose('Checking for extraneous remote files to delete', {
       method: 'deleteExtraneous',
@@ -235,6 +238,7 @@ export async function deleteExtraneous({
           config.logger.info(`[dryRun] Would delete remote file at ${absPath}`);
         } else {
           await rm(config, { path: absPath });
+          if (!singleFile) remoteFiles?.delete(relPath);
           onDelete?.(absPath);
         }
       }
@@ -253,8 +257,39 @@ export async function deleteExtraneous({
           config.logger.info(`[dryRun] Would delete local file at ${absPath}`);
         } else {
           await fs.rm(absPath);
+          if (!singleFile) localFiles?.delete(relPath);
           onDelete?.(absPath);
         }
+      }
+    }
+
+    // Remove empty local directories
+    const dirs: string[] = [];
+
+    for await (const entry of walkLocalDir(localPath, { includeDirs: true })) {
+      if (entry.isDirectory) {
+        dirs.push(entry.localPath);
+      }
+    }
+
+    // Sort deepest directories first
+    dirs.sort((a, b) => b.length - a.length);
+
+    for (const dir of dirs) {
+      try {
+        const contents = await fs.readdir(dir);
+        if (contents.length === 0) {
+          if (dryRun) {
+            config.logger.info(
+              `[dryRun] Would remove empty local directory ${dir}`,
+            );
+          } else {
+            await fs.rmdir(dir);
+            onDelete?.(dir);
+          }
+        }
+      } catch {
+        // ignore errors like ENOENT or ENOTDIR
       }
     }
   }

@@ -73,6 +73,16 @@ export async function syncFile(
     },
   };
 
+  await deleteExtraneous({
+    config,
+    deleteExtraneous: deleteExtraneousParam,
+    dryRun,
+    localPath,
+    remotePath,
+    singleFile: true,
+    onDelete: handlers.onDelete,
+  });
+
   await syncSingleEntry({
     config,
     direction: syncDirection,
@@ -85,16 +95,6 @@ export async function syncFile(
     conflictResolution,
     onTransfer: handlers.onTransfer,
     onSkip: handlers.onSkip,
-  });
-
-  await deleteExtraneous({
-    config,
-    deleteExtraneous: deleteExtraneousParam,
-    dryRun,
-    localPath,
-    remotePath,
-    singleFile: true,
-    onDelete: handlers.onDelete,
   });
 
   return results;
