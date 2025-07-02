@@ -33,7 +33,7 @@ export async function syncFile(
     onDelete,
   }: SyncFileParams,
 ): Promise<SyncResult> {
-  config.logger.info(
+  config.logger.verbose(
     formatSyncDirectionLog({ localPath, remotePath, syncDirection }),
     {
       method: 'syncFile',

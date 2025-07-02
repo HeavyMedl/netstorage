@@ -1,11 +1,11 @@
 import path from 'node:path';
 import pLimit from 'p-limit';
 import {
-  isFile,
   upload,
   walkLocalDir,
   type LocalWalkEntry,
   type NetStorageClientConfig,
+  isFile,
 } from '@/index';
 import type { NetStorageUpload } from '@/operations/upload';
 

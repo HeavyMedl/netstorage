@@ -61,7 +61,7 @@ export type ResolvedConflictAction = 'upload' | 'download' | 'skip' | undefined;
  * @property {string} remotePath - Remote file path involved in the transfer.
  */
 export interface SyncTransferEvent {
-  direction: 'upload' | 'download';
+  direction: SyncDirection;
   localPath: string;
   remotePath: string;
 }
@@ -75,7 +75,7 @@ export interface SyncTransferEvent {
  * @property {string} reason - Reason why the transfer was skipped.
  */
 export interface SyncSkipEvent {
-  direction: 'upload' | 'download';
+  direction: SyncDirection;
   localPath: string;
   remotePath: string;
   reason: string;
@@ -118,12 +118,12 @@ export interface BaseSyncParams extends SyncEventHandlers {
  * @interface SyncFileParams
  * Parameters for syncing a single file.
  * @extends BaseSyncParams
- * @property {Extract<SyncDirection, 'upload' | 'download'>} [syncDirection] - Direction to sync a single file.
+ * @property {SyncDirection} [syncDirection] - Direction to sync a single file.
  * @property {NetStorageFile} [remoteFileMeta] - Metadata of the remote file.
  * @property {DeleteExtraneous} [deleteExtraneous] - Whether to delete extraneous files.
  */
 export interface SyncFileParams extends BaseSyncParams {
-  syncDirection?: Extract<SyncDirection, 'upload' | 'download'>;
+  syncDirection?: SyncDirection;
   remoteFileMeta?: NetStorageFile;
   deleteExtraneous?: DeleteExtraneous;
 }
@@ -146,13 +146,13 @@ export interface SyncDirectoryParams extends BaseSyncParams {
  * @interface TransferPermissionInput
  * Input parameters to determine if a file transfer is permitted.
  * @property {CompareStrategy} compareStrategy - Strategy used to compare files.
- * @property {Extract<SyncDirection, 'upload' | 'download'>} direction - Direction of transfer.
+ * @property {SyncDirection} direction - Direction of transfer.
  * @property {'upload' | 'download' | 'skip' | undefined} action - Proposed action for the file.
  * @property {ConflictResolution} conflictResolution - Conflict resolution strategy.
  */
 export interface TransferPermissionInput {
   compareStrategy: CompareStrategy;
-  direction: Extract<SyncDirection, 'upload' | 'download'>;
+  direction: SyncDirection;
   action: 'upload' | 'download' | 'skip' | undefined;
   conflictResolution: ConflictResolution;
 }
@@ -161,7 +161,7 @@ export interface TransferPermissionInput {
  * @interface SyncSingleEntryParams
  * Parameters for syncing a single file or directory entry.
  * @property {NetStorageClientconfig} config - Client config.
- * @property {Extract<SyncDirection, 'upload' | 'download'>} direction - Direction of sync.
+ * @property {SyncDirection} direction - Direction of sync.
  * @property {string} localPath - Local file path.
  * @property {string} remotePath - Remote file path.
  * @property {NetStorageFile} [remoteFileMeta] - Metadata of the remote file.
@@ -174,7 +174,7 @@ export interface TransferPermissionInput {
  */
 export interface SyncSingleEntryParams {
   config: NetStorageClientConfig;
-  direction: Extract<SyncDirection, 'upload' | 'download'>;
+  direction: SyncDirection;
   localPath: string;
   remotePath: string;
   remoteFileMeta?: NetStorageFile;
@@ -215,14 +215,14 @@ export interface DeleteExtraneousFilesParams {
  * @interface ShouldTransferFileInput
  * Input parameters to decide if a file should be transferred.
  * @property {NetStorageClientconfig} config - Client config.
- * @property {Extract<SyncDirection, 'upload' | 'download'>} direction - Direction of transfer.
+ * @property {SyncDirection} direction - Direction of transfer.
  * @property {string} localAbsPath - Absolute local file path.
  * @property {NetStorageFile} [remoteFile] - Metadata of the remote file.
  * @property {CompareStrategy} compareStrategy - Strategy to compare files.
  */
 export interface ShouldTransferFileInput {
   config: NetStorageClientConfig;
-  direction: Extract<SyncDirection, 'upload' | 'download'>;
+  direction: SyncDirection;
   localAbsPath: string;
   remoteFile?: NetStorageFile;
   compareStrategy: CompareStrategy;

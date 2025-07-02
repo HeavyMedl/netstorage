@@ -1,9 +1,9 @@
 import {
   createConfig,
   syncDirectory,
-  isFile,
   removeDirectory,
   uploadDirectory,
+  isFile,
 } from '@/index';
 import { writeFileSync, rmSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';

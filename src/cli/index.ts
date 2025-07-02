@@ -8,6 +8,7 @@ import { createConfigCommand } from './commands/createConfigCommand';
 import { createDownloadCommand } from './commands/createDownloadCommand';
 import { createUploadCommand } from './commands/createUploadCommand';
 import { createSymlinkCommand } from './commands/createSymlinkCommand';
+import { createSyncCommand } from './commands/createSyncCommand';
 import { createRenameCommand } from './commands/createRenameCommand';
 import { createMtimeCommand } from './commands/createMtimeCommand';
 import { createTreeCommand } from './commands/createTreeCommand';
@@ -101,6 +102,7 @@ program.addCommand(
   }),
 );
 program.addCommand(createSymlinkCommand(logger));
+program.addCommand(createSyncCommand(logger));
 program.addCommand(createTreeCommand(logger));
 program.addCommand(createUploadCommand(logger));
 program.parseAsync(process.argv);

@@ -72,7 +72,7 @@ export async function syncDirectory(
     },
   };
 
-  config.logger.info(
+  config.logger.verbose(
     formatSyncDirectionLog({ localPath, remotePath, syncDirection }),
     { method: 'syncDirectory' },
   );

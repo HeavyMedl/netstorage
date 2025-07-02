@@ -30,13 +30,18 @@ export function isTransferAllowed({
   action,
   conflictResolution,
 }: TransferPermissionInput): boolean {
-  return (
-    compareStrategy === 'exists' ||
-    action === direction ||
-    (!action &&
-      ((direction === 'upload' && conflictResolution === 'preferLocal') ||
-        (direction === 'download' && conflictResolution === 'preferRemote')))
-  );
+  if (compareStrategy === 'exists') return true;
+  if (action === direction) return true;
+  if (!action) {
+    const prefersLocal =
+      conflictResolution === 'preferLocal' &&
+      ['upload', 'both'].includes(direction);
+    const prefersRemote =
+      conflictResolution === 'preferRemote' &&
+      ['download', 'both'].includes(direction);
+    return prefersLocal || prefersRemote;
+  }
+  return false;
 }
 
 /**
@@ -61,7 +66,6 @@ export async function shouldTransferFile({
   compareStrategy = 'exists',
 }: ShouldTransferFileInput): Promise<boolean> {
   const stat = toNetStorageStat(remoteFile);
-
   switch (compareStrategy) {
     case 'size':
       return await isSizeMismatch(config, localAbsPath, stat);
@@ -70,12 +74,17 @@ export async function shouldTransferFile({
     case 'checksum':
       return await isChecksumMismatch(config, localAbsPath, stat);
     case 'exists':
-      return direction === 'upload'
-        ? remoteFile === undefined
-        : !(await fs
-            .stat(localAbsPath)
-            .then(() => true)
-            .catch(() => false));
+      if (direction === 'upload' || direction === 'both') {
+        if (remoteFile === undefined) return true;
+      }
+      if (direction === 'download' || direction === 'both') {
+        const localExists = await fs
+          .stat(localAbsPath)
+          .then(() => true)
+          .catch(() => false);
+        if (!localExists) return true;
+      }
+      return false;
     default:
       return false;
   }
@@ -175,9 +184,15 @@ export async function syncSingleEntry({
       `[dryRun] Would ${direction} ${localPath} ${direction === 'upload' ? '→' : '←'} ${remotePath}`,
     );
   } else {
-    if (direction === 'upload') {
+    if (
+      direction === 'upload' ||
+      (direction === 'both' && remoteFileMeta === undefined)
+    ) {
       await upload(config, { fromLocal: localPath, toRemote: remotePath });
-    } else {
+    } else if (
+      direction === 'download' ||
+      (direction === 'both' && remoteFileMeta !== undefined)
+    ) {
       await fs.mkdir(path.dirname(localPath), { recursive: true });
       await download(config, { fromRemote: remotePath, toLocal: localPath });
     }
