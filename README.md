@@ -55,6 +55,8 @@ await tree(config, {
 npx netstorage config set --host example-nsu.akamaihd.net --key-name my-key --key abc123
 ```
 
+---
+
 #### Sync a directory to NetStorage
 
 ```bash
@@ -62,6 +64,8 @@ npx netstorage sync ./media
 ```
 
 Syncs a local directory with a remote one of the same name.
+
+---
 
 #### Upload a directory to NetStorage
 
@@ -71,6 +75,8 @@ npx netstorage upload ./media /uploaded-media
 
 Uploads all files and subdirectories from the local directory to the specified remote path.
 
+---
+
 #### Recursively remove a remote directory
 
 ```bash
@@ -78,6 +84,8 @@ npx netstorage rm -r /old-uploads
 ```
 
 Removes a remote directory and its contents. Use with caution!
+
+---
 
 #### Inspect a remote directory tree with sizes and timestamps
 
@@ -89,8 +97,8 @@ Displays a remote directory tree with sizes and timestamps.
 
 ## Documentation
 
-- [API Reference](./docs/API.md) — TypeScript interface for interacting with NetStorage programmatically
-- [CLI Reference](./docs/CLI.md) — Command-line interface for NetStorage scripting
+- [API Reference](https://github.com/HeavyMedl/netstorage/blob/main/docs/API.md) — TypeScript interface for interacting with NetStorage programmatically
+- [CLI Reference](https://github.com/HeavyMedl/netstorage/blob/main/docs/CLI.md) — Command-line interface for NetStorage scripting
 
 ## Disclaimer
 
