@@ -1,8 +1,6 @@
-# NetStorage API Client
+# NetStorage API & CLI
 
-> **Unofficial client** — This library is not affiliated with or endorsed by Akamai. It is an independently developed API wrapper for the Akamai NetStorage REST API.
-
-A modern, ESM-native TypeScript client for the [Akamai NetStorage REST API](https://techdocs.akamai.com/netstorage-usage/reference/api). Built for composability, reliability, and full control over file operations.
+A modern TypeScript API and CLI for the [Akamai NetStorage REST interface](https://techdocs.akamai.com/netstorage-usage/reference/api). Built for composability, reliability, and full control over file operations.
 
 ## Features
 
@@ -13,6 +11,7 @@ A modern, ESM-native TypeScript client for the [Akamai NetStorage REST API](http
 - Fully typed API responses and parameters
 - Built-in retries, rate limiting, and dry-run mode
 - Tools for size aggregation and file validation
+- Rich CLI with matching feature parity
 
 ## Installation
 
@@ -20,111 +19,79 @@ A modern, ESM-native TypeScript client for the [Akamai NetStorage REST API](http
 npm install netstorage
 ```
 
-## API Usage
+## Quick Start
+
+### Using the API
 
 ```ts
-import { createConfig, upload, download, stat } from 'netstorage';
+import { createConfig, uploadDirectory, tree } from 'netstorage';
 
 const config = createConfig({
   key: process.env.NETSTORAGE_API_KEY!,
   keyName: process.env.NETSTORAGE_API_KEYNAME!,
   host: process.env.NETSTORAGE_HOST!,
+  cpCode: process.env.NETSTORAGE_CP_CODE!,
 });
 
-await upload(config, {
-  localPath: './file.txt',
-  remotePath: '/12345/file.txt',
+const remotePath = '/batch-media';
+
+await uploadDirectory(config, {
+  localPath: './media',
+  remotePath,
 });
 
-const result = await stat(config, '/12345/file.txt');
-console.log(result.stat.file);
-```
-
-## Directory Sync
-
-```ts
-import { syncDirectory } from 'netstorage';
-
-await syncDirectory(config, {
-  localPath: './dist',
-  remotePath: '/12345/site-assets',
-  syncDirection: 'upload', // 'upload' | 'download' | 'both'
-  dryRun: false,
+await tree(config, {
+  path: remotePath,
+  showSize: true,
+  showMtime: true,
 });
 ```
 
-## Check if File Exists
+### Using the CLI
 
-```ts
-import { isFile } from 'netstorage';
+#### Set your configuration
 
-const exists = await isFile(config, '/12345/some-file.txt');
+```bash
+npx netstorage config set --host example-nsu.akamaihd.net --key-name my-key --key abc123
 ```
 
-## Remove Remote Directory
+#### Sync a directory to NetStorage
 
-```ts
-import { removeDirectory } from 'netstorage';
-
-await removeDirectory(config, { remotePath: '/12345/old-assets' });
+```bash
+npx netstorage sync ./media
 ```
 
-## API Docs
+Syncs a local directory with a remote one of the same name.
 
-WIP
+#### Upload a directory to NetStorage
 
-### Configuration
+```bash
+npx netstorage upload ./media /uploaded-media
+```
 
-Essential utilities to authenticate and configure the client.
+Uploads all files and subdirectories from the local directory to the specified remote path.
 
-- `createConfig` — Unified factory to create a fully resolved client configuration.
+#### Recursively remove a remote directory
 
-### Core Operations
+```bash
+npx netstorage rm -r /old-uploads
+```
 
-Low-level primitives that directly map to the Akamai NetStorage REST API.
+Removes a remote directory and its contents. Use with caution!
 
-- `dir` — List remote directory contents
-- `download` — Download a single file
-- `du` — Aggregate file sizes for remote paths
-- `mkdir` — Create a remote directory
-- `mtime` — Update modification time of a remote file
-- `rename` — Rename a file or directory
-- `rm` — Delete a remote file
-- `rmdir` — Remove a remote directory
-- `stat` — Fetch file or directory metadata
-- `symlink` — Create a symbolic link
-- `upload` — Upload a single file
+#### Inspect a remote directory tree with sizes and timestamps
 
-### Wrapper Utilities
+```bash
+npx netstorage tree -s -M /release-history
+```
 
-High-level functions that compose multiple core operations for common workflows.
+Displays a remote directory tree with sizes and timestamps.
 
-#### Directory Operations
+## Documentation
 
-Utilities for working with full directory trees.
-
-- `downloadDirectory` — Download a remote directory and its contents
-- `removeDirectory` — Recursively remove a remote directory
-- `syncDirectory` — Bi-directionally sync local and remote directories (`upload`, `download`, or `both`)
-- `uploadDirectory` — Upload a local directory and its contents
-- `tree` — Recursively describe the structure of a remote directory
-
-#### File Operations
-
-Simplified helpers for file-level interactions.
-
-- `isFile` — Check if a remote file exists
-- `syncFile` — Sync a single file between local and remote
-- `uploadMissing` — Upload only files missing from the remote target
-
-#### Advanced Utilities
-
-These are exposed for advanced use cases and deeper customization.
-
-- `buildAdjacencyList` — Construct a directory graph structure from remote entries
-- `findAll` — Find all matching remote files by pattern
-- `remoteWalk` — Async generator for recursively walking remote directories
+- [API Reference](./docs/API.md) — TypeScript interface for interacting with NetStorage programmatically
+- [CLI Reference](./docs/CLI.md) — Command-line interface for NetStorage scripting
 
 ## Disclaimer
 
-This project is provided as-is under an unlicensed status. It is an unofficial and independent implementation of the Akamai NetStorage REST API. The author assumes no responsibility for any issues, damages, or misuse arising from its use. Use at your own risk.
+This project is an unofficial and independently developed implementation of the Akamai NetStorage REST API. It is not affiliated with or endorsed by Akamai. Use it at your own risk. The software is provided as-is under an unlicensed status, and the author assumes no responsibility for any issues, damages, or misuse arising from its use.

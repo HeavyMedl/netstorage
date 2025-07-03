@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Introduced CLI tool interface (`npx netstorage`) to interact with NetStorage operations directly from the command line.
+- Introduced CLI tool interface (`npx netstoraget`) to interact with NetStorage operations directly from the command line.
 
 ## [1.0.0] - 2025-06-27
 
