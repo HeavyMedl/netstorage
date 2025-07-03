@@ -1,32 +1,24 @@
-# NetStorage CLI
-
-A command-line interface for interacting with Akamai NetStorage using intuitive commands and persistent config.
-
-## Table of Contents
-
-- [NetStorage CLI](#netstorage-cli)
-  - [Table of Contents](#table-of-contents)
-  - [Getting Started](#getting-started)
-    - [Optional: Global Install for `nst`](#optional-global-install-for-nst)
-  - [`config`](#config)
-    - [`config set`](#config-set)
-    - [`config show`](#config-show)
-    - [`config clear`](#config-clear)
-    - [`config path`](#config-path)
-    - [Configuration Resolution Order](#configuration-resolution-order)
-  - [`dir`](#dir)
-  - [`download`](#download)
-  - [`du`](#du)
-  - [`mtime`](#mtime)
-  - [`mkdir`](#mkdir)
-  - [`rename`](#rename)
-  - [`rm`](#rm)
-  - [`rmdir`](#rmdir)
-  - [`stat`](#stat)
-  - [`symlink`](#symlink)
-  - [`sync`](#sync)
-  - [`tree`](#tree)
-  - [`upload`](#upload)
+- [Getting Started](#getting-started)
+  - [Optional: Global Install for `nst`](#optional-global-install-for-nst)
+- [`config`](#config)
+  - [`config set`](#config-set)
+  - [`config show`](#config-show)
+  - [`config clear`](#config-clear)
+  - [`config path`](#config-path)
+  - [Configuration Resolution Order](#configuration-resolution-order)
+- [`dir`](#dir)
+- [`download`](#download)
+- [`du`](#du)
+- [`mtime`](#mtime)
+- [`mkdir`](#mkdir)
+- [`rename`](#rename)
+- [`rm`](#rm)
+- [`rmdir`](#rmdir)
+- [`stat`](#stat)
+- [`symlink`](#symlink)
+- [`sync`](#sync)
+- [`tree`](#tree)
+- [`upload`](#upload)
 
 ## Getting Started
 

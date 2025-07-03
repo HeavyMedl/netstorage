@@ -1,104 +1,135 @@
-# API Reference
+- [`createConfig({ host, keyName, key, ... })`](#createconfig-host-keyname-key--)
+  - [Parameters](#parameters)
+  - [Returns](#returns)
+  - [Example](#example)
+- [`dir(config, { path, options })`](#dirconfig--path-options-)
+  - [Parameters](#parameters-1)
+  - [Returns](#returns-1)
+  - [Example](#example-1)
+- [`download(config, { fromRemote, toLocal, options, shouldDownload })`](#downloadconfig--fromremote-tolocal-options-shoulddownload-)
+  - [Parameters](#parameters-2)
+  - [Returns](#returns-2)
+  - [Example](#example-2)
+- [`du(config, { path, options })`](#duconfig--path-options-)
+  - [Parameters](#parameters-3)
+  - [Returns](#returns-3)
+  - [Example](#example-3)
+- [`mkdir(config, { path, options })`](#mkdirconfig--path-options-)
+  - [Parameters](#parameters-4)
+  - [Returns](#returns-4)
+  - [Example](#example-4)
+- [`mtime(config, { path, date, options })`](#mtimeconfig--path-date-options-)
+  - [Parameters](#parameters-5)
+  - [Returns](#returns-5)
+  - [Example](#example-5)
+- [`rename(config, { pathFrom, pathTo, options })`](#renameconfig--pathfrom-pathto-options-)
+  - [Parameters](#parameters-6)
+  - [Returns](#returns-6)
+  - [Example](#example-6)
+- [`rm(config, { path, options })`](#rmconfig--path-options-)
+  - [Parameters](#parameters-7)
+  - [Returns](#returns-7)
+  - [Example](#example-7)
+- [`rmdir(config, { path, options })`](#rmdirconfig--path-options-)
+  - [Parameters](#parameters-8)
+  - [Returns](#returns-8)
+  - [Example](#example-8)
+- [`stat(config, { path, options })`](#statconfig--path-options-)
+  - [Parameters](#parameters-9)
+  - [Returns](#returns-9)
+  - [Example](#example-9)
+- [`symlink(config, { pathFileTo, pathSymlink, options })`](#symlinkconfig--pathfileto-pathsymlink-options-)
+  - [Parameters](#parameters-10)
+  - [Returns](#returns-10)
+  - [Example](#example-10)
+- [`upload(config, { fromLocal, toRemote, options, shouldUpload })`](#uploadconfig--fromlocal-toremote-options-shouldupload-)
+  - [Parameters](#parameters-11)
+  - [Returns](#returns-11)
+  - [Example](#example-11)
+- [`uploadDirectory(config, { localPath, remotePath, ... })`](#uploaddirectoryconfig--localpath-remotepath--)
+  - [Parameters](#parameters-12)
+  - [Returns](#returns-12)
+  - [Example](#example-12)
+- [`downloadDirectory(config, { remotePath, localPath, ... })`](#downloaddirectoryconfig--remotepath-localpath--)
+  - [Parameters](#parameters-13)
+  - [Returns](#returns-13)
+  - [Example](#example-13)
+- [`syncDirectory(config, { localPath, remotePath, ... })`](#syncdirectoryconfig--localpath-remotepath--)
+  - [Parameters](#parameters-14)
+  - [Returns](#returns-14)
+  - [Example](#example-14)
+- [`syncFile(config, { localPath, remotePath, ... })`](#syncfileconfig--localpath-remotepath--)
+  - [Parameters](#parameters-15)
+  - [Returns](#returns-15)
+  - [Example](#example-15)
+- [`removeDirectory(config, { remotePath, ... })`](#removedirectoryconfig--remotepath--)
+  - [Parameters](#parameters-16)
+  - [Returns](#returns-16)
+  - [Example](#example-16)
+- [`tree(config, { path, ... })`](#treeconfig--path--)
+  - [Parameters](#parameters-17)
+  - [Returns](#returns-17)
+  - [Example](#example-17)
+- [`remoteWalk(config, { path, ... })`](#remotewalkconfig--path--)
+  - [Parameters](#parameters-18)
+  - [Returns](#returns-18)
+  - [Example](#example-18)
+- [`inspectRemotePath(config, { path, kind })`](#inspectremotepathconfig--path-kind-)
+  - [Parameters](#parameters-19)
+  - [Returns](#returns-19)
+  - [Example](#example-19)
 
-## Table of Contents
+## `createConfig({ host, keyName, key, ... })`
 
-- [API Reference](#api-reference)
-  - [Table of Contents](#table-of-contents)
-    - [`dir(config, { path, options })`](#dirconfig--path-options-)
-      - [Parameters](#parameters)
-      - [Returns](#returns)
-      - [Example](#example)
-    - [`download(config, { fromRemote, toLocal, options, shouldDownload })`](#downloadconfig--fromremote-tolocal-options-shoulddownload-)
-      - [Parameters](#parameters-1)
-      - [Returns](#returns-1)
-      - [Example](#example-1)
-    - [`du(config, { path, options })`](#duconfig--path-options-)
-      - [Parameters](#parameters-2)
-      - [Returns](#returns-2)
-      - [Example](#example-2)
-    - [`mkdir(config, { path, options })`](#mkdirconfig--path-options-)
-      - [Parameters](#parameters-3)
-      - [Returns](#returns-3)
-      - [Example](#example-3)
-    - [`mtime(config, { path, date, options })`](#mtimeconfig--path-date-options-)
-      - [Parameters](#parameters-4)
-      - [Returns](#returns-4)
-      - [Example](#example-4)
-    - [`rename(config, { pathFrom, pathTo, options })`](#renameconfig--pathfrom-pathto-options-)
-      - [Parameters](#parameters-5)
-      - [Returns](#returns-5)
-      - [Example](#example-5)
-    - [`rm(config, { path, options })`](#rmconfig--path-options-)
-      - [Parameters](#parameters-6)
-      - [Returns](#returns-6)
-      - [Example](#example-6)
-    - [`rmdir(config, { path, options })`](#rmdirconfig--path-options-)
-      - [Parameters](#parameters-7)
-      - [Returns](#returns-7)
-      - [Example](#example-7)
-    - [`stat(config, { path, options })`](#statconfig--path-options-)
-      - [Parameters](#parameters-8)
-      - [Returns](#returns-8)
-      - [Example](#example-8)
-    - [`symlink(config, { pathFileTo, pathSymlink, options })`](#symlinkconfig--pathfileto-pathsymlink-options-)
-      - [Parameters](#parameters-9)
-      - [Returns](#returns-9)
-      - [Example](#example-9)
-    - [`upload(config, { fromLocal, toRemote, options, shouldUpload })`](#uploadconfig--fromlocal-toremote-options-shouldupload-)
-      - [Parameters](#parameters-10)
-      - [Returns](#returns-10)
-      - [Example](#example-10)
-    - [`uploadDirectory(config, { localPath, remotePath, ... })`](#uploaddirectoryconfig--localpath-remotepath--)
-      - [Parameters](#parameters-11)
-      - [Returns](#returns-11)
-      - [Example](#example-11)
-    - [`downloadDirectory(config, { remotePath, localPath, ... })`](#downloaddirectoryconfig--remotepath-localpath--)
-      - [Parameters](#parameters-12)
-      - [Returns](#returns-12)
-      - [Example](#example-12)
-    - [`syncDirectory(config, { localPath, remotePath, ... })`](#syncdirectoryconfig--localpath-remotepath--)
-      - [Parameters](#parameters-13)
-      - [Returns](#returns-13)
-      - [Example](#example-13)
-    - [`syncFile(config, { localPath, remotePath, ... })`](#syncfileconfig--localpath-remotepath--)
-      - [Parameters](#parameters-14)
-      - [Returns](#returns-14)
-      - [Example](#example-14)
-    - [`removeDirectory(config, { remotePath, ... })`](#removedirectoryconfig--remotepath--)
-      - [Parameters](#parameters-15)
-      - [Returns](#returns-15)
-      - [Example](#example-15)
-    - [`tree(config, { path, ... })`](#treeconfig--path--)
-      - [Parameters](#parameters-16)
-      - [Returns](#returns-16)
-      - [Example](#example-16)
-    - [`remoteWalk(config, { path, ... })`](#remotewalkconfig--path--)
-      - [Parameters](#parameters-17)
-      - [Returns](#returns-17)
-      - [Example](#example-17)
-    - [`inspectRemotePath(config, { path, kind })`](#inspectremotepathconfig--path-kind-)
-      - [Parameters](#parameters-18)
-      - [Returns](#returns-18)
-      - [Example](#example-18)
+Creates a fully validated configuration object for use with all other NetStorage API methods.
 
-### `dir(config, { path, options })`
+### Parameters
+
+- `host` (`string`): NetStorage host name (without protocol).
+- `keyName` (`string`): Name of the API key.
+- `key` (`string`): API key used to sign requests.
+- `ssl` (`boolean`, optional): Use HTTPS if true (default: false).
+- `cpCode` (`string`, optional): CP code prefix for remote paths.
+- `logLevel` (`'info' | 'debug' | 'warn' | 'error'`, optional): Internal log level.
+- `rateLimitConfig` (`object`, optional): Customize rate limiting behavior.
+- `request.timeout` (`number`, optional): Request timeout in milliseconds (default: 10000).
+
+### Returns
+
+A `NetStorageClientConfig` object that can be passed into all other methods.
+
+### Example
+
+```ts
+import { createConfig } from 'netstorage';
+
+const config = createConfig({
+  host: 'example-nsu.akamaihd.net',
+  keyName: 'my-key',
+  key: 'abc123',
+  cpCode: '12345',
+  ssl: true,
+});
+```
+
+## `dir(config, { path, options })`
 
 Lists the contents of a remote NetStorage directory by sending a `dir` action request to the API.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `path` (`string`): The remote directory path to list (e.g., `/12345/site-assets`).
 - `options` (`RequestOptions`, optional): Optional request config (timeout, signal, etc.).
 
-#### Returns
+### Returns
 
 A Promise resolving to an object of shape:
 
 - `stat.directory` (optional): The directory name.
 - `stat.file`: Array of file and directory entries (`NetStorageFile[]`).
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, dir } from 'netstorage';
@@ -112,11 +143,11 @@ for (const entry of result.stat.file ?? []) {
 }
 ```
 
-### `download(config, { fromRemote, toLocal, options, shouldDownload })`
+## `download(config, { fromRemote, toLocal, options, shouldDownload })`
 
 Downloads a file from NetStorage to a local file path.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `fromRemote` (`string`): The full NetStorage path to the remote file.
@@ -124,13 +155,13 @@ Downloads a file from NetStorage to a local file path.
 - `options` (`RequestOptions`, optional): Optional request config (timeout, signal, etc.).
 - `shouldDownload` (`() => Promise<boolean>`, optional): Optional async predicate that, if defined and resolves to false, will skip the download.
 
-#### Returns
+### Returns
 
 A Promise resolving to an object of shape:
 
 - `status.code`: HTTP status code returned by the server (e.g., 200).
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, download } from 'netstorage';
@@ -143,17 +174,17 @@ const result = await download(config, {
 });
 ```
 
-### `du(config, { path, options })`
+## `du(config, { path, options })`
 
 Retrieves disk usage information for a given NetStorage directory.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `path` (`string`): The remote directory path to inspect (e.g., `/12345/site-assets`).
 - `options` (`RequestOptions`, optional): Optional request config (timeout, signal, etc.).
 
-#### Returns
+### Returns
 
 A Promise resolving to an object of shape:
 
@@ -161,7 +192,7 @@ A Promise resolving to an object of shape:
 - `du['du-info'].bytes` (`string`): Total number of bytes.
 - `du.directory` (`string`): Path of the directory queried.
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, du } from 'netstorage';
@@ -174,23 +205,23 @@ console.log(`Files: ${result.du['du-info'].files}`);
 console.log(`Bytes: ${result.du['du-info'].bytes}`);
 ```
 
-### `mkdir(config, { path, options })`
+## `mkdir(config, { path, options })`
 
 Creates a new directory at the specified path in NetStorage.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `path` (`string`): The full NetStorage path where the directory should be created.
 - `options` (`RequestOptions`, optional): Optional request config (timeout, signal, etc.).
 
-#### Returns
+### Returns
 
 A Promise resolving to:
 
 - `status.code` (`number`): HTTP status code returned by the server (e.g., 200).
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, mkdir } from 'netstorage';
@@ -202,24 +233,24 @@ const result = await mkdir(config, { path: '/12345/new-dir' });
 console.log(`Created with status: ${result.status.code}`);
 ```
 
-### `mtime(config, { path, date, options })`
+## `mtime(config, { path, date, options })`
 
 Sets the modification time for a remote file or directory.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `path` (`string`): The full NetStorage path to the file or directory.
 - `date` (`Date`): A JavaScript `Date` object representing the desired modification time.
 - `options` (`RequestOptions`, optional): Optional request config (timeout, signal, etc.).
 
-#### Returns
+### Returns
 
 A Promise resolving to:
 
 - `status.code` (`number`): HTTP status code returned by the server.
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, mtime } from 'netstorage';
@@ -234,24 +265,24 @@ const result = await mtime(config, {
 console.log(`Updated mtime with status: ${result.status.code}`);
 ```
 
-### `rename(config, { pathFrom, pathTo, options })`
+## `rename(config, { pathFrom, pathTo, options })`
 
 Renames a file or directory in NetStorage.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `pathFrom` (`string`): The full NetStorage path of the source file or directory.
 - `pathTo` (`string`): The full destination path for the renamed file or directory.
 - `options` (`RequestOptions`, optional): Optional request config (timeout, signal, etc.).
 
-#### Returns
+### Returns
 
 A Promise resolving to:
 
 - `status.code` (`number`): HTTP status code returned by the server.
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, rename } from 'netstorage';
@@ -266,23 +297,23 @@ const result = await rename(config, {
 console.log(`Rename status: ${result.status.code}`);
 ```
 
-### `rm(config, { path, options })`
+## `rm(config, { path, options })`
 
 Deletes a file from NetStorage at the specified remote path.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `path` (`string`): The remote path of the file to delete.
 - `options` (`RequestOptions`, optional): Optional per-request configuration, including timeout and abort signal.
 
-#### Returns
+### Returns
 
 A Promise resolving to:
 
 - `status.code` (`number`): HTTP status code returned by the server.
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, rm } from 'netstorage';
@@ -294,23 +325,23 @@ const result = await rm(config, { path: '/12345/file-to-delete.txt' });
 console.log(`Deleted with status: ${result.status.code}`);
 ```
 
-### `rmdir(config, { path, options })`
+## `rmdir(config, { path, options })`
 
 Removes a directory from NetStorage. The directory must be empty.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `path` (`string`): The full path to the NetStorage directory to remove.
 - `options` (`RequestOptions`, optional): Optional request config (timeout, signal, etc.).
 
-#### Returns
+### Returns
 
 A Promise resolving to:
 
 - `status.code` (`number`): HTTP status code returned by the server.
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, rmdir } from 'netstorage';
@@ -322,24 +353,24 @@ const result = await rmdir(config, { path: '/12345/empty-folder' });
 console.log(`rmdir status: ${result.status.code}`);
 ```
 
-### `stat(config, { path, options })`
+## `stat(config, { path, options })`
 
 Retrieves metadata for a file or directory in NetStorage.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `path` (`string`): The full path of the file or directory to inspect.
 - `options` (`RequestOptions`, optional): Optional request config (timeout, signal, etc.).
 
-#### Returns
+### Returns
 
 A Promise resolving to:
 
 - `stat.file`: File metadata (`NetStorageFile`) or array of files.
 - `stat.directory`: Directory path (if present).
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, stat } from 'netstorage';
@@ -351,24 +382,24 @@ const result = await stat(config, { path: '/12345/file.txt' });
 console.log(result.stat.file);
 ```
 
-### `symlink(config, { pathFileTo, pathSymlink, options })`
+## `symlink(config, { pathFileTo, pathSymlink, options })`
 
 Creates a symbolic link in NetStorage pointing from `pathSymlink` to `pathFileTo`.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `pathFileTo` (`string`): Target file path the symbolic link should reference.
 - `pathSymlink` (`string`): Destination path for the symbolic link.
 - `options` (`RequestOptions`, optional): Optional per-request configuration (timeout, signal, etc.).
 
-#### Returns
+### Returns
 
 A Promise resolving to:
 
 - `status.code` (`number`): HTTP status code returned by the server.
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, symlink } from 'netstorage';
@@ -383,11 +414,11 @@ const result = await symlink(config, {
 console.log(`Symlink created with status: ${result.status.code}`);
 ```
 
-### `upload(config, { fromLocal, toRemote, options, shouldUpload })`
+## `upload(config, { fromLocal, toRemote, options, shouldUpload })`
 
 Uploads a local file to a remote NetStorage path.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `fromLocal` (`string`): Absolute path to the local file to upload.
@@ -395,13 +426,13 @@ Uploads a local file to a remote NetStorage path.
 - `options` (`RequestOptions`, optional): Optional per-request config (timeout, signal, etc.).
 - `shouldUpload` (`() => Promise<boolean>`, optional): Optional async predicate. If defined and resolves to false, upload is skipped.
 
-#### Returns
+### Returns
 
 A Promise resolving to:
 
 - `status.code` (`number`): HTTP status code returned by the server (or `0` if skipped).
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, upload } from 'netstorage';
@@ -416,11 +447,11 @@ const result = await upload(config, {
 console.log(`Upload status: ${result.status.code}`);
 ```
 
-### `uploadDirectory(config, { localPath, remotePath, ... })`
+## `uploadDirectory(config, { localPath, remotePath, ... })`
 
 Uploads all files from a local directory to a remote NetStorage path, preserving relative structure.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `localPath` (`string`): Path to the local directory to upload.
@@ -434,7 +465,7 @@ Uploads all files from a local directory to a remote NetStorage path, preserving
 - `onSkip` (`function`, optional): Callback for each skipped file.
 - `shouldUpload` (`function`, optional): Predicate function that returns a boolean or Promise<boolean> to filter uploads.
 
-#### Returns
+### Returns
 
 A Promise resolving to an array of upload result objects:
 
@@ -442,7 +473,7 @@ A Promise resolving to an array of upload result objects:
 - `remotePath` – Destination path on NetStorage.
 - `status.code` – HTTP status code.
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, uploadDirectory } from 'netstorage';
@@ -459,11 +490,11 @@ await uploadDirectory(config, {
 });
 ```
 
-### `downloadDirectory(config, { remotePath, localPath, ... })`
+## `downloadDirectory(config, { remotePath, localPath, ... })`
 
 Downloads all files from a remote NetStorage directory to a local directory, preserving structure.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `remotePath` (`string`): Remote NetStorage path to download from.
@@ -475,7 +506,7 @@ Downloads all files from a remote NetStorage directory to a local directory, pre
 - `onSkip` (`function`, optional): Callback for each skipped file, includes reason and optional error.
 - `shouldDownload` (`function`, optional): Predicate function that returns a boolean or Promise<boolean> to filter downloads.
 
-#### Returns
+### Returns
 
 A Promise resolving to an array of download result objects:
 
@@ -483,7 +514,7 @@ A Promise resolving to an array of download result objects:
 - `localPath` – Destination path on local filesystem.
 - `status.code` – HTTP status code returned from download.
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, downloadDirectory } from 'netstorage';
@@ -500,11 +531,11 @@ await downloadDirectory(config, {
 });
 ```
 
-### `syncDirectory(config, { localPath, remotePath, ... })`
+## `syncDirectory(config, { localPath, remotePath, ... })`
 
 Synchronizes files between a local directory and a remote NetStorage directory, with options to upload, download, or bidirectionally sync.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `localPath` (`string`): Local base directory path.
@@ -520,7 +551,7 @@ Synchronizes files between a local directory and a remote NetStorage directory, 
 - `onSkip` (`function`, optional): Called when a file is skipped.
 - `maxConcurrency` (`number`, default: `5`): Max parallel sync operations.
 
-#### Returns
+### Returns
 
 A Promise resolving to a summary result object:
 
@@ -528,7 +559,7 @@ A Promise resolving to a summary result object:
 - `skipped` (`Array<SkipEvent>`): List of skipped files.
 - `deleted` (`Array<string>`): List of deleted file paths.
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, syncDirectory } from 'netstorage';
@@ -549,11 +580,11 @@ const result = await syncDirectory(config, {
 console.log(result);
 ```
 
-### `syncFile(config, { localPath, remotePath, ... })`
+## `syncFile(config, { localPath, remotePath, ... })`
 
 Synchronizes a single file between the local filesystem and NetStorage, with support for conflict resolution, dry run, direction control, and deletion of unmatched remote files.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `localPath` (`string`): Path to the local file to sync.
@@ -569,7 +600,7 @@ Synchronizes a single file between the local filesystem and NetStorage, with sup
 - `onSkip` (`function`, optional): Callback for skipped files.
 - `onDelete` (`function`, optional): Callback for deleted remote files.
 
-#### Returns
+### Returns
 
 A Promise resolving to a `SyncResult`:
 
@@ -577,7 +608,7 @@ A Promise resolving to a `SyncResult`:
 - `skipped`: Array of skipped file events.
 - `deleted`: Array of deleted remote paths.
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, syncFile } from 'netstorage';
@@ -599,11 +630,11 @@ const result = await syncFile(config, {
 console.log(result);
 ```
 
-### `removeDirectory(config, { remotePath, ... })`
+## `removeDirectory(config, { remotePath, ... })`
 
 Recursively removes a remote NetStorage directory and its contents.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `remotePath` (`string`): The remote directory to delete.
@@ -612,14 +643,14 @@ Recursively removes a remote NetStorage directory and its contents.
 - `onSkip` (`function`, optional): Callback for skipped entries, receives reason and optional error.
 - `shouldRemove` (`function`, optional): Predicate function that returns a boolean or Promise<boolean> to determine if a path should be removed.
 
-#### Returns
+### Returns
 
 A Promise resolving to an array of result objects:
 
 - `remotePath` – The full path of the removed file or directory.
 - `status.code` – HTTP status code (e.g., 200 if removed successfully).
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, removeDirectory } from 'netstorage';
@@ -638,11 +669,11 @@ const results = await removeDirectory(config, {
 });
 ```
 
-### `tree(config, { path, ... })`
+## `tree(config, { path, ... })`
 
 Generates a visual directory tree of a remote NetStorage path, optionally displaying metadata like size, modification time, checksums, and symlink targets.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `path` (`string`): The remote base directory to visualize.
@@ -655,7 +686,7 @@ Generates a visual directory tree of a remote NetStorage path, optionally displa
 - `showRelativePath` (`boolean`, optional): Include relative path in output.
 - `showAbsolutePath` (`boolean`, optional): Include full path in output.
 
-#### Returns
+### Returns
 
 A Promise resolving to:
 
@@ -663,7 +694,7 @@ A Promise resolving to:
 - `directorySizeMap`: Map of directory paths to aggregated sizes.
 - `totalSize`: Total size of all files (in bytes).
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, tree } from 'netstorage';
@@ -689,11 +720,11 @@ Outputs a tree view like:
 └── 📄 script.js (400 KB)
 ```
 
-### `remoteWalk(config, { path, ... })`
+## `remoteWalk(config, { path, ... })`
 
 Traverses a remote NetStorage directory recursively and yields each entry as a structured object. Useful for inspection, visualization, and filtering of remote files and folders.
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `path` (`string`): The remote directory path to walk.
@@ -701,7 +732,7 @@ Traverses a remote NetStorage directory recursively and yields each entry as a s
 - `shouldInclude` (`(entry: RemoteWalkEntry) => boolean | Promise<boolean>`, optional): Predicate function to filter which entries to yield.
 - `addSyntheticRoot` (`boolean`, optional): If true, includes a synthetic root node as the first entry.
 
-#### Returns
+### Returns
 
 An async generator yielding `RemoteWalkEntry` objects:
 
@@ -711,7 +742,7 @@ An async generator yielding `RemoteWalkEntry` objects:
 - `relativePath`: Path relative to the walk root.
 - `depth`: Depth from the root path.
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, remoteWalk } from 'netstorage';
@@ -733,24 +764,24 @@ index.html
     logo.png
 ```
 
-### `inspectRemotePath(config, { path, kind })`
+## `inspectRemotePath(config, { path, kind })`
 
 Inspects a remote NetStorage path to determine whether it is a file or a directory. Optionally filters the check by kind (`'file'`, `'directory'`, or `'any'`).
 
-#### Parameters
+### Parameters
 
 - `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
 - `path` (`string`): The remote path to inspect.
 - `kind` (`'file' | 'directory' | 'any'`, optional): What kind of path to confirm. Defaults to `'any'`.
 
-#### Returns
+### Returns
 
 A Promise resolving to an object:
 
 - `file` (`NetStorageFile`, optional): Returned if the path is a file.
 - `du` (`NetStorageDu`, optional): Returned if the path is (or is inferred to be) a directory.
 
-#### Example
+### Example
 
 ```ts
 import { createConfig, inspectRemotePath } from 'netstorage';
