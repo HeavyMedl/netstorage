@@ -2,15 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.0.0] - YYYY-MM-DD
+## [2.0.0] - 2025-07-02
 
-### Changed
+This release introduces a streamlined configuration system and a new CLI interface.
 
-- Unified `createAuthConfig`, `createClientContext`, and `createContext` into a single `createConfig` factory function. Removed the original individual factory functions.
+### Features
 
-### Added
+- Added `createConfig` factory to replace `createAuthConfig`, `createClientContext`, and `createContext`.
+- Introduced CLI tool for running NetStorage operations from the command line:
+  ```bash
+  npx netstorage dir /example
+  ```
+- CLI supports core operations including: `dir`, `upload`, `download`, `mkdir`, `stat`, `rmdir`, `tree`, and more.
 
-- Introduced CLI tool interface (`npx netstoraget`) to interact with NetStorage operations directly from the command line.
+### Breaking Changes
+
+- Removed `createAuthConfig`, `createClientContext`, and `createContext`. Use `createConfig` instead.
+
+See [`docs`](https://github.com/HeavyMedl/netstorage/tree/main/docs) for full API and CLI documentation.
 
 ## [1.0.0] - 2025-06-27
 
