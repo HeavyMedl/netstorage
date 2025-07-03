@@ -52,7 +52,7 @@ await tree(config, {
 Set your configuration
 
 ```bash
-npx netstorage config set --host example-nsu.akamaihd.net --key-name my-key --key abc123
+npx netstorage config set --key-name my-key --key abc123 --host example-nsu.akamaihd.net3 --cp-code 123
 ```
 
 Now you can:
