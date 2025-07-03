@@ -49,51 +49,37 @@ await tree(config, {
 
 ### Using the CLI
 
-#### Set your configuration
+Set your configuration
 
 ```bash
 npx netstorage config set --host example-nsu.akamaihd.net --key-name my-key --key abc123
 ```
 
----
+Now you can:
 
-#### Sync a directory to NetStorage
+- Sync a directory to NetStorage
 
 ```bash
 npx netstorage sync ./media
 ```
 
-Syncs a local directory with a remote one of the same name.
-
----
-
-#### Upload a directory to NetStorage
+- Upload a directory to NetStorage
 
 ```bash
 npx netstorage upload ./media /uploaded-media
 ```
 
-Uploads all files and subdirectories from the local directory to the specified remote path.
-
----
-
-#### Recursively remove a remote directory
+- Recursively remove a remote directory
 
 ```bash
 npx netstorage rm -r /old-uploads
 ```
 
-Removes a remote directory and its contents. Use with caution!
-
----
-
-#### Inspect a remote directory tree with sizes and timestamps
+- Inspect a remote directory tree with sizes and timestamps
 
 ```bash
 npx netstorage tree -s -M /release-history
 ```
-
-Displays a remote directory tree with sizes and timestamps.
 
 ## Documentation
 
