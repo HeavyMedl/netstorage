@@ -268,8 +268,8 @@ export async function deleteExtraneous({
 
     for (const relPath of sortedDirs) {
       const absPath = path.posix.join(remotePath, relPath);
-
       const dirMeta = remoteDirs?.get(relPath);
+      if (!dirMeta) continue;
       if (dirMeta?.implicit === 'true') continue;
 
       let isEmpty = dirMeta?.bytes === '0';
