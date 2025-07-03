@@ -4,7 +4,6 @@ A modern TypeScript API and CLI for the [Akamai NetStorage REST interface](https
 
 ## Features
 
-- Modern ESM and TypeScript-first design
 - Upload/download individual files or entire directories
 - Bi-directional sync with local ↔ remote support
 - Recursive remote directory tree traversal
