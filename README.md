@@ -65,19 +65,19 @@ npx netstorage sync ./media
 - Upload a directory to NetStorage
 
 ```bash
-npx netstorage upload ./media /uploaded-media
+npx netstorage upload ./media uploaded-media
 ```
 
 - Recursively remove a remote directory
 
 ```bash
-npx netstorage rm -r /old-uploads
+npx netstorage rm -r old-uploads
 ```
 
 - Inspect a remote directory tree with sizes and timestamps
 
 ```bash
-npx netstorage tree -s -M /release-history
+npx netstorage tree -s -M release-history
 ```
 
 ## Documentation
