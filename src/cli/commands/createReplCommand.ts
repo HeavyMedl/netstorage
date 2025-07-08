@@ -24,10 +24,6 @@ interface RemoteContext {
   setPath(path: string): void;
   getEntries(): Promise<NetStorageFile[]>;
   loadEntries(path: string): Promise<{
-    /**
-     * Optional root entry, used to verify if the path is a directory.
-     * Only present if `addSyntheticRoot` was true.
-     */
     rootMeta?: NetStorageFile;
     entries: NetStorageFile[];
   }>;
@@ -66,10 +62,6 @@ function createRemoteContext(config: NetStorageClientConfig) {
    * @returns An object with optional root metadata and entries array.
    */
   async function loadEntries(path: string): Promise<{
-    /**
-     * Optional root entry, used to verify if the path is a directory.
-     * Only present if `addSyntheticRoot` was true.
-     */
     rootMeta?: NetStorageFile;
     entries: NetStorageFile[];
   }> {
@@ -300,85 +292,88 @@ export function createReplCommand(): Command {
   return new Command('repl')
     .description('Start an interactive NetStorage shell')
     .action(async () => {
-      const config = await loadClientConfig();
+      try {
+        const config = await loadClientConfig();
+        const context = createRemoteContext(config);
+        let entries: NetStorageFile[] = [];
+        let completer = createCompleterSync([]);
 
-      const context = createRemoteContext(config);
-      let entries: NetStorageFile[] = [];
-      let completer = createCompleterSync([]);
-
-      /**
-       * Helper to refresh the tab completion list with the latest entries.
-       *
-       * @returns Promise resolving when completer is refreshed.
-       */
-      async function refreshCompleter() {
-        entries = await context.getEntries();
-        completer = createCompleterSync(entries);
-      }
-
-      const shell = repl.start({
-        prompt: `nst:${chalk.cyan(context.getPath())}> `,
-        ignoreUndefined: true,
-        completer: (...args: [string]) => completer(...args),
         /**
-         * REPL evaluator callback for processing user commands.
+         * Helper to refresh the tab completion list with the latest entries.
          *
-         * Parses and executes supported commands such as `cd`, `ls`, `pwd`,
-         * and `exit`.
-         * Delegates to Commander CLI for unrecognized commands.
-         *
-         * @param input - Raw user input line.
-         * @param _context - REPL context object (unused).
-         * @param _filename - Filename for the REPL context (unused).
-         * @param callback - Callback to resume REPL input loop.
+         * @returns Promise resolving when completer is refreshed.
          */
-        eval: async (input, _context, _filename, callback) => {
-          const [command, ...args] = input.trim().split(/\s+/);
+        async function refreshCompleter() {
+          entries = await context.getEntries();
+          completer = createCompleterSync(entries);
+        }
 
-          try {
-            switch (command) {
-              case 'cd':
-                await handleCdCommand(args[0], context, logger);
-                await refreshCompleter();
-                break;
-              case 'ls':
-                await handleLsCommand(args.includes('-l'), context);
-                await refreshCompleter();
-                break;
-              case 'll':
-                await handleLsCommand(true, context);
-                await refreshCompleter();
-                break;
-              case 'pwd':
-                process.stdout.write(`${config.uri(context.getPath())}\n`);
-                break;
-              case 'clear':
-                process.stdout.write('\x1Bc');
-                break;
-              case 'exit':
-                logger.info('Goodbye!');
-                process.exit(0);
-                break;
-              default:
-                if (command !== '') {
-                  await program
-                    .exitOverride()
-                    .parseAsync([command, ...args], { from: 'user' });
-                }
+        const shell = repl.start({
+          prompt: `nst:${chalk.cyan(context.getPath())}> `,
+          ignoreUndefined: true,
+          completer: (...args: [string]) => completer(...args),
+          /**
+           * REPL evaluator callback for processing user commands.
+           *
+           * Parses and executes supported commands such as `cd`, `ls`, `pwd`,
+           * and `exit`.
+           * Delegates to Commander CLI for unrecognized commands.
+           *
+           * @param input - Raw user input line.
+           * @param _context - REPL context object (unused).
+           * @param _filename - Filename for the REPL context (unused).
+           * @param callback - Callback to resume REPL input loop.
+           */
+          eval: async (input, _context, _filename, callback) => {
+            const [command, ...args] = input.trim().split(/\s+/);
+
+            try {
+              switch (command) {
+                case 'cd':
+                  await handleCdCommand(args[0], context, logger);
+                  await refreshCompleter();
+                  break;
+                case 'ls':
+                  await handleLsCommand(args.includes('-l'), context);
+                  await refreshCompleter();
+                  break;
+                case 'll':
+                  await handleLsCommand(true, context);
+                  await refreshCompleter();
+                  break;
+                case 'pwd':
+                  process.stdout.write(`${config.uri(context.getPath())}\n`);
+                  break;
+                case 'clear':
+                  process.stdout.write('\x1Bc');
+                  break;
+                case 'exit':
+                  logger.info('Goodbye!');
+                  process.exit(0);
+                  break;
+                default:
+                  if (command !== '') {
+                    await program
+                      .exitOverride()
+                      .parseAsync([command, ...args], { from: 'user' });
+                  }
+              }
+            } catch (err) {
+              logger.error(err);
             }
-          } catch (err) {
-            logger.error(err);
-          }
 
-          shell.setPrompt(`nst:${chalk.cyan(context.getPath())}> `);
-          shell.prompt();
-          callback(null, undefined);
-        },
-      });
-
-      shell.on('exit', () => {
-        logger.info('Goodbye!');
-        process.exit(0);
-      });
+            shell.setPrompt(`nst:${chalk.cyan(context.getPath())}> `);
+            shell.prompt();
+            callback(null, undefined);
+          },
+        });
+        shell.on('exit', () => {
+          logger.info('Goodbye!');
+          process.exit(0);
+        });
+      } catch (err) {
+        logger.error(err);
+        process.exit(1);
+      }
     });
 }

@@ -30,7 +30,7 @@ export function loadPersistentConfig(): Partial<NetStorageClientConfig> {
  *
  * @param {Partial<NetStorageClientConfig>} update - Configuration values to persist.
  */
-export function savePersistentconfig(
+export function savePersistentConfig(
   update: Partial<NetStorageClientConfig>,
 ): void {
   const current = loadPersistentConfig();
@@ -40,11 +40,38 @@ export function savePersistentconfig(
 }
 
 /**
+ * Overwrites the persistent configuration file with the given config object.
+ *
+ * @param {Partial<NetStorageClientConfig>} config - The complete configuration to persist.
+ */
+function overwritePersistentConfig(
+  config: Partial<NetStorageClientConfig>,
+): void {
+  fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
+}
+
+/**
  * Deletes the persisted NetStorage configuration file if it exists.
  */
 export function clearPersistentConfig(): void {
   if (fs.existsSync(CONFIG_FILE)) {
     fs.unlinkSync(CONFIG_FILE);
+  }
+}
+
+/**
+ * Deletes a specific key from the persisted NetStorage configuration file.
+ *
+ * @param {keyof NetStorageClientConfig} key - The configuration key to remove.
+ */
+export function clearPersistentConfigKey(
+  key: keyof NetStorageClientConfig,
+): void {
+  const current = loadPersistentConfig();
+  if (key in current) {
+    delete current[key];
+    overwritePersistentConfig(current);
   }
 }
 
