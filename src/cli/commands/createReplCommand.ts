@@ -133,6 +133,7 @@ function createRemoteContext(config: NetStorageClientConfig) {
     getPath: () => remoteWorkingDir,
     setPath: (p: string) => {
       remoteWorkingDir = p;
+      savePersistentConfig({ lastReplPath: remoteWorkingDir });
     },
     getEntries,
     loadEntries,
@@ -423,10 +424,6 @@ export function createReplCommand(): Command {
           },
         });
         shell.on('exit', () => {
-          const updatedConfig: Partial<NetStorageClientConfig> = {
-            lastReplPath: context.getPath(),
-          };
-          savePersistentConfig(updatedConfig);
           logger.info('Goodbye!');
           process.exit(0);
         });
