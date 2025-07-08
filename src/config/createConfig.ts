@@ -22,6 +22,7 @@ import {
  * @property {{ timeout?: number }} [request] - Optional request config (e.g., request timeout in ms).
  * @property {ReturnType<typeof createLogger>} logger - Logger instance to use for internal logging.
  * @property {ReturnType<typeof createRateLimiters>} rateLimiters - Rate limiter instance to use for request throttling.
+ * @property {string} [lastReplPath] - Optional REPL path to restore previous session location in interactive shell.
  * @property {(path?: string) => string} uri - Method to build a URI with an optional path.
  */
 export interface NetStorageClientConfig {
@@ -37,6 +38,7 @@ export interface NetStorageClientConfig {
   };
   logger: ReturnType<typeof createLogger>;
   rateLimiters: ReturnType<typeof createRateLimiters>;
+  lastReplPath?: string;
   uri(path?: string): string;
 }
 
@@ -89,6 +91,7 @@ export function createConfig(
       ...input.request,
       timeout,
     },
+    lastReplPath: input.lastReplPath,
     uri(path = '') {
       return buildUri(this, path);
     },

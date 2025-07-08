@@ -216,3 +216,18 @@ export function colorizeName(name: string, type: string) {
       return chalk.gray(name);
   }
 }
+
+/**
+ * Asserts that the provided config is valid for REPL usage.
+ *
+ * Specifically ensures that `cpCode` is defined, since REPL operations
+ * often require a default CP code for scoped commands.
+ *
+ * @param config - The NetStorageClientConfig to validate.
+ * @throws ConfigValidationError if cpCode is not set.
+ */
+export function assertReplConfig(config: { cpCode?: string }): void {
+  if (!config.cpCode) {
+    throw new ConfigValidationError('cpCode');
+  }
+}

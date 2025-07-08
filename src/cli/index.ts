@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-import { fileURLToPath } from 'node:url';
 import { argv } from 'node:process';
-import { realpathSync } from 'node:fs';
 import { Command } from 'commander';
 import { version } from '../../package.json';
 
@@ -25,13 +23,15 @@ program
   .alias('nst')
   .description(
     [
-      'An unofficial CLI for Akamai NetStorage that makes it easy to inspect,',
-      'manage, and transfer files or directories using familiar commands.',
+      'An unofficial CLI for Akamai NetStorage to inspect, manage, and transfer',
+      'files or directories using familiar commands. Includes an interactive shell (REPL)',
+      'for exploring and manipulating remote storage.',
       '',
       'Examples:',
-      '  nst upload ./local-file.txt remote-file.txt',
-      '  nst download remote-dir',
-      '  nst rm remote-file.txt',
+      '  $ nst upload ./local-file.txt remote-file.txt',
+      '  $ nst download remote-dir',
+      '  $ nst rm remote-file.txt',
+      '  $ nst # Launch interactive REPL',
       '',
       'Persistent config management and verbose logging are supported to enhance',
       'flexibility. Built-in rate limiting, retry logic, and concurrency controls',
@@ -108,8 +108,7 @@ program.addCommand(createSymlinkCommand(logger));
 program.addCommand(createSyncCommand(logger));
 program.addCommand(createTreeCommand(logger));
 program.addCommand(createUploadCommand(logger));
-program.addCommand(createReplCommand());
-
-if (fileURLToPath(import.meta.url) === realpathSync(argv[1])) {
-  program.parseAsync(argv);
-}
+program.action(() => {
+  createReplCommand().parseAsync(argv);
+});
+program.parseAsync(argv);
