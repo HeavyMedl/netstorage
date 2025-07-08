@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import { program } from '../index'; // Assumes program is exported from CLI index
 import { loadClientConfig } from '../utils/loadConfig';
+import { savePersistentConfig } from '../utils/configStore';
 import {
   createLogger,
   remoteWalk,
@@ -15,6 +16,7 @@ import {
   sortEntriesByTypeAndName,
   formatDetailedEntry,
   formatSimpleEntry,
+  assertReplConfig,
 } from '../utils';
 
 const logger = createLogger('info', 'netstorage/repl');
@@ -49,7 +51,7 @@ interface RemoteContext {
  *     entries.
  */
 function createRemoteContext(config: NetStorageClientConfig) {
-  let remoteWorkingDir = '/';
+  let remoteWorkingDir = config.lastReplPath || '/';
   const cache = createRemoteDirectoryCache();
 
   /**
@@ -294,6 +296,7 @@ export function createReplCommand(): Command {
     .action(async () => {
       try {
         const config = await loadClientConfig();
+        assertReplConfig(config);
         const context = createRemoteContext(config);
         let entries: NetStorageFile[] = [];
         let completer = createCompleterSync([]);
@@ -368,6 +371,10 @@ export function createReplCommand(): Command {
           },
         });
         shell.on('exit', () => {
+          const updatedConfig: Partial<NetStorageClientConfig> = {
+            lastReplPath: context.getPath(),
+          };
+          savePersistentConfig(updatedConfig);
           logger.info('Goodbye!');
           process.exit(0);
         });
