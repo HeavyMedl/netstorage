@@ -301,11 +301,8 @@ function createCompleterSync(
     }
 
     if (['download', 'dl', 'get'].includes(cmd)) {
-      if (tokens.length === 2) {
-        const matches = fileAndDirNames.filter((name) => name.startsWith(arg));
-        return [matches.length ? matches : fileAndDirNames, arg];
-      }
-      return [[], ''];
+      const matches = fileAndDirNames.filter((name) => name.startsWith(arg));
+      return [matches.length ? matches : fileAndDirNames, arg];
     }
 
     const matches = allCommands.filter((c) => c.startsWith(trimmed));
