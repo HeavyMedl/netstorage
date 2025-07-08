@@ -73,10 +73,20 @@ npx netstorage config show
 
 ### `config clear`
 
-Remove all saved configuration values.
+Remove all or specific saved configuration values.
 
 ```bash
-npx netstorage config clear
+npx netstorage config clear [key]
+```
+
+- `key` (optional) – The specific configuration key to remove. If omitted, all configuration values will be cleared.
+
+Examples:
+
+```bash
+npx netstorage config clear         # Clears all configuration values
+npx netstorage config clear key     # Clears only the "key" entry
+npx netstorage config clear timeout # Clears only the "timeout" entry
 ```
 
 ### `config path`

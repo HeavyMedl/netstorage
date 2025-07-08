@@ -1,9 +1,10 @@
 import { Command } from 'commander';
 import {
   loadPersistentConfig,
-  savePersistentconfig,
+  savePersistentConfig,
   clearPersistentConfig,
   getPersistentConfigPath,
+  clearPersistentConfigKey,
 } from '../utils/configStore';
 import { validateTimeout } from '../utils';
 
@@ -36,7 +37,7 @@ export function createConfigCommand(
           validateTimeout,
         )
         .action((options) => {
-          savePersistentconfig(options);
+          savePersistentConfig(options);
           logger.info('config saved', { method: 'set' });
         }),
     )
@@ -47,10 +48,18 @@ export function createConfigCommand(
       }),
     )
     .addCommand(
-      new Command('clear').description('Clear all saved config').action(() => {
-        clearPersistentConfig();
-        logger.info('cleared', { method: 'clear' });
-      }),
+      new Command('clear')
+        .description('Clear all or specific config key(s)')
+        .argument('[key]', 'Key to clear (if specified)')
+        .action((key) => {
+          if (key) {
+            clearPersistentConfigKey(key);
+            logger.info(`cleared key: ${key}`, { method: 'clear' });
+          } else {
+            clearPersistentConfig();
+            logger.info('cleared all config', { method: 'clear' });
+          }
+        }),
     )
     .addCommand(
       new Command('path')
