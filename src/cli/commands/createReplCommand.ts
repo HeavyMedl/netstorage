@@ -394,7 +394,7 @@ export function createReplCommand(): Command {
                   process.exit(0);
                   break;
                 default: {
-                  if (command !== '') {
+                  if (command in CLICommandArgResolution) {
                     const resolutionSpec = CLICommandArgResolution[command];
                     const resolvedArgs = [...args];
                     if (resolutionSpec) {
