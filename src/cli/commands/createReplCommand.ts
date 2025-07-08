@@ -21,7 +21,32 @@ import {
 
 const logger = createLogger('info', 'netstorage/repl');
 
-interface RemoteContext {
+/**
+ * Defines which arguments for each REPL command should be resolved as remote
+ * paths. Only includes commands that are not handled internally by the REPL.
+ */
+const CLICommandArgResolution: Record<string, { resolveArgsAt: number[] }> = {
+  stat: { resolveArgsAt: [0] },
+  upload: { resolveArgsAt: [1] },
+  download: { resolveArgsAt: [0] },
+  dl: { resolveArgsAt: [0] },
+  get: { resolveArgsAt: [0] },
+};
+
+/**
+ * List of internal REPL commands that are handled directly by the REPL shell.
+ * These commands do not delegate to the main CLI command parser.
+ */
+const ReplInternalCommands = [
+  'cd',
+  'ls',
+  'll',
+  'pwd',
+  'clear',
+  'exit',
+] as const;
+
+export interface RemoteContext {
   getPath(): string;
   setPath(path: string): void;
   getEntries(): Promise<NetStorageFile[]>;
@@ -236,9 +261,10 @@ async function handleLsCommand(
 /**
  * Creates a synchronous tab-completion handler for the REPL.
  *
- * For the `cd` command, only directory entries are suggested.
- * Other commands (e.g. upload, stat) are matched against a static command
- * list.
+ * Supports command-aware completion for `cd`, `download`, and their aliases.
+ * For `cd`, only directory entries are suggested.
+ * For `download` (and aliases: `dl`, `get`), both file and directory entries are suggested.
+ * Other commands (e.g. upload, stat) are matched against a static command list.
  *
  * @param entries - List of NetStorageFile entries to use for completion.
  * @returns A REPL-compatible completer function.
@@ -246,19 +272,15 @@ async function handleLsCommand(
 function createCompleterSync(
   entries: NetStorageFile[],
 ): (line: string) => [string[], string] {
-  const staticCommands = [
-    'cd',
-    'pwd',
-    'exit',
-    'upload',
-    'download',
-    'stat',
-    'clear',
-  ];
   const dirNames = entries
     .filter((e) => e.type === 'dir')
     .map((e) => e.name)
     .sort();
+  const fileAndDirNames = entries.map((e) => e.name).sort();
+  const allCommands = [
+    ...Object.keys(CLICommandArgResolution),
+    ...ReplInternalCommands,
+  ];
 
   /**
    * Completer function for REPL tab completion.
@@ -277,8 +299,16 @@ function createCompleterSync(
       return [matches.length ? matches : dirNames, arg];
     }
 
-    const matches = staticCommands.filter((c) => c.startsWith(trimmed));
-    return [matches.length ? matches : staticCommands, trimmed];
+    if (['download', 'dl', 'get'].includes(cmd)) {
+      if (tokens.length === 2) {
+        const matches = fileAndDirNames.filter((name) => name.startsWith(arg));
+        return [matches.length ? matches : fileAndDirNames, arg];
+      }
+      return [[], ''];
+    }
+
+    const matches = allCommands.filter((c) => c.startsWith(trimmed));
+    return [matches.length ? matches : allCommands, trimmed];
   };
 }
 
@@ -299,6 +329,11 @@ export function createReplCommand(): Command {
         assertReplConfig(config);
         const context = createRemoteContext(config);
         let entries: NetStorageFile[] = [];
+
+        /**
+         * Current tab completion function used by the REPL to suggest
+         * completions based on the current directory entries and command.
+         */
         let completer = createCompleterSync([]);
 
         /**
@@ -311,6 +346,9 @@ export function createReplCommand(): Command {
           completer = createCompleterSync(entries);
         }
 
+        /**
+         * The REPL instance started for the interactive shell session.
+         */
         const shell = repl.start({
           prompt: `nst:${chalk.cyan(context.getPath())}> `,
           ignoreUndefined: true,
@@ -354,12 +392,26 @@ export function createReplCommand(): Command {
                   logger.info('Goodbye!');
                   process.exit(0);
                   break;
-                default:
+                default: {
                   if (command !== '') {
+                    const resolutionSpec = CLICommandArgResolution[command];
+                    const resolvedArgs = [...args];
+                    if (resolutionSpec) {
+                      for (const index of resolutionSpec.resolveArgsAt) {
+                        if (resolvedArgs[index]) {
+                          resolvedArgs[index] = resolvePath(
+                            resolvedArgs[index],
+                            context.getPath(),
+                          );
+                        }
+                      }
+                    }
                     await program
                       .exitOverride()
-                      .parseAsync([command, ...args], { from: 'user' });
+                      .parseAsync([command, ...resolvedArgs], { from: 'user' });
                   }
+                  break;
+                }
               }
             } catch (err) {
               logger.error(err);
