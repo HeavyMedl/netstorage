@@ -1,17 +1,21 @@
 import repl from 'node:repl';
-import path from 'node:path';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { program } from '../index'; // Assumes program is exported from CLI index
+import { loadClientConfig } from '../utils/loadConfig';
 import {
   createLogger,
   remoteWalk,
   formatBytes,
-  formatMtime,
   type NetStorageClientConfig,
   type NetStorageFile,
 } from '@/index';
-import { loadClientConfig } from '../utils/loadConfig';
+import {
+  resolvePath,
+  sortEntriesByTypeAndName,
+  formatDetailedEntry,
+  formatSimpleEntry,
+} from '../utils';
 
 const logger = createLogger('info', 'netstorage/repl');
 
@@ -79,7 +83,7 @@ function createRemoteContext(config: NetStorageClientConfig) {
     })) {
       if (entry.depth === 0 && entry.path === path) {
         rootMeta = entry.file;
-      } else {
+      } else if (entry.file.name !== '__synthetic_root__') {
         entries.push(entry.file);
       }
     }
@@ -102,9 +106,8 @@ function createRemoteContext(config: NetStorageClientConfig) {
     const cached = cache.getCachedEntries(remoteWorkingDir);
     if (cached) return cached;
     const { entries } = await loadEntries(remoteWorkingDir);
-    const filtered = entries.filter((e) => e.name !== '__synthetic_root__');
-    cache.setCachedEntries(remoteWorkingDir, filtered);
-    return filtered;
+    cache.setCachedEntries(remoteWorkingDir, entries);
+    return entries;
   }
 
   return {
@@ -219,84 +222,22 @@ async function handleLsCommand(
   ctx: RemoteContext,
 ): Promise<void> {
   const entries = await ctx.getEntries();
+  sortEntriesByTypeAndName(entries);
 
-  entries.sort((a, b) => {
-    const typeOrder = { dir: 0, file: 1, symlink: 2 };
-    return (
-      (typeOrder[a.type] ?? 3) - (typeOrder[b.type] ?? 3) ||
-      a.name.localeCompare(b.name)
-    );
-  });
+  const maxSizeLength = Math.max(
+    ...entries.map((e) =>
+      e.type === 'file' && e.size ? formatBytes(Number(e.size)).length : 2,
+    ),
+  );
 
   const lines = detailed
-    ? entries.map(({ name, type, size, mtime }) => {
-        const typeLabel = type.padEnd(5);
-        const sizeLabel = size
-          ? formatBytes(Number(size)).padStart(8)
-          : '        ';
-        const timeLabel = formatMtime(mtime);
-        const coloredName = colorizeName(
-          type === 'dir' ? `${name}/` : name,
-          type,
-        );
-        return `${typeLabel} ${sizeLabel} ${timeLabel} ${coloredName}`;
-      })
-    : entries.map((e) =>
-        colorizeName(e.type === 'dir' ? `${e.name}/` : e.name, e.type),
-      );
+    ? entries.map((e) => formatDetailedEntry(e, maxSizeLength))
+    : entries.map(formatSimpleEntry);
 
   for (const line of lines) {
     process.stdout.write(line + '\n');
   }
 }
-
-// REPL utilities
-
-/**
- * Resolves a relative or absolute path against the current remote working
- * directory.
- *
- * - Normalizes redundant slashes.
- * - Ensures path starts with a single leading slash.
- * - Trims any trailing slashes (except root).
- *
- * @param input - The path input from the user (may be relative or absolute).
- * @param currentPath - The current working directory path.
- * @returns A normalized, absolute path.
- */
-function resolvePath(input: string | undefined, currentPath: string): string {
-  const candidate = path.posix.normalize(
-    input?.startsWith('/') ? input : `${currentPath}/${input ?? ''}`,
-  );
-  return (
-    (candidate.startsWith('/') ? candidate : `/${candidate}`).replace(
-      /\/+$/,
-      '',
-    ) || '/'
-  );
-}
-
-/**
- * Applies terminal colorization to a NetStorage entry name based on its type.
- *
- * - Directories are cyan.
- * - Symlinks are blue.
- * - Files are gray.
- *
- * @param name - The display name of the entry.
- * @param type - The entry type: 'dir', 'file', or 'symlink'.
- * @returns The colorized name string.
- */
-const colorizeName = (name: string, type: string) => {
-  switch (type) {
-    case 'dir':
-      return chalk.cyan(name);
-    case 'symlink':
-      return chalk.blue(name);
-    default:
-      return chalk.gray(name);
-  }
-};
 
 /**
  * Creates a synchronous tab-completion handler for the REPL.
@@ -402,6 +343,10 @@ export function createReplCommand(): Command {
                 break;
               case 'ls':
                 await handleLsCommand(args.includes('-l'), context);
+                await refreshCompleter();
+                break;
+              case 'll':
+                await handleLsCommand(true, context);
                 await refreshCompleter();
                 break;
               case 'pwd':

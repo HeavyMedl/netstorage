@@ -1,6 +1,15 @@
-import { ConfigValidationError, createLogger, HttpError } from '@/index';
+import path from 'node:path';
+import chalk from 'chalk';
 import { getReasonPhrase } from 'http-status-codes';
-import type { WinstonLogLevel } from '@/index';
+import {
+  ConfigValidationError,
+  createLogger,
+  formatBytes,
+  formatMtime,
+  HttpError,
+  type NetStorageFile,
+  type WinstonLogLevel,
+} from '@/index';
 
 /**
  * Validates and parses a timeout value from a string.
@@ -105,4 +114,105 @@ export function getLogLevelOverride(
 export function printJson(data: unknown, pretty = false) {
   const payload = pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data);
   process.stdout.write(payload + '\n');
+}
+
+/**
+ * Sorts NetStorage entries by type priority and alphabetically by name.
+ *
+ * @param entries - The entries to sort.
+ */
+export function sortEntriesByTypeAndName(entries: NetStorageFile[]) {
+  const typeOrder = { dir: 0, file: 1, symlink: 2 };
+  entries.sort((a, b) => {
+    return (
+      (typeOrder[a.type] ?? 3) - (typeOrder[b.type] ?? 3) ||
+      a.name.localeCompare(b.name)
+    );
+  });
+}
+
+/**
+ * Formats a single entry with detailed metadata.
+ *
+ * @param entry - The NetStorage file entry.
+ * @param maxSizeLength - Width for right-aligned file sizes.
+ * @returns A formatted string.
+ */
+export function formatDetailedEntry(
+  entry: NetStorageFile,
+  maxSizeLength: number,
+): string {
+  const typeLabel = entry.type.slice(0, 4).padEnd(4);
+  const sizeLabel =
+    entry.type === 'file' && entry.size
+      ? formatBytes(Number(entry.size)).padStart(maxSizeLength)
+      : '--'.padStart(maxSizeLength);
+  const timeLabel = formatMtime(entry.mtime);
+  const nameLabel = colorizeName(
+    entry.type === 'dir' ? `${entry.name}/` : entry.name,
+    entry.type,
+  );
+  return `${typeLabel}  ${sizeLabel}  ${timeLabel}  ${nameLabel}`;
+}
+
+/**
+ * Formats a single entry for simple (non-detailed) output.
+ *
+ * @param entry - The NetStorage file entry.
+ * @returns A formatted string.
+ */
+export function formatSimpleEntry(entry: NetStorageFile): string {
+  return colorizeName(
+    entry.type === 'dir' ? `${entry.name}/` : entry.name,
+    entry.type,
+  );
+}
+
+/**
+ * Resolves a relative or absolute path against the current remote working
+ * directory.
+ *
+ * - Normalizes redundant slashes.
+ * - Ensures path starts with a single leading slash.
+ * - Trims any trailing slashes (except root).
+ *
+ * @param input - The path input from the user (may be relative or absolute).
+ * @param currentPath - The current working directory path.
+ * @returns A normalized, absolute path.
+ */
+export function resolvePath(
+  input: string | undefined,
+  currentPath: string,
+): string {
+  const candidate = path.posix.normalize(
+    input?.startsWith('/') ? input : `${currentPath}/${input ?? ''}`,
+  );
+  return (
+    (candidate.startsWith('/') ? candidate : `/${candidate}`).replace(
+      /\/+$/,
+      '',
+    ) || '/'
+  );
+}
+
+/**
+ * Applies terminal colorization to a NetStorage entry name based on its type.
+ *
+ * - Directories are cyan.
+ * - Symlinks are blue.
+ * - Files are gray.
+ *
+ * @param name - The display name of the entry.
+ * @param type - The entry type: 'dir', 'file', or 'symlink'.
+ * @returns The colorized name string.
+ */
+export function colorizeName(name: string, type: string) {
+  switch (type) {
+    case 'dir':
+      return chalk.cyan(name);
+    case 'symlink':
+      return chalk.blue(name);
+    default:
+      return chalk.gray(name);
+  }
 }
