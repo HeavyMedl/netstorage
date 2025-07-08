@@ -17,6 +17,7 @@ export function createDownloadCommand(
 ): Command {
   return new Command('download')
     .alias('dl')
+    .alias('get')
     .description('Download a file or directory from NetStorage to a local path')
     .argument('<remotePath>', 'Remote path to download from')
     .argument(

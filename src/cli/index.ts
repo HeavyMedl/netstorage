@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { fileURLToPath } from 'node:url';
+import { argv } from 'node:process';
+import { realpathSync } from 'node:fs';
 import { Command } from 'commander';
 import { version } from '../../package.json';
 
@@ -13,10 +16,10 @@ import { createRenameCommand } from './commands/createRenameCommand';
 import { createMtimeCommand } from './commands/createMtimeCommand';
 import { createTreeCommand } from './commands/createTreeCommand';
 import { createRemoveCommand } from './commands/createRemoveCommand';
+import { createReplCommand } from './commands/createReplCommand';
 
 const logger = createLogger('info', `netstorage/cli`);
-
-const program = new Command();
+export const program = new Command();
 program
   .name('netstorage')
   .alias('nst')
@@ -105,4 +108,8 @@ program.addCommand(createSymlinkCommand(logger));
 program.addCommand(createSyncCommand(logger));
 program.addCommand(createTreeCommand(logger));
 program.addCommand(createUploadCommand(logger));
-program.parseAsync(process.argv);
+program.addCommand(createReplCommand());
+
+if (fileURLToPath(import.meta.url) === realpathSync(argv[1])) {
+  program.parseAsync(argv);
+}

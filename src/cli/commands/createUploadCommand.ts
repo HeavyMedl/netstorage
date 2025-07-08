@@ -23,6 +23,7 @@ export function createUploadCommand(
 ): Command {
   return new Command('upload')
     .alias('up')
+    .alias('put')
     .description('Upload a local file or directory to NetStorage')
     .argument('<fromLocal>', 'Path to the local file or directory to upload')
     .argument(
