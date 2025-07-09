@@ -11,6 +11,7 @@ import {
   type NetStorageFile,
   type WinstonLogLevel,
 } from '@/index';
+import yargsParser from 'yargs-parser';
 
 /**
  * Validates and parses a timeout value from a string.
@@ -290,4 +291,83 @@ export function getReplCompletions(
       ? remoteEntries.filter((name) => name.startsWith(prefix))
       : [];
   return [matches.length ? matches : [], prefix];
+}
+
+/**
+ * Parses the input string to extract command, arguments, and options using yargs-parser.
+ *
+ * @param input - The raw input string from the REPL.
+ * @returns An object containing the command, args, and options as string arrays.
+ */
+export function parseReplInput(input: string): {
+  command: string;
+  args: string[];
+  options: string[];
+} {
+  const parsed = yargsParser(input.trim(), {
+    configuration: {
+      'camel-case-expansion': false,
+      'dot-notation': false,
+      'parse-numbers': false,
+    },
+  });
+
+  const [rawCommand = ''] = parsed._;
+  const command = String(rawCommand);
+  const args = parsed._.slice(1).map(String);
+
+  const options: string[] = Object.entries(parsed)
+    .filter(([key]) => key !== '_')
+    .flatMap(([key, val]) => {
+      const prefix = key.length === 1 ? `-${key}` : `--${key}`;
+      if (val === true) return [prefix];
+      if (Array.isArray(val)) return val.flatMap((v) => [prefix, String(v)]);
+      return [prefix, String(val)];
+    });
+
+  return { command, args, options };
+}
+
+/**
+ * Resolves CLI arguments based on resolution spec and working directory.
+ *
+ * If no argument is passed for a remote path, it resolves to the current working directory.
+ * This ensures commands like `upload` or `download` can infer default remote targets.
+ *
+ * @param args - Raw user-provided arguments
+ * @param resolutionSpec - Positional resolution map for the command
+ * @param cwd - Current remote working directory
+ * @returns Resolved argument list
+ */
+export function resolveCliArgs(
+  args: string[],
+  resolutionSpec: Record<number, 'local' | 'remote'>,
+  cwd: string,
+): string[] {
+  const result: string[] = [];
+  const maxIndex = Math.max(...Object.keys(resolutionSpec).map(Number));
+
+  for (let i = 0; i <= maxIndex; i++) {
+    const mode = resolutionSpec[i];
+    const arg = args[i];
+
+    if (arg !== undefined) {
+      result.push(mode === 'remote' ? resolvePath(arg, cwd) : arg);
+    } else if (mode === 'remote') {
+      // Look for corresponding local arg to infer a basename
+      const localIndex = Object.entries(resolutionSpec).find(
+        ([, v]) => v === 'local',
+      )?.[0];
+
+      if (localIndex !== undefined && args[Number(localIndex)]) {
+        const localPath = args[Number(localIndex)];
+        const inferred = path.posix.join(cwd, path.basename(localPath));
+        result.push(inferred);
+      } else {
+        result.push(cwd);
+      }
+    }
+  }
+
+  return result;
 }

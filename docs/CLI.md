@@ -3,6 +3,7 @@
 - [CLI](#cli)
   - [Getting Started](#getting-started)
     - [Optional: Global Install for `nst`](#optional-global-install-for-nst)
+  - [Interactive REPL](#interactive-repl)
   - [`config`](#config)
     - [`config set`](#config-set)
     - [`config show`](#config-show)
@@ -41,6 +42,36 @@ nst --help
 ```
 
 After global install, all `npx netstorage` commands can be run as `nst` instead.
+
+## Interactive REPL
+
+The NetStorage CLI includes an interactive REPL for issuing multiple commands within a persistent session.
+
+To launch the REPL:
+
+```bash
+nst
+```
+
+While in the REPL, you can execute any supported NetStorage command using shorthand or full command names (e.g., `upload`, `dir`, `stat`, etc.). The REPL automatically resolves remote paths relative to your current working directory on NetStorage, which is displayed in the prompt.
+
+Features:
+
+- Tab autocompletion for local and remote paths
+- Path suggestions that reflect REPL context
+- Persistent remote working directory that updates with navigation
+- Command history and shortcut aliases (e.g., `ls` for `dir`, `get` for `download`, `put` for `upload`)
+
+Example session:
+
+```bash
+nst:/media> ls
+nst:/media> stat file.jpg
+nst:/media> put ./photo.jpg
+nst:/media> get remote-folder -v
+```
+
+To exit the REPL, type `exit` or press `Ctrl+D`.
 
 ## `config`
 
