@@ -1,4 +1,3 @@
-import yargsParser from 'yargs-parser';
 import repl from 'node:repl';
 import chalk from 'chalk';
 import { Command } from 'commander';
@@ -19,28 +18,42 @@ import {
   formatSimpleEntry,
   assertReplConfig,
   getReplCompletions,
+  parseReplInput,
+  resolveCliArgs,
 } from '../utils';
 import type winston from 'winston';
 
 const logger = createLogger('info', 'netstorage/repl');
 
 /**
- * Defines which arguments for each REPL command should be resolved as local or remote paths,
- * indexed by argument position. Only includes commands that are not handled internally by the REPL.
+ * Defines which arguments for GET commands should be resolved as local or remote paths.
  */
-const CLICommandArgResolution: Record<
-  string,
-  Record<number, 'local' | 'remote'>
-> = {
+const GetCommands: Record<string, Record<number, 'local' | 'remote'>> = {
   stat: { 0: 'remote' },
   dir: { 0: 'remote' },
-  // sync: { 0: 'local', 1: 'remote' },
-  upload: { 0: 'local', 1: 'remote' },
-  up: { 0: 'local', 1: 'remote' },
-  put: { 0: 'local', 1: 'remote' },
+  tree: { 0: 'remote' },
   download: { 0: 'remote', 1: 'local' },
   dl: { 0: 'remote', 1: 'local' },
   get: { 0: 'remote', 1: 'local' },
+};
+
+/**
+ * Defines which arguments for PUT commands should be resolved as local or remote paths.
+ */
+const PutCommands: Record<string, Record<number, 'local' | 'remote'>> = {
+  sync: { 0: 'local', 1: 'remote' },
+  upload: { 0: 'local', 1: 'remote' },
+  up: { 0: 'local', 1: 'remote' },
+  put: { 0: 'local', 1: 'remote' },
+  rm: { 0: 'remote' },
+};
+
+/**
+ * Merged argument resolution for REPL commands (GET and PUT).
+ */
+const CLICommands: Record<string, Record<number, 'local' | 'remote'>> = {
+  ...GetCommands,
+  ...PutCommands,
 };
 
 /**
@@ -290,10 +303,7 @@ function createCompleterSync(
   const remoteDirEntries = entries
     .filter((e) => e.type === 'dir')
     .map((e) => e.name);
-  const allCommands = [
-    ...Object.keys(CLICommandArgResolution),
-    ...ReplInternalCommands,
-  ];
+  const allCommands = [...Object.keys(CLICommands), ...ReplInternalCommands];
 
   /**
    * Completer function for REPL tab completion.
@@ -312,8 +322,8 @@ function createCompleterSync(
       return [matches.length ? matches : remoteDirEntries, arg];
     }
 
-    if (CLICommandArgResolution[cmd]) {
-      const resolutionSpec = CLICommandArgResolution[cmd];
+    if (CLICommands[cmd]) {
+      const resolutionSpec = CLICommands[cmd];
       let localArgIndex: number | undefined;
       let remoteArgIndex: number | undefined;
       for (const index in resolutionSpec) {
@@ -331,74 +341,6 @@ function createCompleterSync(
     const matches = allCommands.filter((c) => c.startsWith(trimmed));
     return [matches.length ? matches : allCommands, trimmed];
   };
-}
-
-/**
- * Parses the input string to extract command, arguments, and options using yargs-parser.
- *
- * @param input - The raw input string from the REPL.
- * @returns An object containing the command, args, and options as string arrays.
- */
-function parseReplInput(input: string): {
-  command: string;
-  args: string[];
-  options: string[];
-} {
-  const parsed = yargsParser(input.trim(), {
-    configuration: {
-      'camel-case-expansion': false,
-      'dot-notation': false,
-      'parse-numbers': false,
-    },
-  });
-
-  const [rawCommand = ''] = parsed._;
-  const command = String(rawCommand);
-  const args = parsed._.slice(1).map(String);
-
-  const options: string[] = Object.entries(parsed)
-    .filter(([key]) => key !== '_')
-    .flatMap(([key, val]) => {
-      const prefix = key.length === 1 ? `-${key}` : `--${key}`;
-      if (val === true) return [prefix];
-      if (Array.isArray(val)) return val.flatMap((v) => [prefix, String(v)]);
-      return [prefix, String(val)];
-    });
-
-  return { command, args, options };
-}
-
-/**
- * Resolves CLI arguments based on resolution spec and working directory.
- *
- * If no argument is passed for a remote path, it resolves to the current working directory.
- * This ensures commands like `upload` or `download` can infer default remote targets.
- *
- * @param args - Raw user-provided arguments
- * @param resolutionSpec - Positional resolution map for the command
- * @param cwd - Current remote working directory
- * @returns Resolved argument list
- */
-function resolveCliArgs(
-  args: string[],
-  resolutionSpec: Record<number, 'local' | 'remote'>,
-  cwd: string,
-): string[] {
-  const result: string[] = [];
-  const maxIndex = Math.max(...Object.keys(resolutionSpec).map(Number));
-
-  for (let i = 0; i <= maxIndex; i++) {
-    const mode = resolutionSpec[i];
-    const arg = args[i];
-
-    if (arg !== undefined) {
-      result.push(mode === 'remote' ? resolvePath(arg, cwd) : arg);
-    } else if (mode === 'remote') {
-      result.push(cwd);
-    }
-  }
-
-  return result;
 }
 
 /**
@@ -480,8 +422,8 @@ export function createReplCommand(): Command {
                   process.exit(0);
                   break;
                 default: {
-                  if (command in CLICommandArgResolution) {
-                    const resolutionSpec = CLICommandArgResolution[command];
+                  if (command in CLICommands) {
+                    const resolutionSpec = CLICommands[command];
                     const resolvedArgs = resolveCliArgs(
                       args,
                       resolutionSpec,
@@ -492,6 +434,9 @@ export function createReplCommand(): Command {
                       .parseAsync([command, ...resolvedArgs, ...options], {
                         from: 'user',
                       });
+                    if (command in PutCommands) {
+                      context.clearCache();
+                    }
                   }
                   break;
                 }

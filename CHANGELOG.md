@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2025-07-03
+
+### Introduction of REPL
+
+- Added interactive REPL shell via `npx netstorage` command.
+- Supports tab completion for commands and remote/local paths.
+- Dynamic path resolution based on command argument positions (e.g., remote vs. local).
+- Maintains working directory context and caches directory listings for fast navigation.
+- Handles standard navigation commands (`cd`, `ls`, `ll`, `pwd`, `clear`, `exit`) natively.
+- Automatically resolves missing remote paths in upload/download/sync operations using current REPL context.
+- Integrates with main CLI commands for invocation with resolved arguments and options.
+
 ## [2.0.0] - 2025-07-02
 
 This release introduces a streamlined configuration system and a new CLI interface.
