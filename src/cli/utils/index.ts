@@ -1,3 +1,4 @@
+import { readdirSync } from 'node:fs';
 import path from 'node:path';
 import chalk from 'chalk';
 import { getReasonPhrase } from 'http-status-codes';
@@ -230,4 +231,63 @@ export function assertReplConfig(config: { cpCode?: string }): void {
   if (!config.cpCode) {
     throw new ConfigValidationError('cpCode');
   }
+}
+
+/**
+ * Returns a list of local files and directories that match the provided prefix.
+ *
+ * @param {string} prefix - The prefix to filter local files and directories by.
+ * @returns {string[]} A list of matching local files and directories.
+ */
+export function getLocalCompletions(prefix: string): string[] {
+  const base = path.dirname(prefix || '');
+  const partial = path.basename(prefix || '');
+  try {
+    const fullBase = base ? path.resolve(process.cwd(), base) : process.cwd();
+    return readdirSync(fullBase, { withFileTypes: true })
+      .map((e) => (e.isDirectory() ? e.name + '/' : e.name))
+      .filter((n: string) => n.startsWith(partial))
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Generates tab completions for REPL commands with both remote and local path arguments.
+ *
+ * @param line - The raw REPL input line.
+ * @param tokens - Tokenized input from the REPL.
+ * @param arg - The current argument token being completed.
+ * @param remoteEntries - Remote NetStorage entry names.
+ * @param options - Object specifying which argument indices are for local or remote completions.
+ * @returns A tuple of matching completions and the replacement prefix.
+ */
+export function getReplCompletions(
+  line: string,
+  tokens: string[],
+  arg: string,
+  remoteEntries: string[],
+  options: {
+    localArgIndex?: number;
+    remoteArgIndex?: number;
+  },
+): [string[], string] {
+  const endsWithSpace = /\s$/.test(line);
+
+  // Calculate the index of the next token (current arg position)
+  const nextTokenIndex = endsWithSpace ? tokens.length : tokens.length - 1;
+  const currentArgIndex = nextTokenIndex - 1;
+
+  const isLocalCompletion = options.localArgIndex === currentArgIndex;
+  const isRemoteCompletion = options.remoteArgIndex === currentArgIndex;
+
+  const prefix = endsWithSpace ? '' : arg;
+
+  const matches = isLocalCompletion
+    ? getLocalCompletions(prefix)
+    : isRemoteCompletion
+      ? remoteEntries.filter((name) => name.startsWith(prefix))
+      : [];
+  return [matches.length ? matches : [], prefix];
 }
