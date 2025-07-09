@@ -1,3 +1,4 @@
+import yargsParser from 'yargs-parser';
 import repl from 'node:repl';
 import chalk from 'chalk';
 import { Command } from 'commander';
@@ -17,20 +18,29 @@ import {
   formatDetailedEntry,
   formatSimpleEntry,
   assertReplConfig,
+  getReplCompletions,
 } from '../utils';
+import type winston from 'winston';
 
 const logger = createLogger('info', 'netstorage/repl');
 
 /**
- * Defines which arguments for each REPL command should be resolved as remote
- * paths. Only includes commands that are not handled internally by the REPL.
+ * Defines which arguments for each REPL command should be resolved as local or remote paths,
+ * indexed by argument position. Only includes commands that are not handled internally by the REPL.
  */
-const CLICommandArgResolution: Record<string, { resolveArgsAt: number[] }> = {
-  stat: { resolveArgsAt: [0] },
-  upload: { resolveArgsAt: [1] },
-  download: { resolveArgsAt: [0] },
-  dl: { resolveArgsAt: [0] },
-  get: { resolveArgsAt: [0] },
+const CLICommandArgResolution: Record<
+  string,
+  Record<number, 'local' | 'remote'>
+> = {
+  stat: { 0: 'remote' },
+  dir: { 0: 'remote' },
+  // sync: { 0: 'local', 1: 'remote' },
+  upload: { 0: 'local', 1: 'remote' },
+  up: { 0: 'local', 1: 'remote' },
+  put: { 0: 'local', 1: 'remote' },
+  download: { 0: 'remote', 1: 'local' },
+  dl: { 0: 'remote', 1: 'local' },
+  get: { 0: 'remote', 1: 'local' },
 };
 
 /**
@@ -46,6 +56,11 @@ const ReplInternalCommands = [
   'exit',
 ] as const;
 
+/**
+ * Represents an interactive NetStorage shell context.
+ *
+ * @interface
+ */
 export interface RemoteContext {
   getPath(): string;
   setPath(path: string): void;
@@ -75,7 +90,7 @@ export interface RemoteContext {
  *   - `loadEntries`: Performs a remote walk to load and optionally cache
  *     entries.
  */
-function createRemoteContext(config: NetStorageClientConfig) {
+function createRemoteContext(config: NetStorageClientConfig): RemoteContext {
   let remoteWorkingDir = config.lastReplPath || '/';
   const cache = createRemoteDirectoryCache();
 
@@ -187,8 +202,6 @@ function createRemoteDirectoryCache() {
   };
 }
 
-// REPL command handlers
-
 /**
  * Handles the `cd` command within the REPL.
  *
@@ -204,7 +217,7 @@ function createRemoteDirectoryCache() {
 async function handleCdCommand(
   target: string | undefined,
   ctx: RemoteContext,
-  logger: ReturnType<typeof createLogger>,
+  logger: winston.Logger,
 ): Promise<void> {
   const resolved = resolvePath(target, ctx.getPath());
   const prev = ctx.getPath();
@@ -273,11 +286,10 @@ async function handleLsCommand(
 function createCompleterSync(
   entries: NetStorageFile[],
 ): (line: string) => [string[], string] {
-  const dirNames = entries
+  const remoteEntries = entries.map((e) => e.name).sort();
+  const remoteDirEntries = entries
     .filter((e) => e.type === 'dir')
-    .map((e) => e.name)
-    .sort();
-  const fileAndDirNames = entries.map((e) => e.name).sort();
+    .map((e) => e.name);
   const allCommands = [
     ...Object.keys(CLICommandArgResolution),
     ...ReplInternalCommands,
@@ -296,18 +308,97 @@ function createCompleterSync(
     const arg = tokens[1] ?? '';
 
     if (cmd === 'cd') {
-      const matches = dirNames.filter((name) => name.startsWith(arg));
-      return [matches.length ? matches : dirNames, arg];
+      const matches = remoteDirEntries.filter((name) => name.startsWith(arg));
+      return [matches.length ? matches : remoteDirEntries, arg];
     }
 
-    if (['download', 'dl', 'get'].includes(cmd)) {
-      const matches = fileAndDirNames.filter((name) => name.startsWith(arg));
-      return [matches.length ? matches : fileAndDirNames, arg];
+    if (CLICommandArgResolution[cmd]) {
+      const resolutionSpec = CLICommandArgResolution[cmd];
+      let localArgIndex: number | undefined;
+      let remoteArgIndex: number | undefined;
+      for (const index in resolutionSpec) {
+        const key = parseInt(index, 10);
+        const value = resolutionSpec[key];
+        if (value === 'local') localArgIndex = key;
+        if (value === 'remote') remoteArgIndex = key;
+      }
+      return getReplCompletions(line, tokens, arg, remoteEntries, {
+        localArgIndex,
+        remoteArgIndex,
+      });
     }
 
     const matches = allCommands.filter((c) => c.startsWith(trimmed));
     return [matches.length ? matches : allCommands, trimmed];
   };
+}
+
+/**
+ * Parses the input string to extract command, arguments, and options using yargs-parser.
+ *
+ * @param input - The raw input string from the REPL.
+ * @returns An object containing the command, args, and options as string arrays.
+ */
+function parseReplInput(input: string): {
+  command: string;
+  args: string[];
+  options: string[];
+} {
+  const parsed = yargsParser(input.trim(), {
+    configuration: {
+      'camel-case-expansion': false,
+      'dot-notation': false,
+      'parse-numbers': false,
+    },
+  });
+
+  const [rawCommand = ''] = parsed._;
+  const command = String(rawCommand);
+  const args = parsed._.slice(1).map(String);
+
+  const options: string[] = Object.entries(parsed)
+    .filter(([key]) => key !== '_')
+    .flatMap(([key, val]) => {
+      const prefix = key.length === 1 ? `-${key}` : `--${key}`;
+      if (val === true) return [prefix];
+      if (Array.isArray(val)) return val.flatMap((v) => [prefix, String(v)]);
+      return [prefix, String(val)];
+    });
+
+  return { command, args, options };
+}
+
+/**
+ * Resolves CLI arguments based on resolution spec and working directory.
+ *
+ * If no argument is passed for a remote path, it resolves to the current working directory.
+ * This ensures commands like `upload` or `download` can infer default remote targets.
+ *
+ * @param args - Raw user-provided arguments
+ * @param resolutionSpec - Positional resolution map for the command
+ * @param cwd - Current remote working directory
+ * @returns Resolved argument list
+ */
+function resolveCliArgs(
+  args: string[],
+  resolutionSpec: Record<number, 'local' | 'remote'>,
+  cwd: string,
+): string[] {
+  const result: string[] = [];
+  const maxIndex = Math.max(...Object.keys(resolutionSpec).map(Number));
+
+  for (let i = 0; i <= maxIndex; i++) {
+    const mode = resolutionSpec[i];
+    const arg = args[i];
+
+    if (arg !== undefined) {
+      result.push(mode === 'remote' ? resolvePath(arg, cwd) : arg);
+    } else if (mode === 'remote') {
+      result.push(cwd);
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -364,8 +455,7 @@ export function createReplCommand(): Command {
            * @param callback - Callback to resume REPL input loop.
            */
           eval: async (input, _context, _filename, callback) => {
-            const [command, ...args] = input.trim().split(/\s+/);
-
+            const { command, args, options } = parseReplInput(input);
             try {
               switch (command) {
                 case 'cd':
@@ -387,26 +477,21 @@ export function createReplCommand(): Command {
                   process.stdout.write('\x1Bc');
                   break;
                 case 'exit':
-                  logger.info('Goodbye!');
                   process.exit(0);
                   break;
                 default: {
                   if (command in CLICommandArgResolution) {
                     const resolutionSpec = CLICommandArgResolution[command];
-                    const resolvedArgs = [...args];
-                    if (resolutionSpec) {
-                      for (const index of resolutionSpec.resolveArgsAt) {
-                        if (resolvedArgs[index]) {
-                          resolvedArgs[index] = resolvePath(
-                            resolvedArgs[index],
-                            context.getPath(),
-                          );
-                        }
-                      }
-                    }
+                    const resolvedArgs = resolveCliArgs(
+                      args,
+                      resolutionSpec,
+                      context.getPath(),
+                    );
                     await program
                       .exitOverride()
-                      .parseAsync([command, ...resolvedArgs], { from: 'user' });
+                      .parseAsync([command, ...resolvedArgs, ...options], {
+                        from: 'user',
+                      });
                   }
                   break;
                 }
@@ -421,7 +506,6 @@ export function createReplCommand(): Command {
           },
         });
         shell.on('exit', () => {
-          logger.info('Goodbye!');
           process.exit(0);
         });
       } catch (err) {
