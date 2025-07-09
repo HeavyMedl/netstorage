@@ -20,16 +20,19 @@ import {
   getReplCompletions,
   parseReplInput,
   resolveCliArgs,
+  type CommandArgResolutionSpec,
 } from '../utils';
 import type winston from 'winston';
 
 const logger = createLogger('info', 'netstorage/repl');
 
 /**
- * Specifies which arguments for GET commands should be interpreted as local or remote paths.
- * The key is the command name, and the value is a mapping of argument index to 'local' or 'remote'.
+ * Defines resolution specifications for read-based NetStorage commands.
+ *
+ * Each command maps its positional arguments to how they should be resolved:
+ * - 'remote': argument should resolve to a remote path.
  */
-const GetCommands: Record<string, Record<number, 'local' | 'remote'>> = {
+const GetCommands: CommandArgResolutionSpec = {
   stat: { 0: 'remote' },
   dir: { 0: 'remote' },
   tree: { 0: 'remote' },
@@ -39,37 +42,44 @@ const GetCommands: Record<string, Record<number, 'local' | 'remote'>> = {
 };
 
 /**
- * Specifies which arguments for PUT commands should be interpreted as local or remote paths.
- * The key is the command name, and the value is a mapping of argument index to 'local' or 'remote'.
+ * Defines resolution specifications for write-based NetStorage commands.
+ *
+ * Each command maps its positional arguments to how they should be resolved:
+ * - 'local': argument should resolve to a local path.
+ * - 'remote': argument should resolve to a remote path.
+ * - 'passthrough': argument is preserved as-is without resolution.
  */
-const PutCommands: Record<string, Record<number, 'local' | 'remote'>> = {
+const PutCommands: CommandArgResolutionSpec = {
   sync: { 0: 'local', 1: 'remote' },
   upload: { 0: 'local', 1: 'remote' },
   up: { 0: 'local', 1: 'remote' },
   put: { 0: 'local', 1: 'remote' },
   rm: { 0: 'remote' },
   symlink: { 0: 'remote', 1: 'remote' },
+  mtime: { 0: 'remote', 1: 'passthrough' },
 };
 
 /**
- * Aggregates argument resolution mappings for all CLI commands available in the REPL.
- * Used to determine which arguments are local or remote paths for each command.
+ * Combined resolution specification for all supported CLI commands.
+ *
+ * Merges `GetCommands` and `PutCommands` to support tab completion and
+ * argument resolution logic for the interactive REPL shell.
  */
-const CLICommands: Record<string, Record<number, 'local' | 'remote'>> = {
+const CLICommands: CommandArgResolutionSpec = {
   ...GetCommands,
   ...PutCommands,
 };
 
 /**
- * List of internal REPL commands handled directly by the REPL shell.
- * These commands do not invoke the main CLI parser.
+ * List of internal REPL commands handled directly by the REPL shell. These
+ * commands do not invoke the main CLI parser.
  */
 const REPLCommands = ['cd', 'ls', 'll', 'pwd', 'clear', 'exit'] as const;
 
 /**
- * Interface representing the remote context for the interactive NetStorage shell.
- * Provides methods for managing the current remote path, caching directory entries,
- * and retrieving/updating directory contents.
+ * Interface representing the remote context for the interactive NetStorage
+ * shell. Provides methods for managing the current remote path, caching
+ * directory entries, and retrieving/updating directory contents.
  */
 export interface RemoteContext {
   getPath(): string;
@@ -84,12 +94,13 @@ export interface RemoteContext {
 }
 
 /**
- * Creates a remote context object for interacting with the NetStorage working directory.
- * The context manages the current remote path, caches directory entries, and exposes
- * methods to retrieve or update remote directory contents.
+ * Creates a remote context object for interacting with the NetStorage working
+ * directory. The context manages the current remote path, caches directory
+ * entries, and exposes methods to retrieve or update remote directory contents.
  *
  * @param config - The NetStorage client configuration.
- * @returns A RemoteContext object providing access to path and entries management.
+ * @returns A RemoteContext object providing access to path and entries
+ * management.
  */
 function createRemoteContext(config: NetStorageClientConfig): RemoteContext {
   let remoteWorkingDir = config.lastReplPath || '/';
@@ -97,10 +108,12 @@ function createRemoteContext(config: NetStorageClientConfig): RemoteContext {
 
   /**
    * Loads directory entries from the specified remote path using a remote walk.
-   * Optionally caches the result if the path matches the current working directory.
+   * Optionally caches the result if the path matches the current working
+   * directory.
    *
    * @param path - Remote path to retrieve entries from.
-   * @returns Promise resolving to an object containing root metadata and entries array.
+   * @returns Promise resolving to an object containing root metadata and entries
+   * array.
    */
   async function loadEntries(path: string): Promise<{
     rootMeta?: NetStorageFile;
@@ -129,8 +142,8 @@ function createRemoteContext(config: NetStorageClientConfig): RemoteContext {
   }
 
   /**
-   * Retrieves directory entries for the current remote working directory.
-   * Uses the cache if available, otherwise loads entries from the remote source.
+   * Retrieves directory entries for the current remote working directory. Uses
+   * the cache if available, otherwise loads entries from the remote source.
    *
    * @returns Promise resolving to an array of NetStorageFile entries.
    */
@@ -156,8 +169,8 @@ function createRemoteContext(config: NetStorageClientConfig): RemoteContext {
 }
 
 /**
- * Creates an in-memory cache utility for directory listings in the REPL.
- * Stores entries for a single directory path and clears when navigating to a new path.
+ * Creates an in-memory cache utility for directory listings in the REPL. Stores
+ * entries for a single directory path and clears when navigating to a new path.
  *
  * @returns An object with methods to get, set, and clear cached entries.
  */
@@ -196,9 +209,9 @@ function createRemoteDirectoryCache() {
 }
 
 /**
- * Executes the `cd` command in the REPL.
- * Resolves the target path, verifies it's a directory, and updates the remote context.
- * Logs a warning if the path is invalid or not a directory.
+ * Executes the `cd` command in the REPL. Resolves the target path, verifies it's
+ * a directory, and updates the remote context. Logs a warning if the path is
+ * invalid or not a directory.
  *
  * @param target - Target path to change to (relative or absolute).
  * @param ctx - RemoteContext instance for managing remote path state.
@@ -229,19 +242,25 @@ async function handleCdCommand(
 }
 
 /**
- * Executes the `ls` or `ll` command in the REPL.
- * Fetches and displays directory entries for the current path, optionally showing detailed metadata.
+ * Executes the `ls` or `ll` command in the REPL. Fetches and displays directory
+ * entries for the target or current path, optionally showing detailed metadata.
  * Entries are sorted by type and name.
  *
- * @param detailed - Whether to show detailed output (type, size, modified time, colorized name).
+ * @param detailed - Whether to show detailed output (type, size, modified time,
+ * colorized name).
  * @param ctx - RemoteContext instance for retrieving entries.
+ * @param target - Optional target path to list.
  * @returns Promise that resolves when the command finishes.
  */
 async function handleLsCommand(
   detailed: boolean,
   ctx: RemoteContext,
+  target?: string,
 ): Promise<void> {
-  const entries = await ctx.getEntries();
+  const resolved = target ? resolvePath(target, ctx.getPath()) : ctx.getPath();
+  const entries = target
+    ? (await ctx.loadEntries(resolved)).entries
+    : await ctx.getEntries();
   sortEntriesByTypeAndName(entries);
 
   const maxSizeLength = Math.max(
@@ -260,10 +279,12 @@ async function handleLsCommand(
 }
 
 /**
- * Creates a synchronous tab-completion function for the REPL.
- * Provides command-aware completion for REPL and CLI commands, suggesting appropriate entries or commands.
+ * Creates a synchronous tab-completion function for the REPL. Provides
+ * command-aware completion for REPL and CLI commands, suggesting appropriate
+ * entries or commands.
  *
- * @param entries - Array of NetStorageFile entries to use for completion suggestions.
+ * @param entries - Array of NetStorageFile entries to use for completion
+ * suggestions.
  * @returns A function compatible with the REPL completer API.
  */
 function createCompleterSync(
@@ -316,8 +337,8 @@ function createCompleterSync(
 }
 
 /**
- * Constructs the `repl` command for the NetStorage CLI.
- * Launches an interactive shell that accepts NetStorage CLI commands and routes them through Commander.
+ * Constructs the `repl` command for the NetStorage CLI. Launches an interactive
+ * shell that accepts NetStorage CLI commands and routes them through Commander.
  *
  * @returns Commander Command instance for the REPL.
  */
@@ -332,7 +353,8 @@ export function createReplCommand(): Command {
         let entries: NetStorageFile[] = [];
 
         /**
-         * Current tab completion function used by the REPL to suggest completions.
+         * Current tab completion function used by the REPL to suggest
+         * completions.
          */
         let completer = createCompleterSync([]);
 
@@ -354,8 +376,8 @@ export function createReplCommand(): Command {
           ignoreUndefined: true,
           completer: (...args: [string]) => completer(...args),
           /**
-           * Evaluator callback for processing user commands in the REPL.
-           * Handles internal REPL commands and delegates other commands to the CLI parser.
+           * Evaluator callback for processing user commands in the REPL. Handles
+           * internal REPL commands and delegates other commands to the CLI parser.
            *
            * @param input - Raw input line from the user.
            * @param _context - REPL context object (unused).
@@ -371,11 +393,15 @@ export function createReplCommand(): Command {
                   await refreshCompleter();
                   break;
                 case 'ls':
-                  await handleLsCommand(args.includes('-l'), context);
+                  await handleLsCommand(
+                    options.includes('-l'),
+                    context,
+                    args[0],
+                  );
                   await refreshCompleter();
                   break;
                 case 'll':
-                  await handleLsCommand(true, context);
+                  await handleLsCommand(true, context, args[0]);
                   await refreshCompleter();
                   break;
                 case 'pwd':
