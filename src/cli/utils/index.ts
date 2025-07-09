@@ -255,13 +255,15 @@ export function getLocalCompletions(prefix: string): string[] {
 }
 
 /**
- * Generates tab completions for REPL commands with both remote and local path arguments.
+ * Generates tab completions for REPL commands based on specified local and remote argument positions.
+ *
+ * Supports commands where multiple positional arguments may be resolved as either local or remote paths.
  *
  * @param line - The raw REPL input line.
  * @param tokens - Tokenized input from the REPL.
  * @param arg - The current argument token being completed.
  * @param remoteEntries - Remote NetStorage entry names.
- * @param options - Object specifying which argument indices are for local or remote completions.
+ * @param options - Object with Sets identifying which argument indices should resolve as local or remote.
  * @returns A tuple of matching completions and the replacement prefix.
  */
 export function getReplCompletions(
@@ -270,8 +272,8 @@ export function getReplCompletions(
   arg: string,
   remoteEntries: string[],
   options: {
-    localArgIndex?: number;
-    remoteArgIndex?: number;
+    localArgIndices?: Set<number>;
+    remoteArgIndices?: Set<number>;
   },
 ): [string[], string] {
   const endsWithSpace = /\s$/.test(line);
@@ -280,8 +282,8 @@ export function getReplCompletions(
   const nextTokenIndex = endsWithSpace ? tokens.length : tokens.length - 1;
   const currentArgIndex = nextTokenIndex - 1;
 
-  const isLocalCompletion = options.localArgIndex === currentArgIndex;
-  const isRemoteCompletion = options.remoteArgIndex === currentArgIndex;
+  const isLocalCompletion = options.localArgIndices?.has(currentArgIndex);
+  const isRemoteCompletion = options.remoteArgIndices?.has(currentArgIndex);
 
   const prefix = endsWithSpace ? '' : arg;
 
@@ -295,6 +297,9 @@ export function getReplCompletions(
 
 /**
  * Parses the input string to extract command, arguments, and options using yargs-parser.
+ *
+ * All returned args and options are coerced to strings.
+ * Handles both short (e.g., -v) and long (e.g., --verbose) options.
  *
  * @param input - The raw input string from the REPL.
  * @returns An object containing the command, args, and options as string arrays.
@@ -331,13 +336,15 @@ export function parseReplInput(input: string): {
 /**
  * Resolves CLI arguments based on resolution spec and working directory.
  *
- * If no argument is passed for a remote path, it resolves to the current working directory.
- * This ensures commands like `upload` or `download` can infer default remote targets.
+ * For arguments marked as 'remote' that are missing, infers the value using the basename of a corresponding
+ * local argument (if available) or defaults to the current remote working directory.
  *
- * @param args - Raw user-provided arguments
- * @param resolutionSpec - Positional resolution map for the command
- * @param cwd - Current remote working directory
- * @returns Resolved argument list
+ * Supports multiple remote or local positions defined via the resolutionSpec.
+ *
+ * @param args - Raw user-provided arguments.
+ * @param resolutionSpec - Map indicating whether each positional argument should resolve as 'local' or 'remote'.
+ * @param cwd - Current remote working directory.
+ * @returns Fully resolved list of arguments for CLI execution.
  */
 export function resolveCliArgs(
   args: string[],
@@ -351,22 +358,23 @@ export function resolveCliArgs(
     const mode = resolutionSpec[i];
     const arg = args[i];
 
-    if (arg !== undefined) {
-      result.push(mode === 'remote' ? resolvePath(arg, cwd) : arg);
-    } else if (mode === 'remote') {
-      // Look for corresponding local arg to infer a basename
-      const localIndex = Object.entries(resolutionSpec).find(
-        ([, v]) => v === 'local',
-      )?.[0];
-
-      if (localIndex !== undefined && args[Number(localIndex)]) {
-        const localPath = args[Number(localIndex)];
-        const inferred = path.posix.join(cwd, path.basename(localPath));
-        result.push(inferred);
-      } else {
-        result.push(cwd);
-      }
+    if (mode === 'local') {
+      result.push(arg ?? '');
+      continue;
     }
+
+    if (arg !== undefined) {
+      result.push(resolvePath(arg, cwd));
+      continue;
+    }
+
+    const localIndex = Object.entries(resolutionSpec).find(
+      ([, v]) => v === 'local',
+    )?.[0];
+    const localArg =
+      localIndex !== undefined ? args[Number(localIndex)] : undefined;
+
+    result.push(localArg ? path.posix.join(cwd, path.basename(localArg)) : cwd);
   }
 
   return result;
