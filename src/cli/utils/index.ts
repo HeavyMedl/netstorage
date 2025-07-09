@@ -14,6 +14,21 @@ import {
 import yargsParser from 'yargs-parser';
 
 /**
+ * Specifies how each positional argument of a command should be resolved.
+ *
+ * Each key is a command string mapping to an object where keys are argument
+ * indices and values indicate resolution mode:
+ * - 'local': argument is a local path.
+ * - 'remote': argument is a remote path.
+ * - 'passthrough': argument is passed through as-is without resolution.
+ */
+export interface CommandArgResolutionSpec {
+  [command: string]: {
+    [index: number]: 'local' | 'remote' | 'passthrough';
+  };
+}
+
+/**
  * Validates and parses a timeout value from a string.
  *
  * @param v - The timeout value as a string.
@@ -40,10 +55,12 @@ export function validateCancelAfter(v: string): number {
 }
 
 /**
- * Resolves an AbortSignal that triggers after the given number of milliseconds.
+ * Resolves an AbortSignal that triggers after the given number of
+ * milliseconds.
  *
  * @param cancelAfter - Time in milliseconds to wait before aborting.
- * @returns An AbortSignal if cancelAfter is provided; otherwise, undefined.
+ * @returns An AbortSignal if cancelAfter is provided; otherwise,
+ * undefined.
  */
 export function resolveAbortSignal(
   cancelAfter?: number,
@@ -87,7 +104,8 @@ export function handleCliError(
  *
  * @param logLevel - Optional string log level explicitly provided.
  * @param verbose - Whether verbose logging is enabled.
- * @returns An object containing the log level override, or undefined if invalid.
+ * @returns An object containing the log level override, or undefined if
+ * invalid.
  */
 export function getLogLevelOverride(
   logLevel?: string,
@@ -178,7 +196,8 @@ export function formatSimpleEntry(entry: NetStorageFile): string {
  * - Ensures path starts with a single leading slash.
  * - Trims any trailing slashes (except root).
  *
- * @param input - The path input from the user (may be relative or absolute).
+ * @param input - The path input from the user (may be relative or
+ * absolute).
  * @param currentPath - The current working directory path.
  * @returns A normalized, absolute path.
  */
@@ -198,7 +217,8 @@ export function resolvePath(
 }
 
 /**
- * Applies terminal colorization to a NetStorage entry name based on its type.
+ * Applies terminal colorization to a NetStorage entry name based on its
+ * type.
  *
  * - Directories are cyan.
  * - Symlinks are blue.
@@ -235,9 +255,11 @@ export function assertReplConfig(config: { cpCode?: string }): void {
 }
 
 /**
- * Returns a list of local files and directories that match the provided prefix.
+ * Returns a list of local files and directories that match the provided
+ * prefix.
  *
- * @param {string} prefix - The prefix to filter local files and directories by.
+ * @param {string} prefix - The prefix to filter local files and directories
+ * by.
  * @returns {string[]} A list of matching local files and directories.
  */
 export function getLocalCompletions(prefix: string): string[] {
@@ -255,15 +277,18 @@ export function getLocalCompletions(prefix: string): string[] {
 }
 
 /**
- * Generates tab completions for REPL commands based on specified local and remote argument positions.
+ * Generates tab completions for REPL commands based on specified local and
+ * remote argument positions.
  *
- * Supports commands where multiple positional arguments may be resolved as either local or remote paths.
+ * Supports commands where multiple positional arguments may be resolved as
+ * either local or remote paths.
  *
  * @param line - The raw REPL input line.
  * @param tokens - Tokenized input from the REPL.
  * @param arg - The current argument token being completed.
  * @param remoteEntries - Remote NetStorage entry names.
- * @param options - Object with Sets identifying which argument indices should resolve as local or remote.
+ * @param options - Object with Sets identifying which argument indices
+ * should resolve as local or remote.
  * @returns A tuple of matching completions and the replacement prefix.
  */
 export function getReplCompletions(
@@ -296,13 +321,15 @@ export function getReplCompletions(
 }
 
 /**
- * Parses the input string to extract command, arguments, and options using yargs-parser.
+ * Parses the input string to extract command, arguments, and options using
+ * yargs-parser.
  *
  * All returned args and options are coerced to strings.
  * Handles both short (e.g., -v) and long (e.g., --verbose) options.
  *
  * @param input - The raw input string from the REPL.
- * @returns An object containing the command, args, and options as string arrays.
+ * @returns An object containing the command, args, and options as string
+ * arrays.
  */
 export function parseReplInput(input: string): {
   command: string;
@@ -336,19 +363,24 @@ export function parseReplInput(input: string): {
 /**
  * Resolves CLI arguments based on resolution spec and working directory.
  *
- * For arguments marked as 'remote' that are missing, infers the value using the basename of a corresponding
- * local argument (if available) or defaults to the current remote working directory.
+ * For arguments marked as 'remote' that are missing, infers the value using
+ * the basename of a corresponding local argument (if available) or
+ * defaults to the current remote working directory.
  *
- * Supports multiple remote or local positions defined via the resolutionSpec.
+ * Supports multiple remote, local, or passthrough positions defined via the
+ * resolutionSpec.
+ * Arguments marked as 'passthrough' are preserved as-is without
+ * resolution.
  *
  * @param args - Raw user-provided arguments.
- * @param resolutionSpec - Map indicating whether each positional argument should resolve as 'local' or 'remote'.
+ * @param resolutionSpec - Map indicating whether each positional argument
+ * should resolve as 'local', 'remote', or 'passthrough'.
  * @param cwd - Current remote working directory.
  * @returns Fully resolved list of arguments for CLI execution.
  */
 export function resolveCliArgs(
   args: string[],
-  resolutionSpec: Record<number, 'local' | 'remote'>,
+  resolutionSpec: CommandArgResolutionSpec[string],
   cwd: string,
 ): string[] {
   const result: string[] = [];
@@ -357,6 +389,11 @@ export function resolveCliArgs(
   for (let i = 0; i <= maxIndex; i++) {
     const mode = resolutionSpec[i];
     const arg = args[i];
+
+    if (mode === 'passthrough') {
+      result.push(arg ?? '');
+      continue;
+    }
 
     if (mode === 'local') {
       result.push(arg ?? '');
