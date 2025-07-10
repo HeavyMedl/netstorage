@@ -73,6 +73,10 @@ const PutCommands: CommandArgResolutionSpec = {
 const CLICommands: CommandArgResolutionSpec = {
   ...GetCommands,
   ...PutCommands,
+  config: {
+    0: 'passthrough',
+    1: 'passthrough',
+  },
 };
 
 /**
@@ -352,9 +356,9 @@ export function createReplCommand(): Command {
     .description('Start an interactive NetStorage shell')
     .action(async () => {
       try {
-        const config = await loadClientConfig();
+        let config = await loadClientConfig();
         assertReplConfig(config);
-        const context = createRemoteContext(config);
+        let context = createRemoteContext(config);
         let entries: NetStorageFile[] = [];
 
         /**
@@ -431,6 +435,15 @@ export function createReplCommand(): Command {
                       .parseAsync([command, ...resolvedArgs, ...options], {
                         from: 'user',
                       });
+                    if (
+                      command === 'config' &&
+                      ['set', 'clear'].includes(args[0])
+                    ) {
+                      config = await loadClientConfig();
+                      assertReplConfig(config);
+                      context = createRemoteContext(config);
+                      await refreshCompleter();
+                    }
                     if (command in PutCommands) {
                       context.clearCache();
                       context.getEntries();
