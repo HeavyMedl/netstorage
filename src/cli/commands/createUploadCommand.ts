@@ -11,12 +11,12 @@ import {
 import {
   getLogLevelOverride,
   handleCliError,
+  loadClientConfig,
   printJson,
   resolveAbortSignal,
   validateCancelAfter,
   validateTimeout,
 } from '../utils';
-import { loadClientConfig } from '../utils/loadConfig';
 
 export function createUploadCommand(
   logger: ReturnType<typeof createLogger>,

@@ -291,6 +291,8 @@ npx netstorage rename old.txt new.txt
 npx netstorage rename -d -p old.txt new.txt
 ```
 
+> **Note:** The `rename` operation requires the destination path to be fully qualified, including the CP code (e.g., `/12345/path/to/file`). If a CP code is configured via `config set`, the CLI will automatically prefix the destination with the CP code. If not, the rename may fail. A warning will be logged in this case.
+
 ## `rm`
 
 Remove a file or directory from NetStorage.

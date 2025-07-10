@@ -1,15 +1,16 @@
+import path from 'node:path';
 import { Command } from 'commander';
 import { basename } from 'node:path';
 import { createLogger, rename } from '@/index';
 import {
   getLogLevelOverride,
   handleCliError,
+  loadClientConfig,
   printJson,
   resolveAbortSignal,
   validateCancelAfter,
   validateTimeout,
 } from '../utils';
-import { loadClientConfig } from '../utils/loadConfig';
 
 export function createRenameCommand(
   logger: ReturnType<typeof createLogger>,
@@ -56,15 +57,29 @@ export function createRenameCommand(
           getLogLevelOverride(logLevel, verbose),
         );
         const inferredTo = to ?? basename(from);
+        let resolvedTo = inferredTo;
+
+        if (config.cpCode) {
+          resolvedTo = path.posix.join(
+            `/${config.cpCode}`,
+            inferredTo.replace(/^\/+/, ''),
+          );
+        } else {
+          config.logger.verbose(
+            'Warning: `cpCode` is not configured. Ensure `pathTo` is a fully qualified path.',
+          );
+        }
+
         if (dryRun) {
           config.logger.info(
-            `[Dry Run] would rename ${config.uri(from)} -> ${config.uri(inferredTo)}`,
+            `[Dry Run] would rename ${config.uri(from)} -> ${config.uri(resolvedTo)}`,
           );
           return;
         }
+
         const result = await rename(config, {
           pathFrom: from,
-          pathTo: inferredTo,
+          pathTo: resolvedTo,
           options: {
             timeout,
             signal: resolveAbortSignal(cancelAfter),

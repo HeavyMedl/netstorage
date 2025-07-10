@@ -7,6 +7,7 @@ import {
   type RemoteWalkParams,
   type NetStorageClientConfig,
 } from '@/index';
+import { colorizeName } from '@/cli/utils';
 
 /**
  * Parameters for the `tree` operation.
@@ -120,7 +121,7 @@ export async function tree(
       const file = entry.file;
       const isSymlink = file.type === 'symlink';
       const isDir = file.type === 'dir';
-      const icon = isSymlink ? '🔗' : isDir ? '📁' : '📄';
+      const name = colorizeName(isDir ? `${file.name}/` : file.name, file.type);
       const dirSize = directorySizeMap.get(entry.path)?.aggregatedSize ?? 0;
       const fileSize = file.size ? Number(file.size) : 0;
       const displaySize = isDir ? formatBytes(dirSize) : formatBytes(fileSize);
@@ -138,9 +139,7 @@ export async function tree(
 
       const suffix =
         displayParts.length > 0 ? ` (${displayParts.join(' | ')})` : '';
-      process.stdout.write(
-        `${prefix}${connector} ${icon} ${file.name}${suffix}\n`,
-      );
+      process.stdout.write(`${prefix}${connector} ${name}${suffix}\n`);
 
       if (isDir) {
         const children = getChildren(entry.path, entry.depth + 1);
@@ -153,8 +152,9 @@ export async function tree(
   // Find root entries (depth 0)
   const rootGroup = depthBuckets.find((g) => g.depth === 0);
   const rootEntries = rootGroup ? rootGroup.entries : [];
+  const topLabel = colorizeName('.', 'dir');
   process.stdout.write(
-    `📁 ${path}${showSize ? ` (${formatBytes(totalSize)})` : ''}\n`,
+    `${topLabel}${showSize ? ` (${formatBytes(totalSize)})` : ''}\n`,
   );
   renderTree(rootEntries, '');
   return { depthBuckets, directorySizeMap, totalSize };
