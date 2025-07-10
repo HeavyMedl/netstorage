@@ -78,7 +78,6 @@ export function resolveAbortSignal(
   }
   return undefined;
 }
-
 /**
  * Handles CLI-related errors and logs a user-friendly message.
  * Exits the process with status code 1.
@@ -397,7 +396,7 @@ export function resolveCliArgs(
     const arg = args[i];
 
     if (mode === 'passthrough') {
-      result.push(arg ?? '');
+      if (arg) result.push(arg);
       continue;
     }
 
