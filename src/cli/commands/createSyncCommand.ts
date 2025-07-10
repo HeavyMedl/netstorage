@@ -10,8 +10,12 @@ import {
   type NetStorageDu,
   type NetStorageFile,
 } from '@/index';
-import { getLogLevelOverride, handleCliError, printJson } from '../utils';
-import { loadClientConfig } from '../utils/loadConfig';
+import {
+  getLogLevelOverride,
+  handleCliError,
+  loadClientConfig,
+  printJson,
+} from '../utils';
 
 class SyncPathInferenceError extends Error {
   constructor(message: string) {

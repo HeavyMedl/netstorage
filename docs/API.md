@@ -715,12 +715,12 @@ await tree(config, {
 Outputs a tree view like:
 
 ```
-📁 /12345/assets (1.2 MB)
-├── 📄 index.html (12 KB | 2024-06-01T12:00:00Z)
-├── 📁 images (800 KB)
-│   ├── 📄 logo.png (200 KB | md5: abc123)
-│   └── 📄 bg.jpg (600 KB)
-└── 📄 script.js (400 KB)
+. (1.2 MB)
+├── index.html (12 KB | 2024-06-01T12:00:00Z)
+├── images/ (800 KB)
+│   ├── logo.png (200 KB | md5: abc123)
+│   └── bg.jpg (600 KB)
+└── script.js (400 KB)
 ```
 
 ## `remoteWalk(config, { path, ... })`

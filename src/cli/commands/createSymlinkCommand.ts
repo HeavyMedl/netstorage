@@ -4,12 +4,12 @@ import { createLogger, symlink } from '@/index';
 import {
   getLogLevelOverride,
   handleCliError,
+  loadClientConfig,
   printJson,
   resolveAbortSignal,
   validateCancelAfter,
   validateTimeout,
 } from '../utils';
-import { loadClientConfig } from '../utils/loadConfig';
 
 export function createSymlinkCommand(
   logger: ReturnType<typeof createLogger>,

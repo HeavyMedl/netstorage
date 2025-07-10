@@ -1,7 +1,10 @@
 import { Command } from 'commander';
 import { createLogger, tree } from '@/index';
-import { getLogLevelOverride, handleCliError } from '../utils';
-import { loadClientConfig } from '../utils/loadConfig';
+import {
+  getLogLevelOverride,
+  handleCliError,
+  loadClientConfig,
+} from '../utils';
 
 export function createTreeCommand(
   logger: ReturnType<typeof createLogger>,

@@ -9,8 +9,8 @@ import {
   resolveAbortSignal,
   getLogLevelOverride,
   printJson,
+  loadClientConfig,
 } from '../utils';
-import { loadClientConfig } from '../utils/loadConfig';
 
 export function createDownloadCommand(
   logger: ReturnType<typeof createLogger>,

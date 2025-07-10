@@ -1,12 +1,12 @@
 import { Command } from 'commander';
 import {
+  validateTimeout,
   loadPersistentConfig,
   savePersistentConfig,
   clearPersistentConfig,
   getPersistentConfigPath,
   clearPersistentConfigKey,
-} from '../utils/configStore';
-import { validateTimeout } from '../utils';
+} from '../utils';
 
 export function createConfigCommand(
   logger: ReturnType<typeof import('@/index').createLogger>,

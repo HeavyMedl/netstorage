@@ -1,9 +1,9 @@
 import { Command } from 'commander';
 import { rm, createLogger, removeDirectory, isDirectory } from '@/index';
-import { loadClientConfig } from '../utils/loadConfig';
 import {
   getLogLevelOverride,
   handleCliError,
+  loadClientConfig,
   printJson,
   resolveAbortSignal,
   validateCancelAfter,

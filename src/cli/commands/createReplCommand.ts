@@ -1,9 +1,7 @@
 import repl from 'node:repl';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { program } from '../index'; // Assumes program is exported from CLI index
-import { loadClientConfig } from '../utils/loadConfig';
-import { savePersistentConfig } from '../utils/configStore';
+import { program } from '../index';
 import {
   createLogger,
   remoteWalk,
@@ -21,6 +19,8 @@ import {
   parseReplInput,
   resolveCliArgs,
   type CommandArgResolutionSpec,
+  savePersistentConfig,
+  loadClientConfig,
 } from '../utils';
 import type winston from 'winston';
 
@@ -35,6 +35,7 @@ const logger = createLogger('info', 'netstorage/repl');
 const GetCommands: CommandArgResolutionSpec = {
   stat: { 0: 'remote' },
   dir: { 0: 'remote' },
+  du: { 0: 'remote' },
   tree: { 0: 'remote' },
   download: { 0: 'remote', 1: 'local' },
   dl: { 0: 'remote', 1: 'local' },
@@ -57,6 +58,10 @@ const PutCommands: CommandArgResolutionSpec = {
   rm: { 0: 'remote' },
   symlink: { 0: 'remote', 1: 'remote' },
   mtime: { 0: 'remote', 1: 'passthrough' },
+  rename: { 0: 'remote', 1: 'remote' },
+  mv: { 0: 'remote', 1: 'remote' },
+  mkdir: { 0: 'remote' },
+  rmdir: { 0: 'remote' },
 };
 
 /**
@@ -428,6 +433,7 @@ export function createReplCommand(): Command {
                       });
                     if (command in PutCommands) {
                       context.clearCache();
+                      context.getEntries();
                     }
                   }
                   break;

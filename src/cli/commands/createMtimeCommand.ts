@@ -3,12 +3,12 @@ import { createLogger, mtime } from '@/index';
 import {
   getLogLevelOverride,
   handleCliError,
+  loadClientConfig,
   printJson,
   resolveAbortSignal,
   validateCancelAfter,
   validateTimeout,
 } from '../utils';
-import { loadClientConfig } from '../utils/loadConfig';
 
 export function createMtimeCommand(
   logger: ReturnType<typeof createLogger>,
