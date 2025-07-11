@@ -28,7 +28,6 @@ export interface TreeParams extends RemoteWalkParams {
   showSymlinkTarget?: boolean;
   showRelativePath?: boolean;
   showAbsolutePath?: boolean;
-  onReady?: () => void;
 }
 
 /**
@@ -60,14 +59,13 @@ export async function tree(
   const {
     path,
     maxDepth,
-    shouldInclude,
     showSize,
     showMtime,
     showChecksum,
     showSymlinkTarget,
     showRelativePath,
     showAbsolutePath,
-    onReady,
+    shouldInclude,
   } = params;
   config.logger.verbose(`Generating directory tree for ${path}`, {
     method: 'tree',
@@ -77,7 +75,6 @@ export async function tree(
     maxDepth,
     shouldInclude,
   });
-  if (onReady) onReady();
   if (
     depthBuckets.length === 0 ||
     (depthBuckets[0]?.entries.length ?? 0) === 0

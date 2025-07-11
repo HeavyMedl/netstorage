@@ -21,7 +21,6 @@ import {
   type CommandArgResolutionSpec,
   savePersistentConfig,
   loadClientConfig,
-  getSpinner,
 } from '../utils';
 import type winston from 'winston';
 
@@ -73,7 +72,6 @@ function createRemoteContext(config: NetStorageClientConfig): RemoteContext {
     const entries: NetStorageFile[] = [];
     let rootMeta: NetStorageFile | undefined;
 
-    const spinner = getSpinner(config)?.start();
     for await (const entry of remoteWalk(config, {
       path,
       maxDepth: 0,
@@ -85,7 +83,6 @@ function createRemoteContext(config: NetStorageClientConfig): RemoteContext {
         entries.push(entry.file);
       }
     }
-    spinner?.stop();
 
     if (path === remoteWorkingDir) {
       cache.setCachedEntries(path, entries);
