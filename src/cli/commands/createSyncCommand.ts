@@ -12,6 +12,7 @@ import {
 } from '@/index';
 import {
   getLogLevelOverride,
+  getSpinner,
   handleCliError,
   loadClientConfig,
   printJson,
@@ -136,19 +137,19 @@ export function createSyncCommand(
     )
     .action(
       async (localPath: string, remotePath: string | undefined, options) => {
-        const {
-          dryRun,
-          strategy,
-          mode = 'both',
-          prune: deleteMode,
-          conflictResolution,
-          maxConcurrency,
-          logLevel,
-          verbose,
-          pretty,
-        } = options;
-
+        let spinner;
         try {
+          const {
+            dryRun,
+            strategy,
+            mode = 'both',
+            prune: deleteMode,
+            conflictResolution,
+            maxConcurrency,
+            logLevel,
+            verbose,
+            pretty,
+          } = options;
           const config = await loadClientConfig(
             getLogLevelOverride(logLevel, verbose),
           );
@@ -167,7 +168,7 @@ export function createSyncCommand(
             );
             return;
           }
-
+          spinner = getSpinner(config)?.start();
           if (isDir) {
             result = await syncDirectory(config, {
               localPath,
@@ -191,9 +192,10 @@ export function createSyncCommand(
               remoteFileMeta: remoteInfo.file,
             });
           }
-
+          spinner?.stop();
           printJson(result, pretty);
         } catch (err) {
+          spinner?.stop();
           handleCliError(err, logger);
         }
       },

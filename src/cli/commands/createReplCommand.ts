@@ -21,6 +21,7 @@ import {
   type CommandArgResolutionSpec,
   savePersistentConfig,
   loadClientConfig,
+  getSpinner,
 } from '../utils';
 import type winston from 'winston';
 
@@ -72,6 +73,7 @@ function createRemoteContext(config: NetStorageClientConfig): RemoteContext {
     const entries: NetStorageFile[] = [];
     let rootMeta: NetStorageFile | undefined;
 
+    const spinner = getSpinner(config)?.start();
     for await (const entry of remoteWalk(config, {
       path,
       maxDepth: 0,
@@ -83,6 +85,7 @@ function createRemoteContext(config: NetStorageClientConfig): RemoteContext {
         entries.push(entry.file);
       }
     }
+    spinner?.stop();
 
     if (path === remoteWorkingDir) {
       cache.setCachedEntries(path, entries);
@@ -306,28 +309,28 @@ export function createReplCommand(): Command {
         let completer = createCompleterSync([]);
 
         // Refreshes the tab completion list with the latest directory entries.
-        async function refreshCompleter() {
+        const refreshCompleter = async () => {
           entries = await context.getEntries();
           completer = createCompleterSync(entries);
-        }
+        };
 
         /**
          * Helper to resume shell prompt with updated prompt string.
          */
-        function resumeShell() {
+        const resumeShell = () => {
           shell.setPrompt(`nst:${chalk.cyan(context.getPath())}> `);
           shell.prompt();
-        }
+        };
 
         /**
          * Handles a single REPL command input.
          * Returns a promise that resolves when the command is handled.
          */
-        async function handleReplCommand(
+        const handleReplCommand = async (
           command: string,
           args: string[],
           options: string[],
-        ): Promise<void> {
+        ): Promise<void> => {
           switch (command) {
             case 'cd':
               await handleCdCommand(args[0], context, logger);
@@ -380,7 +383,7 @@ export function createReplCommand(): Command {
               break;
             }
           }
-        }
+        };
 
         // The REPL instance started for the interactive shell session.
         const shell = repl.start({

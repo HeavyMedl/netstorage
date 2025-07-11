@@ -123,9 +123,7 @@ export async function withRetries<T>(
       );
     });
 
-  let attempt = 0;
-
-  while (true) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       await beforeAttempt();
       return await fn();
@@ -135,11 +133,9 @@ export async function withRetries<T>(
       }
 
       const delay = calculateDelay(attempt, baseDelayMs, maxDelayMs, jitter);
-
       onRetry(err, attempt + 1, delay);
-
       await new Promise((res) => setTimeout(res, delay));
-      attempt++;
     }
   }
+  throw new Error('Unexpected execution path in withRetries');
 }

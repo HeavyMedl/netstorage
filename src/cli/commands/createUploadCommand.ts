@@ -10,6 +10,7 @@ import {
 } from '@/index';
 import {
   getLogLevelOverride,
+  getSpinner,
   handleCliError,
   loadClientConfig,
   printJson,
@@ -72,10 +73,10 @@ export function createUploadCommand(
     )
     .action(
       async (fromLocal: string, toRemote: string | undefined, options) => {
-        const { timeout, cancelAfter, pretty, dryRun, logLevel, verbose } =
-          options;
-
+        let spinner;
         try {
+          const { timeout, cancelAfter, pretty, dryRun, logLevel, verbose } =
+            options;
           const config = await loadClientConfig(
             getLogLevelOverride(logLevel, verbose),
           );
@@ -85,7 +86,7 @@ export function createUploadCommand(
           const isDirectory = stats.isDirectory();
 
           let result: NetStorageUpload | UploadResult[];
-
+          spinner = getSpinner(config)?.start();
           if (isDirectory) {
             result = await uploadDirectory(config, {
               localPath: fromLocal,
@@ -108,6 +109,7 @@ export function createUploadCommand(
               shouldUpload: dryRun ? async () => false : undefined,
             });
           }
+          spinner?.stop();
 
           if (!dryRun) {
             printJson(result, pretty);
@@ -120,6 +122,7 @@ export function createUploadCommand(
             );
           }
         } catch (err) {
+          spinner?.stop();
           handleCliError(err, logger);
         }
       },
