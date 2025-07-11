@@ -3,6 +3,7 @@ import { basename } from 'node:path';
 import { createLogger, symlink } from '@/index';
 import {
   getLogLevelOverride,
+  getSpinner,
   handleCliError,
   loadClientConfig,
   printJson,
@@ -49,9 +50,10 @@ export function createSymlinkCommand(
     )
     .action(
       async (target: string, symlinkPath: string | undefined, options) => {
-        const { timeout, cancelAfter, pretty, dryRun, logLevel, verbose } =
-          options;
+        let spinner;
         try {
+          const { timeout, cancelAfter, pretty, dryRun, logLevel, verbose } =
+            options;
           const config = await loadClientConfig(
             getLogLevelOverride(logLevel, verbose),
           );
@@ -62,6 +64,7 @@ export function createSymlinkCommand(
             );
             return;
           }
+          spinner = getSpinner(config)?.start();
           const result = await symlink(config, {
             pathFileTo: target,
             pathSymlink: inferredPath,
@@ -70,8 +73,10 @@ export function createSymlinkCommand(
               signal: resolveAbortSignal(cancelAfter),
             },
           });
+          spinner?.stop();
           printJson(result, pretty);
         } catch (err) {
+          spinner?.stop();
           handleCliError(err, logger);
         }
       },

@@ -4,6 +4,7 @@ import { basename } from 'node:path';
 import { createLogger, rename } from '@/index';
 import {
   getLogLevelOverride,
+  getSpinner,
   handleCliError,
   loadClientConfig,
   printJson,
@@ -50,9 +51,10 @@ export function createRenameCommand(
       ].join('\n'),
     )
     .action(async (from: string, to: string | undefined, options) => {
-      const { timeout, cancelAfter, pretty, dryRun, logLevel, verbose } =
-        options;
+      let spinner;
       try {
+        const { timeout, cancelAfter, pretty, dryRun, logLevel, verbose } =
+          options;
         const config = await loadClientConfig(
           getLogLevelOverride(logLevel, verbose),
         );
@@ -76,7 +78,7 @@ export function createRenameCommand(
           );
           return;
         }
-
+        spinner = getSpinner(config)?.start();
         const result = await rename(config, {
           pathFrom: from,
           pathTo: resolvedTo,
@@ -85,8 +87,10 @@ export function createRenameCommand(
             signal: resolveAbortSignal(cancelAfter),
           },
         });
+        spinner?.stop();
         printJson(result, pretty);
       } catch (err) {
+        spinner?.stop();
         handleCliError(err, logger);
       }
     });

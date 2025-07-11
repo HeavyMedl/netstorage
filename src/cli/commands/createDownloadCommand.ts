@@ -10,6 +10,7 @@ import {
   getLogLevelOverride,
   printJson,
   loadClientConfig,
+  getSpinner,
 } from '../utils';
 
 export function createDownloadCommand(
@@ -57,6 +58,7 @@ export function createDownloadCommand(
       ].join('\n'),
     )
     .action(async function (this: Command, remotePath, localPathArg) {
+      let spinner;
       try {
         const {
           timeout,
@@ -84,7 +86,7 @@ export function createDownloadCommand(
           );
           return;
         }
-
+        spinner = getSpinner(config)?.start();
         let result;
         if (isDir) {
           result = await downloadDirectory(config, {
@@ -103,9 +105,10 @@ export function createDownloadCommand(
             shouldDownload: dryRun ? async () => false : undefined,
           });
         }
-
+        spinner?.stop();
         printJson(result, pretty);
       } catch (err) {
+        spinner?.stop();
         handleCliError(err, logger);
       }
     });

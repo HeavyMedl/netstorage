@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 
 import chalk from 'chalk';
+import yoctoSpinner from 'yocto-spinner';
 import { getReasonPhrase } from 'http-status-codes';
 import yargsParser from 'yargs-parser';
 
@@ -99,9 +100,8 @@ export function handleCliError(
     );
   } else {
     logger.error('Unexpected error');
-    console.error(err);
+    logger.error(err);
   }
-  process.exit(1);
 }
 
 /**
@@ -571,4 +571,19 @@ export function clearPersistentConfigKey(
  */
 export function getPersistentConfigPath(): string {
   return CONFIG_FILE;
+}
+
+/**
+ * Returns a spinner instance based on the logging level configuration.
+ *
+ * @param {Partial<NetStorageClientConfig>} config - The configuration object
+ *   containing the logging level.
+ * @returns {yoctoSpinner.Spinners} A spinner instance if `logLevel` is not set
+ *   or is set to `'info'`. Otherwise returns `null`.
+ */
+export function getSpinner(config: Partial<NetStorageClientConfig>) {
+  if (!config.logLevel || config.logLevel === 'info') {
+    return yoctoSpinner();
+  }
+  return null;
 }

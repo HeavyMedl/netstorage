@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { rm, createLogger, removeDirectory, isDirectory } from '@/index';
 import {
   getLogLevelOverride,
+  getSpinner,
   handleCliError,
   loadClientConfig,
   printJson,
@@ -50,6 +51,7 @@ export function createRemoveCommand(
       ].join('\n'),
     )
     .action(async function (this: Command, remotePath: string) {
+      let spinner;
       try {
         const {
           timeout,
@@ -79,7 +81,7 @@ export function createRemoveCommand(
           );
           return;
         }
-
+        spinner = getSpinner(config)?.start();
         let result;
         if (isDir) {
           result = await removeDirectory(config, {
@@ -94,9 +96,10 @@ export function createRemoveCommand(
             },
           });
         }
-
+        spinner?.stop();
         printJson(result, pretty);
       } catch (err) {
+        spinner?.stop();
         handleCliError(err, logger);
       }
     });
