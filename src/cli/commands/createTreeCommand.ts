@@ -2,11 +2,9 @@ import { Command } from 'commander';
 import { createLogger, tree } from '@/index';
 import {
   getLogLevelOverride,
-  getSpinner,
   handleCliError,
   loadClientConfig,
 } from '../utils';
-import type { Spinner } from 'yocto-spinner';
 
 export function createTreeCommand(
   logger: ReturnType<typeof createLogger>,
@@ -37,7 +35,6 @@ export function createTreeCommand(
       ].join('\n'),
     )
     .action(async (path: string | undefined, options) => {
-      let spinner: Spinner | undefined;
       try {
         const {
           maxDepth,
@@ -61,7 +58,6 @@ export function createTreeCommand(
         const config = await loadClientConfig(
           getLogLevelOverride(logLevel, verbose),
         );
-        spinner = getSpinner(config)?.start();
         await tree(config, {
           path: inferredPath,
           maxDepth: resolvedMaxDepth,
@@ -71,10 +67,8 @@ export function createTreeCommand(
           showSymlinkTarget,
           showRelativePath,
           showAbsolutePath,
-          onReady: () => spinner?.stop(),
         });
       } catch (err) {
-        spinner?.stop();
         handleCliError(err, logger);
       }
     });

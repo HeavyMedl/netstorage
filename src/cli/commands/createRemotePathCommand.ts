@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import { stat, dir, createLogger, du, rmdir, mkdir, rm } from '@/index';
 import {
   getLogLevelOverride,
-  getSpinner,
   handleCliError,
   loadClientConfig,
   printJson,
@@ -70,7 +69,6 @@ export function createRemotePathCommand(
       ].join('\n'),
     )
     .action(async function (this: Command, remotePath?: string) {
-      let spinner;
       try {
         const { timeout, cancelAfter, pretty, logLevel, verbose, dryRun } =
           this.opts();
@@ -83,7 +81,6 @@ export function createRemotePathCommand(
           );
           return;
         }
-        spinner = getSpinner(config)?.start();
         const result = await operations[name](config, {
           path: remotePath || '/',
           options: {
@@ -91,10 +88,8 @@ export function createRemotePathCommand(
             signal: resolveAbortSignal(cancelAfter),
           },
         });
-        spinner?.stop();
         printJson(result, pretty);
       } catch (err) {
-        spinner?.stop();
         handleCliError(err, logger);
       }
     });

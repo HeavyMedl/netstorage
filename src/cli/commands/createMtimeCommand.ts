@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import { createLogger, mtime } from '@/index';
 import {
   getLogLevelOverride,
-  getSpinner,
   handleCliError,
   loadClientConfig,
   printJson,
@@ -47,7 +46,6 @@ export function createMtimeCommand(
       ].join('\n'),
     )
     .action(async (remotePath: string, date: string, options) => {
-      let spinner;
       try {
         const { timeout, cancelAfter, pretty, dryRun, logLevel, verbose } =
           options;
@@ -66,7 +64,6 @@ export function createMtimeCommand(
           );
           return;
         }
-        spinner = getSpinner(config)?.start();
         const result = await mtime(config, {
           path: remotePath,
           date: dateObj,
@@ -75,10 +72,8 @@ export function createMtimeCommand(
             signal: resolveAbortSignal(cancelAfter),
           },
         });
-        spinner?.stop();
         printJson(result, pretty);
       } catch (err) {
-        spinner?.stop();
         handleCliError(err, logger);
       }
     });
