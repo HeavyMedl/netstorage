@@ -18,9 +18,10 @@ import {
   getReplCompletions,
   parseReplInput,
   resolveCliArgs,
-  type CommandArgResolutionSpec,
   savePersistentConfig,
   loadClientConfig,
+  getSpinner,
+  type CommandArgResolutionSpec,
 } from '../utils';
 import type winston from 'winston';
 
@@ -297,9 +298,10 @@ export function createReplCommand(): Command {
     .description('Start an interactive NetStorage shell')
     .action(async () => {
       try {
-        let config = await loadClientConfig();
+        const config = await loadClientConfig();
         assertReplConfig(config);
-        let context = createRemoteContext(config);
+        const spinner = getSpinner(config);
+        const context = createRemoteContext(config);
         let entries: NetStorageFile[] = [];
 
         // Current tab completion function used by the REPL to suggest completions.
@@ -320,10 +322,13 @@ export function createReplCommand(): Command {
         };
 
         /**
-         * Handles a single REPL command input.
-         * Returns a promise that resolves when the command is handled.
+         * Handles internal REPL commands, such as `cd`, `ls`, and `pwd`.
+         *
+         * @param command - The command to handle.
+         * @param args - The arguments for the command.
+         * @param options - The options for the command.
          */
-        const handleReplCommand = async (
+        const handleInternalReplCommands = async (
           command: string,
           args: string[],
           options: string[],
@@ -351,34 +356,48 @@ export function createReplCommand(): Command {
               process.exit(0);
               break;
             default: {
-              if (command in CLICommands) {
-                const resolutionSpec = CLICommands[command];
-                const resolvedArgs = resolveCliArgs(
-                  args,
-                  resolutionSpec,
-                  context.getPath(),
-                );
-                await program
-                  .exitOverride()
-                  .parseAsync([command, ...resolvedArgs, ...options], {
-                    from: 'user',
-                  });
-                if (
-                  command === 'config' &&
-                  ['set', 'clear'].includes(args[0])
-                ) {
-                  config = await loadClientConfig();
-                  assertReplConfig(config);
-                  context = createRemoteContext(config);
-                  await refreshCompleter();
-                }
-                if (command in PutCommands) {
-                  context.clearCache();
-                  context.getEntries();
-                }
-              }
               break;
             }
+          }
+        };
+
+        /**
+         * Handles CLI commands.
+         *
+         * @param config - The NetStorage client configuration.
+         * @param context - The remote context for the REPL.
+         * @param command - The command to handle.
+         * @param args - The arguments for the command.
+         * @param options - The options for the command.
+         */
+        const handleCLICommands = async (
+          config: NetStorageClientConfig,
+          context: RemoteContext,
+          command: string,
+          args: string[],
+          options: string[],
+        ) => {
+          if (!(command in CLICommands)) return;
+          const resolutionSpec = CLICommands[command];
+          const resolvedArgs = resolveCliArgs(
+            args,
+            resolutionSpec,
+            context.getPath(),
+          );
+          await program
+            .exitOverride()
+            .parseAsync([command, ...resolvedArgs, ...options], {
+              from: 'user',
+            });
+          if (command === 'config' && ['set', 'clear'].includes(args[0])) {
+            config = await loadClientConfig();
+            assertReplConfig(config);
+            context = createRemoteContext(config);
+            await refreshCompleter();
+          }
+          if (command in PutCommands) {
+            context.clearCache();
+            context.getEntries();
           }
         };
 
@@ -390,12 +409,16 @@ export function createReplCommand(): Command {
           eval: async (input, _context, _filename, callback) => {
             const { command, args, options } = parseReplInput(input);
             try {
-              await handleReplCommand(command, args, options);
+              spinner?.start();
+              await handleCLICommands(config, context, command, args, options);
+              await handleInternalReplCommands(command, args, options);
             } catch (err) {
               logger.error(err);
+            } finally {
+              spinner?.stop();
+              resumeShell();
+              callback(null, undefined);
             }
-            resumeShell();
-            callback(null, undefined);
           },
         });
         shell.on('exit', () => {
