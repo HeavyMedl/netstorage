@@ -1,4 +1,4 @@
-# NetStorage ![npm version](https://img.shields.io/npm/v/netstorage)
+# NetStorage [![npm version](https://img.shields.io/npm/v/netstorage)](https://www.npmjs.com/package/netstorage)
 
 A modern TypeScript API and CLI for the [Akamai NetStorage REST interface](https://techdocs.akamai.com/netstorage-usage/reference/api). Built for composability, reliability, and full control over file operations.
 
