@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.0.0] - 2025-07-03
+## [3.0.0] - 2025-07-11
 
 ### Introduction of REPL
 
