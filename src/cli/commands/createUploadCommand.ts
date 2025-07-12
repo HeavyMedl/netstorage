@@ -13,7 +13,8 @@ import {
   handleCliError,
   loadClientConfig,
   printJson,
-  resolveAbortSignal,
+  resolveAbortSignalCLI,
+  setLastCommandResult,
   validateCancelAfter,
   validateTimeout,
 } from '../utils';
@@ -61,6 +62,7 @@ export function createUploadCommand(
       validateTimeout,
     )
     .option('-v, --verbose', 'Enable verbose logging')
+    .option('-q, --quiet', 'Suppress standard output')
     .addHelpText(
       'after',
       [
@@ -73,8 +75,15 @@ export function createUploadCommand(
     .action(
       async (fromLocal: string, toRemote: string | undefined, options) => {
         try {
-          const { timeout, cancelAfter, pretty, dryRun, logLevel, verbose } =
-            options;
+          const {
+            timeout,
+            cancelAfter,
+            pretty,
+            dryRun,
+            logLevel,
+            verbose,
+            quiet,
+          } = options;
           const config = await loadClientConfig(
             getLogLevelOverride(logLevel, verbose),
           );
@@ -101,22 +110,21 @@ export function createUploadCommand(
               toRemote: inferredToRemote,
               options: {
                 timeout,
-                signal: resolveAbortSignal(cancelAfter),
+                signal: resolveAbortSignalCLI(cancelAfter),
               },
               shouldUpload: dryRun ? async () => false : undefined,
             });
           }
-
-          if (!dryRun) {
+          if (!quiet && !dryRun) {
             printJson(result, pretty);
           }
-
           if (dryRun) {
             const type = isDirectory ? 'directory' : 'file';
             config.logger.info(
               `[Dry Run] would upload ${type} ${fromLocal} to ${config.uri(inferredToRemote)}`,
             );
           }
+          setLastCommandResult(result);
         } catch (err) {
           handleCliError(err, logger);
         }

@@ -21,6 +21,37 @@ import {
 } from '@/index';
 
 /**
+ * Stores the result of the last executed command.
+ * Managed by set, get, and clear functions.
+ */
+let lastCommandResult: unknown;
+
+/**
+ * Sets the result of the last executed command.
+ *
+ * @param result - The result to store.
+ */
+export function setLastCommandResult(result: unknown): void {
+  lastCommandResult = result;
+}
+
+/**
+ * Retrieves the result of the last executed command.
+ *
+ * @returns The stored result.
+ */
+export function getLastCommandResult(): unknown {
+  return lastCommandResult;
+}
+
+/**
+ * Clears the result of the last executed command.
+ */
+export function clearLastCommandResult(): void {
+  lastCommandResult = undefined;
+}
+
+/**
  * Specifies how each positional argument of a command should be resolved.
  *
  * Each key is a command string mapping to an object where keys are argument
@@ -69,7 +100,7 @@ export function validateCancelAfter(v: string): number {
  * @returns An AbortSignal if cancelAfter is provided; otherwise,
  * undefined.
  */
-export function resolveAbortSignal(
+export function resolveAbortSignalCLI(
   cancelAfter?: number,
 ): AbortSignal | undefined {
   if (cancelAfter != null) {
@@ -586,4 +617,19 @@ export function getSpinner(config: Partial<NetStorageClientConfig>) {
     return yoctoSpinner();
   }
   return null;
+}
+
+/**
+ * Writes the given input string or array of strings to the standard output.
+ *
+ * @param {string|string[]} input - The string or array of strings to write.
+ * @returns {void} No return value.
+ */
+export function writeOut(input?: unknown): void {
+  const lines = Array.isArray(input) ? input : [input];
+  for (const line of lines.filter(Boolean)) {
+    const output =
+      typeof line === 'object' ? JSON.stringify(line) : String(line);
+    process.stdout.write(output + '\n');
+  }
 }

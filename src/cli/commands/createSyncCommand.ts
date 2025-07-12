@@ -15,6 +15,7 @@ import {
   handleCliError,
   loadClientConfig,
   printJson,
+  setLastCommandResult,
 } from '../utils';
 
 class SyncPathInferenceError extends Error {
@@ -125,6 +126,7 @@ export function createSyncCommand(
       'Comparison strategy: "size", "mtime", "checksum", or "exists"',
     )
     .option('-v, --verbose', 'Enable verbose logging')
+    .option('--quiet', 'Suppress standard output')
     .addHelpText(
       'after',
       [
@@ -147,6 +149,7 @@ export function createSyncCommand(
             logLevel,
             verbose,
             pretty,
+            quiet,
           } = options;
           const config = await loadClientConfig(
             getLogLevelOverride(logLevel, verbose),
@@ -188,8 +191,9 @@ export function createSyncCommand(
               conflictResolution,
               remoteFileMeta: remoteInfo.file,
             });
+            if (!quiet) printJson(result, pretty);
+            setLastCommandResult(result);
           }
-          printJson(result, pretty);
         } catch (err) {
           handleCliError(err, logger);
         }

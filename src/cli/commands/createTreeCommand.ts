@@ -1,10 +1,19 @@
 import { Command } from 'commander';
-import { createLogger, tree } from '@/index';
+import {
+  buildAdjacencyList,
+  aggregateDirectorySizes,
+  formatBytes,
+  createLogger,
+  generateRemoteTree,
+} from '@/index';
 import {
   getLogLevelOverride,
   handleCliError,
   loadClientConfig,
+  setLastCommandResult,
+  writeOut,
 } from '../utils';
+import { colorizeName } from '@/cli/utils';
 
 export function createTreeCommand(
   logger: ReturnType<typeof createLogger>,
@@ -25,6 +34,7 @@ export function createTreeCommand(
     .option('-s, --show-size', 'Display file or aggregated directory sizes')
     .option('-t, --show-symlink-target', 'Display symlink targets')
     .option('-v, --verbose', 'Enable verbose logging')
+    .option('-q, --quiet', 'Suppress standard output')
     .addHelpText(
       'after',
       [
@@ -47,6 +57,7 @@ export function createTreeCommand(
           logLevel,
           verbose,
           recursive,
+          quiet,
         } = options;
         const resolvedMaxDepth =
           recursive || maxDepth === 'null'
@@ -58,16 +69,62 @@ export function createTreeCommand(
         const config = await loadClientConfig(
           getLogLevelOverride(logLevel, verbose),
         );
-        await tree(config, {
+        const { depthBuckets, totalSize } = await buildAdjacencyList(config, {
           path: inferredPath,
           maxDepth: resolvedMaxDepth,
-          showSize,
-          showMtime,
-          showChecksum,
-          showSymlinkTarget,
-          showRelativePath,
-          showAbsolutePath,
         });
+
+        const hasEntries = depthBuckets?.[0]?.entries?.length > 0;
+
+        let result: string[] = [];
+
+        if (!hasEntries) {
+          result.push(
+            `No directory entries found at ${config.uri(inferredPath)}`,
+          );
+          setLastCommandResult(result);
+          return;
+        }
+
+        const allEntries = depthBuckets.flatMap((bucket) => bucket.entries);
+        const directorySizeMap = aggregateDirectorySizes(allEntries);
+        const rootGroup = depthBuckets.find((g) => g.depth === 0);
+        const rootEntries = rootGroup ? rootGroup.entries : [];
+
+        // Sort rootEntries: directories first, then alphabetically by name
+        rootEntries.sort((a, b) => {
+          const aIsDir = a.file.type === 'dir';
+          const bIsDir = b.file.type === 'dir';
+
+          if (aIsDir && !bIsDir) return -1;
+          if (!aIsDir && bIsDir) return 1;
+
+          return a.file.name.localeCompare(b.file.name);
+        });
+
+        const trimmedPath = inferredPath.replace(/^\/+/, '');
+        const topLabelPath = trimmedPath || '.';
+        const topLabel = colorizeName(
+          topLabelPath === '.' ? topLabelPath : `${topLabelPath}/`,
+          'dir',
+        );
+        result.push(
+          `${topLabel}${showSize ? ` (${formatBytes(totalSize)})` : ''}`,
+        );
+        result = result.concat(
+          generateRemoteTree(rootEntries, {
+            showSize,
+            showMtime,
+            showChecksum,
+            showSymlinkTarget,
+            showRelativePath,
+            showAbsolutePath,
+            depthBuckets,
+            directorySizeMap,
+          }),
+        );
+        if (!quiet) writeOut(result);
+        setLastCommandResult(result);
       } catch (err) {
         handleCliError(err, logger);
       }
