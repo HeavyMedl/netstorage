@@ -97,12 +97,6 @@ await uploadDirectory(config, {
   localPath: './media',
   remotePath,
 });
-
-await tree(config, {
-  path: remotePath,
-  showSize: true,
-  showMtime: true,
-});
 ```
 
 ## Documentation
