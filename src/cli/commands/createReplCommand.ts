@@ -21,14 +21,13 @@ import {
   savePersistentConfig,
   loadClientConfig,
   getSpinner,
-  type CommandArgResolutionSpec,
   getLastCommandResult,
   writeOut,
   clearLastCommandResult,
+  type CommandArgResolutionSpec,
 } from '../utils';
 import type winston from 'winston';
 import type { Spinner } from 'yocto-spinner';
-// import type { Spinner } from 'yocto-spinner';
 
 const logger = createLogger('info', 'netstorage/repl');
 let spinner: Spinner | null;
@@ -40,6 +39,7 @@ let spinner: Spinner | null;
  * - 'remote': argument should resolve to a remote path.
  */
 export const CLIGetOperationCommands: CommandArgResolutionSpec = {
+  find: { 0: 'remote' },
   stat: { 0: 'remote' },
   dir: { 0: 'remote' },
   du: { 0: 'remote' },

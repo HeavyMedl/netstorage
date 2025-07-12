@@ -137,20 +137,23 @@ export function createSyncCommand(
       ].join('\n'),
     )
     .action(
-      async (localPath: string, remotePath: string | undefined, options) => {
+      async (
+        localPath: string,
+        remotePath: string | undefined,
+        {
+          dryRun,
+          strategy,
+          mode = 'both',
+          prune: deleteMode,
+          conflictResolution,
+          maxConcurrency,
+          logLevel,
+          verbose,
+          pretty,
+          quiet,
+        },
+      ) => {
         try {
-          const {
-            dryRun,
-            strategy,
-            mode = 'both',
-            prune: deleteMode,
-            conflictResolution,
-            maxConcurrency,
-            logLevel,
-            verbose,
-            pretty,
-            quiet,
-          } = options;
           const config = await loadClientConfig(
             getLogLevelOverride(logLevel, verbose),
           );

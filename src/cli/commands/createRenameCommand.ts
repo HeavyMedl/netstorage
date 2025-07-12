@@ -51,52 +51,49 @@ export function createRenameCommand(
         '  $ npx nst rename -d -p old.txt new.txt',
       ].join('\n'),
     )
-    .action(async (from: string, to: string | undefined, options) => {
-      try {
-        const {
-          timeout,
-          cancelAfter,
-          pretty,
-          dryRun,
-          logLevel,
-          verbose,
-          quiet,
-        } = options;
-        const config = await loadClientConfig(
-          getLogLevelOverride(logLevel, verbose),
-        );
-        const inferredTo = to ?? basename(from);
-        let resolvedTo = inferredTo;
+    .action(
+      async (
+        from: string,
+        to: string | undefined,
+        { timeout, cancelAfter, pretty, dryRun, logLevel, verbose, quiet },
+      ) => {
+        try {
+          const config = await loadClientConfig(
+            getLogLevelOverride(logLevel, verbose),
+          );
+          const inferredTo = to ?? basename(from);
+          let resolvedTo = inferredTo;
 
-        if (config.cpCode) {
-          resolvedTo = path.posix.join(
-            `/${config.cpCode}`,
-            inferredTo.replace(/^\/+/, ''),
-          );
-        } else {
-          config.logger.verbose(
-            'Warning: `cpCode` is not configured. Ensure `pathTo` is a fully qualified path.',
-          );
-        }
+          if (config.cpCode) {
+            resolvedTo = path.posix.join(
+              `/${config.cpCode}`,
+              inferredTo.replace(/^\/+/, ''),
+            );
+          } else {
+            config.logger.verbose(
+              'Warning: `cpCode` is not configured. Ensure `pathTo` is a fully qualified path.',
+            );
+          }
 
-        if (dryRun) {
-          config.logger.info(
-            `[Dry Run] would rename ${config.uri(from)} -> ${config.uri(resolvedTo)}`,
-          );
-          return;
+          if (dryRun) {
+            config.logger.info(
+              `[Dry Run] would rename ${config.uri(from)} -> ${config.uri(resolvedTo)}`,
+            );
+            return;
+          }
+          const result = await rename(config, {
+            pathFrom: from,
+            pathTo: resolvedTo,
+            options: {
+              timeout,
+              signal: resolveAbortSignalCLI(cancelAfter),
+            },
+          });
+          if (!quiet) printJson(result, pretty);
+          setLastCommandResult(result);
+        } catch (err) {
+          handleCliError(err, logger);
         }
-        const result = await rename(config, {
-          pathFrom: from,
-          pathTo: resolvedTo,
-          options: {
-            timeout,
-            signal: resolveAbortSignalCLI(cancelAfter),
-          },
-        });
-        if (!quiet) printJson(result, pretty);
-        setLastCommandResult(result);
-      } catch (err) {
-        handleCliError(err, logger);
-      }
-    });
+      },
+    );
 }

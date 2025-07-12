@@ -50,17 +50,12 @@ export function createSymlinkCommand(
       ].join('\n'),
     )
     .action(
-      async (target: string, symlinkPath: string | undefined, options) => {
+      async (
+        target: string,
+        symlinkPath: string | undefined,
+        { timeout, cancelAfter, pretty, dryRun, logLevel, verbose, quiet },
+      ) => {
         try {
-          const {
-            timeout,
-            cancelAfter,
-            pretty,
-            dryRun,
-            logLevel,
-            verbose,
-            quiet,
-          } = options;
           const config = await loadClientConfig(
             getLogLevelOverride(logLevel, verbose),
           );

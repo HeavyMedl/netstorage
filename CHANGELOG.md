@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.0] - 2025-07-12
+
+### Features
+
+- Introduced `find` CLI command for recursive remote file discovery using glob patterns.
+  Supports depth limiting, dotfile inclusion, case-insensitive matching, and extended glob options via `micromatch`.
+  Defaults to printing matched paths; use `--meta` to include full file details.
+
 ## [3.0.0] - 2025-07-11
 
 ### Introduction of REPL

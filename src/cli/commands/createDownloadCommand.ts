@@ -58,9 +58,11 @@ export function createDownloadCommand(
         '  $ nst download -o remote/directory',
       ].join('\n'),
     )
-    .action(async function (this: Command, remotePath, localPathArg) {
-      try {
-        const {
+    .action(
+      async (
+        remotePath,
+        localPathArg,
+        {
           timeout,
           cancelAfter,
           logLevel,
@@ -70,45 +72,48 @@ export function createDownloadCommand(
           overwrite,
           maxConcurrency,
           quiet,
-        } = this.opts();
-        const config = await loadClientConfig(
-          getLogLevelOverride(logLevel, verbose),
-        );
-        const localPath =
-          localPathArg ||
-          path.resolve(process.cwd(), path.basename(remotePath));
-
-        const isDir = await isDirectory(config, remotePath);
-
-        if (dryRun) {
-          const type = isDir ? 'directory' : 'file';
-          logger.info(
-            `[Dry Run] Skipped download of ${type}: ${config.uri(remotePath)} → ${localPath}`,
+        },
+      ) => {
+        try {
+          const config = await loadClientConfig(
+            getLogLevelOverride(logLevel, verbose),
           );
-          return;
+          const localPath =
+            localPathArg ||
+            path.resolve(process.cwd(), path.basename(remotePath));
+
+          const isDir = await isDirectory(config, remotePath);
+
+          if (dryRun) {
+            const type = isDir ? 'directory' : 'file';
+            logger.info(
+              `[Dry Run] Skipped download of ${type}: ${config.uri(remotePath)} → ${localPath}`,
+            );
+            return;
+          }
+          let result;
+          if (isDir) {
+            result = await downloadDirectory(config, {
+              remotePath,
+              localPath,
+              dryRun,
+              overwrite,
+              maxConcurrency,
+              shouldDownload: dryRun ? async () => false : undefined,
+            });
+          } else {
+            result = await download(config, {
+              fromRemote: remotePath,
+              toLocal: localPath,
+              options: { timeout, signal: resolveAbortSignalCLI(cancelAfter) },
+              shouldDownload: dryRun ? async () => false : undefined,
+            });
+          }
+          if (!quiet) printJson(result, pretty);
+          setLastCommandResult(result);
+        } catch (err) {
+          handleCliError(err, logger);
         }
-        let result;
-        if (isDir) {
-          result = await downloadDirectory(config, {
-            remotePath,
-            localPath,
-            dryRun,
-            overwrite,
-            maxConcurrency,
-            shouldDownload: dryRun ? async () => false : undefined,
-          });
-        } else {
-          result = await download(config, {
-            fromRemote: remotePath,
-            toLocal: localPath,
-            options: { timeout, signal: resolveAbortSignalCLI(cancelAfter) },
-            shouldDownload: dryRun ? async () => false : undefined,
-          });
-        }
-        if (!quiet) printJson(result, pretty);
-        setLastCommandResult(result);
-      } catch (err) {
-        handleCliError(err, logger);
-      }
-    });
+      },
+    );
 }
