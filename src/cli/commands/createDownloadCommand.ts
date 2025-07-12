@@ -6,10 +6,11 @@ import {
   validateTimeout,
   validateCancelAfter,
   handleCliError,
-  resolveAbortSignal,
+  resolveAbortSignalCLI,
   getLogLevelOverride,
   printJson,
   loadClientConfig,
+  setLastCommandResult,
 } from '../utils';
 
 export function createDownloadCommand(
@@ -47,6 +48,7 @@ export function createDownloadCommand(
       validateTimeout,
     )
     .option('-v, --verbose', 'Enable verbose logging')
+    .option('-q, --quiet', 'Suppress standard output')
     .addHelpText(
       'after',
       [
@@ -67,6 +69,7 @@ export function createDownloadCommand(
           verbose,
           overwrite,
           maxConcurrency,
+          quiet,
         } = this.opts();
         const config = await loadClientConfig(
           getLogLevelOverride(logLevel, verbose),
@@ -98,11 +101,12 @@ export function createDownloadCommand(
           result = await download(config, {
             fromRemote: remotePath,
             toLocal: localPath,
-            options: { timeout, signal: resolveAbortSignal(cancelAfter) },
+            options: { timeout, signal: resolveAbortSignalCLI(cancelAfter) },
             shouldDownload: dryRun ? async () => false : undefined,
           });
         }
-        printJson(result, pretty);
+        if (!quiet) printJson(result, pretty);
+        setLastCommandResult(result);
       } catch (err) {
         handleCliError(err, logger);
       }

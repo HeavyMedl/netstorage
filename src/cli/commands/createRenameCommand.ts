@@ -7,7 +7,8 @@ import {
   handleCliError,
   loadClientConfig,
   printJson,
-  resolveAbortSignal,
+  resolveAbortSignalCLI,
+  setLastCommandResult,
   validateCancelAfter,
   validateTimeout,
 } from '../utils';
@@ -40,6 +41,7 @@ export function createRenameCommand(
       validateTimeout,
     )
     .option('-v, --verbose', 'Enable verbose logging')
+    .option('-q, --quiet', 'Suppress standard output')
     .addHelpText(
       'after',
       [
@@ -51,8 +53,15 @@ export function createRenameCommand(
     )
     .action(async (from: string, to: string | undefined, options) => {
       try {
-        const { timeout, cancelAfter, pretty, dryRun, logLevel, verbose } =
-          options;
+        const {
+          timeout,
+          cancelAfter,
+          pretty,
+          dryRun,
+          logLevel,
+          verbose,
+          quiet,
+        } = options;
         const config = await loadClientConfig(
           getLogLevelOverride(logLevel, verbose),
         );
@@ -81,10 +90,11 @@ export function createRenameCommand(
           pathTo: resolvedTo,
           options: {
             timeout,
-            signal: resolveAbortSignal(cancelAfter),
+            signal: resolveAbortSignalCLI(cancelAfter),
           },
         });
-        printJson(result, pretty);
+        if (!quiet) printJson(result, pretty);
+        setLastCommandResult(result);
       } catch (err) {
         handleCliError(err, logger);
       }

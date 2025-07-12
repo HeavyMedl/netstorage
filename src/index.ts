@@ -23,7 +23,6 @@ export * from '@/operations/wrappers/buildAdjacencyList';
 export * from '@/operations/wrappers/findAll';
 export * from '@/operations/wrappers/remoteWalk';
 export * from '@/operations/wrappers/removeDirectory';
-export * from '@/operations/wrappers/tree';
 export * from '@/operations/wrappers/uploadDirectory';
 export * from '@/operations/wrappers/downloadDirectory';
 export * from '@/operations/wrappers/syncDirectory';
@@ -47,3 +46,6 @@ export * from '@/utils/sync';
 
 export * from '@/types/shared';
 export * from '@/types/sync';
+
+export * from '@/cli/utils/tree';
+export * from '@/cli/utils/index';

@@ -17,5 +17,10 @@ export default defineConfig({
       },
       formats: ['es'],
     },
+    rollupOptions: {
+      output: {
+        chunkFileNames: 'chunk-[hash].js',
+      },
+    },
   },
 });

@@ -5,7 +5,8 @@ import {
   handleCliError,
   loadClientConfig,
   printJson,
-  resolveAbortSignal,
+  resolveAbortSignalCLI,
+  setLastCommandResult,
   validateCancelAfter,
   validateTimeout,
 } from '../utils';
@@ -30,6 +31,7 @@ export function createMtimeCommand(
     )
     .option('-l, --log-level <level>', 'Override the log level')
     .option('-p, --pretty', 'Pretty-print the JSON output')
+    .option('-q, --quiet', 'Suppress standard output')
     .option(
       '-t, --timeout <ms>',
       'Set request timeout in milliseconds',
@@ -47,8 +49,15 @@ export function createMtimeCommand(
     )
     .action(async (remotePath: string, date: string, options) => {
       try {
-        const { timeout, cancelAfter, pretty, dryRun, logLevel, verbose } =
-          options;
+        const {
+          timeout,
+          cancelAfter,
+          pretty,
+          dryRun,
+          logLevel,
+          verbose,
+          quiet,
+        } = options;
         const config = await loadClientConfig(
           getLogLevelOverride(logLevel, verbose),
         );
@@ -69,10 +78,11 @@ export function createMtimeCommand(
           date: dateObj,
           options: {
             timeout,
-            signal: resolveAbortSignal(cancelAfter),
+            signal: resolveAbortSignalCLI(cancelAfter),
           },
         });
-        printJson(result, pretty);
+        if (!quiet) printJson(result, pretty);
+        setLastCommandResult(result);
       } catch (err) {
         handleCliError(err, logger);
       }

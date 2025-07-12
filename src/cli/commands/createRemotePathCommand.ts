@@ -5,7 +5,8 @@ import {
   handleCliError,
   loadClientConfig,
   printJson,
-  resolveAbortSignal,
+  resolveAbortSignalCLI,
+  setLastCommandResult,
   validateCancelAfter,
   validateTimeout,
 } from '../utils';
@@ -59,6 +60,7 @@ export function createRemotePathCommand(
       validateTimeout,
     )
     .option('-v, --verbose', 'Enable verbose logging')
+    .option('-q, --quiet', 'Suppress standard output')
     .addHelpText(
       'after',
       [
@@ -70,8 +72,15 @@ export function createRemotePathCommand(
     )
     .action(async function (this: Command, remotePath?: string) {
       try {
-        const { timeout, cancelAfter, pretty, logLevel, verbose, dryRun } =
-          this.opts();
+        const {
+          timeout,
+          cancelAfter,
+          pretty,
+          logLevel,
+          verbose,
+          dryRun,
+          quiet,
+        } = this.opts();
         const config = await loadClientConfig(
           getLogLevelOverride(logLevel, verbose),
         );
@@ -85,10 +94,11 @@ export function createRemotePathCommand(
           path: remotePath || '/',
           options: {
             timeout,
-            signal: resolveAbortSignal(cancelAfter),
+            signal: resolveAbortSignalCLI(cancelAfter),
           },
         });
-        printJson(result, pretty);
+        if (!quiet) printJson(result, pretty);
+        setLastCommandResult(result);
       } catch (err) {
         handleCliError(err, logger);
       }

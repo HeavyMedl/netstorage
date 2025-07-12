@@ -1,4 +1,4 @@
-import repl, { REPLServer } from 'node:repl';
+import repl, { type REPLServer } from 'node:repl';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { program } from '../index';
@@ -22,10 +22,16 @@ import {
   loadClientConfig,
   getSpinner,
   type CommandArgResolutionSpec,
+  getLastCommandResult,
+  writeOut,
+  clearLastCommandResult,
 } from '../utils';
 import type winston from 'winston';
+import type { Spinner } from 'yocto-spinner';
+// import type { Spinner } from 'yocto-spinner';
 
 const logger = createLogger('info', 'netstorage/repl');
+let spinner: Spinner | null;
 
 /**
  * Defines resolution specifications for read-based NetStorage commands.
@@ -33,7 +39,7 @@ const logger = createLogger('info', 'netstorage/repl');
  * Each command maps its positional arguments to how they should be resolved:
  * - 'remote': argument should resolve to a remote path.
  */
-export const GetCommands: CommandArgResolutionSpec = {
+export const CLIGetOperationCommands: CommandArgResolutionSpec = {
   stat: { 0: 'remote' },
   dir: { 0: 'remote' },
   du: { 0: 'remote' },
@@ -51,7 +57,7 @@ export const GetCommands: CommandArgResolutionSpec = {
  * - 'remote': argument should resolve to a remote path.
  * - 'passthrough': argument is preserved as-is without resolution.
  */
-export const PutCommands: CommandArgResolutionSpec = {
+export const CLIPutOperationCommands: CommandArgResolutionSpec = {
   sync: { 0: 'local', 1: 'remote' },
   upload: { 0: 'local', 1: 'remote' },
   up: { 0: 'local', 1: 'remote' },
@@ -71,9 +77,15 @@ export const PutCommands: CommandArgResolutionSpec = {
  * Merges `GetCommands` and `PutCommands` to support tab completion and
  * argument resolution logic for the interactive REPL shell.
  */
-export const CLICommands: CommandArgResolutionSpec = {
-  ...GetCommands,
-  ...PutCommands,
+export const CLIOperationCommands: CommandArgResolutionSpec = {
+  ...CLIGetOperationCommands,
+  ...CLIPutOperationCommands,
+};
+
+/**
+ * Resolution specification for the `config` command.
+ */
+export const CLIConfigCommand: CommandArgResolutionSpec = {
   config: {
     0: 'passthrough',
     1: 'passthrough',
@@ -133,7 +145,7 @@ export function createRemoteContext(
   }> {
     const entries: NetStorageFile[] = [];
     let rootMeta: NetStorageFile | undefined;
-
+    spinner?.start();
     for await (const entry of remoteWalk(config, {
       path,
       maxDepth: 0,
@@ -145,6 +157,7 @@ export function createRemoteContext(
         entries.push(entry.file);
       }
     }
+    spinner?.stop();
 
     if (path === remoteWorkingDir) {
       cache.setCachedEntries(path, entries);
@@ -316,7 +329,11 @@ export function createCompleterSync(
   const remoteDirEntries = entries
     .filter((e) => e.type === 'dir')
     .map((e) => e.name);
-  const allCommands = [...Object.keys(CLICommands), ...REPLCommands];
+  const allCommands = [
+    ...Object.keys(CLIOperationCommands),
+    ...Object.keys(CLIConfigCommand),
+    ...REPLCommands,
+  ];
 
   /**
    * Tab completion function for the REPL.
@@ -337,8 +354,8 @@ export function createCompleterSync(
       return [matches.length ? matches : remoteDirEntries, arg];
     }
 
-    if (CLICommands[cmd]) {
-      const resolutionSpec = CLICommands[cmd];
+    if (CLIOperationCommands[cmd]) {
+      const resolutionSpec = CLIOperationCommands[cmd];
       const localArgIndices = new Set<number>();
       const remoteArgIndices = new Set<number>();
       for (const index in resolutionSpec) {
@@ -408,6 +425,16 @@ export const runReplCommand = async (
 };
 
 /**
+ * Returns true if neither '--quiet' nor '-q' is present in the options array.
+ *
+ * @param options - The array of CLI options.
+ * @returns True if neither '--quiet' nor '-q' is present.
+ */
+function isQuietNotPresent(options: string[]): boolean {
+  return !options.includes('--quiet') && !options.includes('-q');
+}
+
+/**
  * Handles CLI commands.
  *
  * @param config - The NetStorage client configuration.
@@ -422,10 +449,19 @@ export const runClICommand = async (
   command: string,
   args: string[],
   options: string[],
-) => {
-  if (!(command in CLICommands)) return;
-  const resolutionSpec = CLICommands[command];
+): Promise<{
+  config: NetStorageClientConfig;
+  context: RemoteContext;
+}> => {
+  if (!(command in CLIOperationCommands || command in CLIConfigCommand))
+    return { config, context };
+  const resolutionSpec =
+    CLIOperationCommands[command] || CLIConfigCommand[command];
   const resolvedArgs = resolveCliArgs(args, resolutionSpec, context.getPath());
+  if (command in CLIOperationCommands && isQuietNotPresent(options)) {
+    options.push('--quiet');
+    spinner?.start();
+  }
   await program
     .exitOverride()
     .parseAsync([command, ...resolvedArgs, ...options], {
@@ -436,10 +472,11 @@ export const runClICommand = async (
     assertReplConfig(config);
     context = createRemoteContext(config);
   }
-  if (command in PutCommands) {
+  if (command in CLIPutOperationCommands) {
     context.clearCache();
     context.getEntries();
   }
+  return { config, context };
 };
 
 /**
@@ -453,10 +490,10 @@ export function createReplCommand(): Command {
     .description('Start an interactive NetStorage shell')
     .action(async () => {
       try {
-        const config = await loadClientConfig();
+        let config = await loadClientConfig();
         assertReplConfig(config);
-        const spinner = getSpinner(config);
-        const context = createRemoteContext(config);
+        spinner = getSpinner(config);
+        let context = createRemoteContext(config);
 
         // Current tab completion function used by the REPL to suggest completions.
         let completer = createCompleterSync([]);
@@ -469,14 +506,22 @@ export function createReplCommand(): Command {
           eval: async (input, _context, _filename, callback) => {
             const { command, args, options } = parseReplInput(input);
             try {
-              spinner?.start();
-              await runClICommand(config, context, command, args, options);
               await runReplCommand(config, context, command, args, options);
+              ({ config, context } = await runClICommand(
+                config,
+                context,
+                command,
+                args,
+                options,
+              ));
               completer = await refreshCompleter(context);
             } catch (err) {
+              spinner?.error();
               logger.error(err);
             } finally {
               spinner?.stop();
+              writeOut(getLastCommandResult());
+              clearLastCommandResult();
               resumeShell(context, shell);
               callback(null, undefined);
             }
