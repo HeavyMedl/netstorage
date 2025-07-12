@@ -13,6 +13,7 @@
   - [`dir`](#dir)
   - [`download`](#download)
   - [`du`](#du)
+  - [`find`](#find)
   - [`mtime`](#mtime)
   - [`mkdir`](#mkdir)
   - [`rename`](#rename)
@@ -210,6 +211,41 @@ Examples:
 npx netstorage du
 npx netstorage du /media
 ```
+
+## `find`
+
+Recursively search a remote NetStorage directory for files and folders matching glob patterns.
+
+```bash
+npx netstorage find [path] -n <pattern>
+```
+
+- `path` (optional) – Remote root path to search from. Defaults to `/`.
+
+Options:
+
+- `-i, --ignore-case` – Enable case-insensitive matching (micromatch `nocase`)
+- `-l, --log-level <level>` – Override the log level
+- `-m, --max-depth <number>` – Limit recursion depth (default: full depth)
+- `-n, --name <pattern>` – Glob pattern to match entry names (micromatch-compatible)
+- `--match-base` – Match against the basename if the pattern does not contain a slash
+- `--match-dot` – Allow patterns to match dotfiles
+- `--meta` – Include full metadata in results
+- `--no-braces` – Disable brace expansion in glob patterns
+- `--no-extglob` – Disable support for extended glob patterns
+- `-p, --pretty` – Pretty-print the JSON output
+- `-q, --quiet` – Suppress standard output
+- `-v, --verbose` – Enable verbose logging
+
+Examples:
+
+```bash
+npx netstorage find -n "README.md"
+npx netstorage find /assets -n "**/*.jpg" -m 2
+npx netstorage find /logs -n "*.log" -i --match-dot --meta
+```
+
+By default, `find` will print matched paths. Use `--meta` to include full JSON results with type, size, and timestamps.
 
 ## `mtime`
 

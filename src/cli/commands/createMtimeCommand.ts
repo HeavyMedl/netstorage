@@ -47,44 +47,41 @@ export function createMtimeCommand(
         '  $ nst mtime -p remote/file.txt 2024-01-01T12:00:00Z',
       ].join('\n'),
     )
-    .action(async (remotePath: string, date: string, options) => {
-      try {
-        const {
-          timeout,
-          cancelAfter,
-          pretty,
-          dryRun,
-          logLevel,
-          verbose,
-          quiet,
-        } = options;
-        const config = await loadClientConfig(
-          getLogLevelOverride(logLevel, verbose),
-        );
-        const dateObj = new Date(date);
-        if (isNaN(dateObj.getTime())) {
-          throw new TypeError(
-            'The provided date is not a valid ISO date string.',
+    .action(
+      async (
+        remotePath: string,
+        date: string,
+        { timeout, cancelAfter, pretty, dryRun, logLevel, verbose, quiet },
+      ) => {
+        try {
+          const config = await loadClientConfig(
+            getLogLevelOverride(logLevel, verbose),
           );
+          const dateObj = new Date(date);
+          if (isNaN(dateObj.getTime())) {
+            throw new TypeError(
+              'The provided date is not a valid ISO date string.',
+            );
+          }
+          if (dryRun) {
+            config.logger.info(
+              `[Dry Run] would update mtime of ${config.uri(remotePath)} to ${dateObj.toISOString()}`,
+            );
+            return;
+          }
+          const result = await mtime(config, {
+            path: remotePath,
+            date: dateObj,
+            options: {
+              timeout,
+              signal: resolveAbortSignalCLI(cancelAfter),
+            },
+          });
+          if (!quiet) printJson(result, pretty);
+          setLastCommandResult(result);
+        } catch (err) {
+          handleCliError(err, logger);
         }
-        if (dryRun) {
-          config.logger.info(
-            `[Dry Run] would update mtime of ${config.uri(remotePath)} to ${dateObj.toISOString()}`,
-          );
-          return;
-        }
-        const result = await mtime(config, {
-          path: remotePath,
-          date: dateObj,
-          options: {
-            timeout,
-            signal: resolveAbortSignalCLI(cancelAfter),
-          },
-        });
-        if (!quiet) printJson(result, pretty);
-        setLastCommandResult(result);
-      } catch (err) {
-        handleCliError(err, logger);
-      }
-    });
+      },
+    );
 }

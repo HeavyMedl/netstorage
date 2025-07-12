@@ -73,17 +73,24 @@ export function createUploadCommand(
       ].join('\n'),
     )
     .action(
-      async (fromLocal: string, toRemote: string | undefined, options) => {
+      async (
+        fromLocal: string,
+        toRemote: string | undefined,
+        {
+          timeout,
+          cancelAfter,
+          followSymlinks,
+          ignore,
+          maxConcurrency,
+          overwrite,
+          pretty,
+          dryRun,
+          logLevel,
+          verbose,
+          quiet,
+        },
+      ) => {
         try {
-          const {
-            timeout,
-            cancelAfter,
-            pretty,
-            dryRun,
-            logLevel,
-            verbose,
-            quiet,
-          } = options;
           const config = await loadClientConfig(
             getLogLevelOverride(logLevel, verbose),
           );
@@ -98,10 +105,10 @@ export function createUploadCommand(
               localPath: fromLocal,
               remotePath: inferredToRemote,
               dryRun,
-              overwrite: options.overwrite,
-              followSymlinks: options.followSymlinks,
-              ignore: options.ignore,
-              maxConcurrency: options.maxConcurrency,
+              overwrite: overwrite,
+              followSymlinks: followSymlinks,
+              ignore,
+              maxConcurrency: maxConcurrency,
               shouldUpload: dryRun ? async () => false : undefined,
             });
           } else {
