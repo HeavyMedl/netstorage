@@ -3,7 +3,7 @@
 A TypeScript API and CLI for the [Akamai NetStorage REST interface](https://techdocs.akamai.com/netstorage-usage/reference/api).
 
 <p align="center">
-  <img src="./assets/demo.svg" alt="REPL demo" style="max-width: 100%; height: auto;">
+  <img src="https://raw.githubusercontent.com/HeavyMedl/netstorage/main/assets/demo.svg" alt="REPL demo" style="max-width: 100%; height: auto;">
 </p>
 
 ## Features
