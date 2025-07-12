@@ -51,9 +51,10 @@ export function createRemoveCommand(
         '  $ nst rm -r path/to/dir',
       ].join('\n'),
     )
-    .action(async function (this: Command, remotePath: string) {
-      try {
-        const {
+    .action(
+      async (
+        remotePath: string,
+        {
           timeout,
           cancelAfter,
           pretty,
@@ -62,44 +63,47 @@ export function createRemoveCommand(
           dryRun,
           recursive,
           quiet,
-        } = this.opts();
-        const config = await loadClientConfig(
-          getLogLevelOverride(logLevel, verbose),
-        );
-
-        const isDir = await isDirectory(config, remotePath);
-
-        if (dryRun) {
-          config.logger.info(
-            `[Dry Run] would remove ${isDir ? 'directory' : 'file'} ${config.uri(remotePath)}`,
+        },
+      ) => {
+        try {
+          const config = await loadClientConfig(
+            getLogLevelOverride(logLevel, verbose),
           );
-          return;
-        }
 
-        if (isDir && !recursive) {
-          config.logger.warn(
-            `'${config.uri(remotePath)}' is a directory. Use the --recursive flag to remove it.`,
-          );
-          return;
+          const isDir = await isDirectory(config, remotePath);
+
+          if (dryRun) {
+            config.logger.info(
+              `[Dry Run] would remove ${isDir ? 'directory' : 'file'} ${config.uri(remotePath)}`,
+            );
+            return;
+          }
+
+          if (isDir && !recursive) {
+            config.logger.warn(
+              `'${config.uri(remotePath)}' is a directory. Use the --recursive flag to remove it.`,
+            );
+            return;
+          }
+          let result;
+          if (isDir) {
+            result = await removeDirectory(config, {
+              remotePath,
+            });
+          } else {
+            result = await rm(config, {
+              path: remotePath,
+              options: {
+                timeout,
+                signal: resolveAbortSignalCLI(cancelAfter),
+              },
+            });
+          }
+          if (!quiet) printJson(result, pretty);
+          setLastCommandResult(result);
+        } catch (err) {
+          handleCliError(err, logger);
         }
-        let result;
-        if (isDir) {
-          result = await removeDirectory(config, {
-            remotePath,
-          });
-        } else {
-          result = await rm(config, {
-            path: remotePath,
-            options: {
-              timeout,
-              signal: resolveAbortSignalCLI(cancelAfter),
-            },
-          });
-        }
-        if (!quiet) printJson(result, pretty);
-        setLastCommandResult(result);
-      } catch (err) {
-        handleCliError(err, logger);
-      }
-    });
+      },
+    );
 }

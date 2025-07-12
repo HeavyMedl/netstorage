@@ -15,6 +15,7 @@ import { createMtimeCommand } from './commands/createMtimeCommand';
 import { createTreeCommand } from './commands/createTreeCommand';
 import { createRemoveCommand } from './commands/createRemoveCommand';
 import { createReplCommand } from './commands/createReplCommand';
+import { createFindCommand } from './commands/createFindCommand';
 
 const logger = createLogger('info', `netstorage/cli`);
 export const program = new Command();
@@ -65,6 +66,7 @@ program.addCommand(
     },
   }),
 );
+program.addCommand(createFindCommand(logger));
 program.addCommand(createMtimeCommand(logger));
 program.addCommand(
   createRemotePathCommand({

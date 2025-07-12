@@ -70,37 +70,33 @@ export function createRemotePathCommand(
         `  $ nst ${name} -p ${examplePath}`,
       ].join('\n'),
     )
-    .action(async function (this: Command, remotePath?: string) {
-      try {
-        const {
-          timeout,
-          cancelAfter,
-          pretty,
-          logLevel,
-          verbose,
-          dryRun,
-          quiet,
-        } = this.opts();
-        const config = await loadClientConfig(
-          getLogLevelOverride(logLevel, verbose),
-        );
-        if (dryRun) {
-          config.logger.info(
-            `[Dry Run] would execute '${name}' on ${config.uri(remotePath || '/')}`,
+    .action(
+      async (
+        remotePath: string | undefined,
+        { timeout, cancelAfter, pretty, logLevel, verbose, dryRun, quiet },
+      ) => {
+        try {
+          const config = await loadClientConfig(
+            getLogLevelOverride(logLevel, verbose),
           );
-          return;
+          if (dryRun) {
+            config.logger.info(
+              `[Dry Run] would execute '${name}' on ${config.uri(remotePath || '/')}`,
+            );
+            return;
+          }
+          const result = await operations[name](config, {
+            path: remotePath || '/',
+            options: {
+              timeout,
+              signal: resolveAbortSignalCLI(cancelAfter),
+            },
+          });
+          if (!quiet) printJson(result, pretty);
+          setLastCommandResult(result);
+        } catch (err) {
+          handleCliError(err, logger);
         }
-        const result = await operations[name](config, {
-          path: remotePath || '/',
-          options: {
-            timeout,
-            signal: resolveAbortSignalCLI(cancelAfter),
-          },
-        });
-        if (!quiet) printJson(result, pretty);
-        setLastCommandResult(result);
-      } catch (err) {
-        handleCliError(err, logger);
-      }
-    });
+      },
+    );
 }

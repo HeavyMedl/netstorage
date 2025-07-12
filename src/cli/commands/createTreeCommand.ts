@@ -44,9 +44,10 @@ export function createTreeCommand(
         '  $ npx nst tree -s -M assets',
       ].join('\n'),
     )
-    .action(async (path: string | undefined, options) => {
-      try {
-        const {
+    .action(
+      async (
+        remotePath: string | undefined,
+        {
           maxDepth,
           showSize,
           showMtime,
@@ -58,75 +59,74 @@ export function createTreeCommand(
           verbose,
           recursive,
           quiet,
-        } = options;
-        const resolvedMaxDepth =
-          recursive || maxDepth === 'null'
-            ? undefined
-            : maxDepth === undefined
-              ? 0
-              : maxDepth;
-        const inferredPath = path ?? '/';
-        const config = await loadClientConfig(
-          getLogLevelOverride(logLevel, verbose),
-        );
-        const { depthBuckets, totalSize } = await buildAdjacencyList(config, {
-          path: inferredPath,
-          maxDepth: resolvedMaxDepth,
-        });
-
-        const hasEntries = depthBuckets?.[0]?.entries?.length > 0;
-
-        let result: string[] = [];
-
-        if (!hasEntries) {
-          result.push(
-            `No directory entries found at ${config.uri(inferredPath)}`,
+        },
+      ) => {
+        try {
+          const resolvedMaxDepth =
+            recursive || maxDepth === 'null' ? undefined : (maxDepth ?? 0);
+          const inferredPath = remotePath ?? '/';
+          const config = await loadClientConfig(
+            getLogLevelOverride(logLevel, verbose),
           );
+          const { depthBuckets, totalSize } = await buildAdjacencyList(config, {
+            path: inferredPath,
+            maxDepth: resolvedMaxDepth,
+          });
+
+          const hasEntries = depthBuckets?.[0]?.entries?.length > 0;
+
+          let result: string[] = [];
+
+          if (!hasEntries) {
+            result.push(
+              `No directory entries found at ${config.uri(inferredPath)}`,
+            );
+            setLastCommandResult(result);
+            return;
+          }
+
+          const allEntries = depthBuckets.flatMap((bucket) => bucket.entries);
+          const directorySizeMap = aggregateDirectorySizes(allEntries);
+          const rootGroup = depthBuckets.find((g) => g.depth === 0);
+          const rootEntries = rootGroup ? rootGroup.entries : [];
+
+          // Sort rootEntries: directories first, then alphabetically by name
+          rootEntries.sort((a, b) => {
+            const aIsDir = a.file.type === 'dir';
+            const bIsDir = b.file.type === 'dir';
+
+            if (aIsDir && !bIsDir) return -1;
+            if (!aIsDir && bIsDir) return 1;
+
+            return a.file.name.localeCompare(b.file.name);
+          });
+
+          const trimmedPath = inferredPath.replace(/^\/+/, '');
+          const topLabelPath = trimmedPath || '.';
+          const topLabel = colorizeName(
+            topLabelPath === '.' ? topLabelPath : `${topLabelPath}/`,
+            'dir',
+          );
+          result.push(
+            `${topLabel}${showSize ? ` (${formatBytes(totalSize)})` : ''}`,
+          );
+          result = result.concat(
+            generateRemoteTree(rootEntries, {
+              showSize,
+              showMtime,
+              showChecksum,
+              showSymlinkTarget,
+              showRelativePath,
+              showAbsolutePath,
+              depthBuckets,
+              directorySizeMap,
+            }),
+          );
+          if (!quiet) writeOut(result);
           setLastCommandResult(result);
-          return;
+        } catch (err) {
+          handleCliError(err, logger);
         }
-
-        const allEntries = depthBuckets.flatMap((bucket) => bucket.entries);
-        const directorySizeMap = aggregateDirectorySizes(allEntries);
-        const rootGroup = depthBuckets.find((g) => g.depth === 0);
-        const rootEntries = rootGroup ? rootGroup.entries : [];
-
-        // Sort rootEntries: directories first, then alphabetically by name
-        rootEntries.sort((a, b) => {
-          const aIsDir = a.file.type === 'dir';
-          const bIsDir = b.file.type === 'dir';
-
-          if (aIsDir && !bIsDir) return -1;
-          if (!aIsDir && bIsDir) return 1;
-
-          return a.file.name.localeCompare(b.file.name);
-        });
-
-        const trimmedPath = inferredPath.replace(/^\/+/, '');
-        const topLabelPath = trimmedPath || '.';
-        const topLabel = colorizeName(
-          topLabelPath === '.' ? topLabelPath : `${topLabelPath}/`,
-          'dir',
-        );
-        result.push(
-          `${topLabel}${showSize ? ` (${formatBytes(totalSize)})` : ''}`,
-        );
-        result = result.concat(
-          generateRemoteTree(rootEntries, {
-            showSize,
-            showMtime,
-            showChecksum,
-            showSymlinkTarget,
-            showRelativePath,
-            showAbsolutePath,
-            depthBuckets,
-            directorySizeMap,
-          }),
-        );
-        if (!quiet) writeOut(result);
-        setLastCommandResult(result);
-      } catch (err) {
-        handleCliError(err, logger);
-      }
-    });
+      },
+    );
 }
