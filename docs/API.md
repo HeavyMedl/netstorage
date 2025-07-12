@@ -69,18 +69,14 @@
     - [Parameters](#parameters-16)
     - [Returns](#returns-16)
     - [Example](#example-16)
-  - [`tree(config, { path, ... })`](#treeconfig--path--)
+  - [`remoteWalk(config, { path, ... })`](#remotewalkconfig--path--)
     - [Parameters](#parameters-17)
     - [Returns](#returns-17)
     - [Example](#example-17)
-  - [`remoteWalk(config, { path, ... })`](#remotewalkconfig--path--)
+  - [`inspectRemotePath(config, { path, kind })`](#inspectremotepathconfig--path-kind-)
     - [Parameters](#parameters-18)
     - [Returns](#returns-18)
     - [Example](#example-18)
-  - [`inspectRemotePath(config, { path, kind })`](#inspectremotepathconfig--path-kind-)
-    - [Parameters](#parameters-19)
-    - [Returns](#returns-19)
-    - [Example](#example-19)
 
 ## `createConfig({ host, keyName, key, ... })`
 
@@ -670,57 +666,6 @@ const results = await removeDirectory(config, {
     console.log(`Skipped ${remotePath} due to: ${reason}`);
   },
 });
-```
-
-## `tree(config, { path, ... })`
-
-Generates a visual directory tree of a remote NetStorage path, optionally displaying metadata like size, modification time, checksums, and symlink targets.
-
-### Parameters
-
-- `config` (`NetStorageClientConfig`): Configuration object returned by `createConfig()`.
-- `path` (`string`): The remote base directory to visualize.
-- `maxDepth` (`number`, optional): Maximum depth to traverse.
-- `shouldInclude` (`(entry: RemoteWalkEntry) => boolean`, optional): Predicate for filtering entries.
-- `showSize` (`boolean`, optional): Display size info (applies to files and dirs).
-- `showMtime` (`boolean`, optional): Display last modified timestamps.
-- `showChecksum` (`boolean`, optional): Display MD5 checksums.
-- `showSymlinkTarget` (`boolean`, optional): Show symlink target paths.
-- `showRelativePath` (`boolean`, optional): Include relative path in output.
-- `showAbsolutePath` (`boolean`, optional): Include full path in output.
-
-### Returns
-
-A Promise resolving to:
-
-- `depthBuckets`: Array of `{ depth, entries }` groups.
-- `directorySizeMap`: Map of directory paths to aggregated sizes.
-- `totalSize`: Total size of all files (in bytes).
-
-### Example
-
-```ts
-import { createConfig, tree } from 'netstorage';
-
-const config = createConfig({ host, keyName, key });
-
-await tree(config, {
-  path: '/12345/assets',
-  showSize: true,
-  showMtime: true,
-  showChecksum: true,
-});
-```
-
-Outputs a tree view like:
-
-```
-. (1.2 MB)
-├── index.html (12 KB | 2024-06-01T12:00:00Z)
-├── images/ (800 KB)
-│   ├── logo.png (200 KB | md5: abc123)
-│   └── bg.jpg (600 KB)
-└── script.js (400 KB)
 ```
 
 ## `remoteWalk(config, { path, ... })`

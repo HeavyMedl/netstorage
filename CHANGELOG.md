@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.1.0] - 2025-07-03
+## [3.0.0] - 2025-07-03
 
 ### Introduction of REPL
 
@@ -13,6 +13,11 @@ All notable changes to this project will be documented in this file.
 - Handles standard navigation commands (`cd`, `ls`, `ll`, `pwd`, `clear`, `exit`) natively.
 - Automatically resolves missing remote paths in upload/download/sync operations using current REPL context.
 - Integrates with main CLI commands for invocation with resolved arguments and options.
+
+### Changes
+
+- Removed `tree` from the public API surface; it remains available as a CLI command.
+  The underlying rendering logic is now available via utility functions.
 
 ## [2.0.0] - 2025-07-02
 
