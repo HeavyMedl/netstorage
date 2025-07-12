@@ -1,5 +1,7 @@
 # NetStorage
 
+![npm version](https://img.shields.io/npm/v/netstorage)
+
 A modern TypeScript API and CLI for the [Akamai NetStorage REST interface](https://techdocs.akamai.com/netstorage-usage/reference/api). Built for composability, reliability, and full control over file operations.
 
 ![REPL demo](./assets/netstorage-repl-demo.gif)
@@ -18,8 +20,10 @@ A modern TypeScript API and CLI for the [Akamai NetStorage REST interface](https
 ## Installation
 
 ```bash
-npm install netstorage
+npm i netstorage -g
 ```
+
+Alternatively, you can run any command with `npx netstorage`—no global install needed.
 
 ## Getting Started
 
@@ -51,20 +55,18 @@ npx netstorage tree -s -M release-history
 
 ### Interactive Shell (REPL)
 
-Launch a REPL session:
-
 ```bash
 npx netstorage
 ```
 
-Inside the REPL, you get:
+Use the REPL to:
 
-- Remote directory navigation (`cd`, `ls`, `ll`, `pwd`)
-- Tab-completion for local and remote paths
-- Access to all CLI commands (`upload`, `download`, `stat`, etc.)
-- Remote context awareness (auto-resolves working directory)
+- Navigate remote directories (`cd`, `ls`, `ll`, `pwd`)
+- Run any CLI command interactively (`upload`, `download`, `stat`, etc.)
+- Autocomplete local and remote paths
+- Maintain remote working directory context
 
-Example session:
+Example commands:
 
 ```bash
 nst:/media> ls
