@@ -1,6 +1,6 @@
 {
   "name": "netstorage",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "A TypeScript API and CLI for the Akamai NetStorage REST interface",
   "keywords": [
     "akamai",
