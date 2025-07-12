@@ -1,4 +1,4 @@
-import repl from 'node:repl';
+import repl, { REPLServer } from 'node:repl';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { program } from '../index';
@@ -28,6 +28,65 @@ import type winston from 'winston';
 const logger = createLogger('info', 'netstorage/repl');
 
 /**
+ * Defines resolution specifications for read-based NetStorage commands.
+ *
+ * Each command maps its positional arguments to how they should be resolved:
+ * - 'remote': argument should resolve to a remote path.
+ */
+export const GetCommands: CommandArgResolutionSpec = {
+  stat: { 0: 'remote' },
+  dir: { 0: 'remote' },
+  du: { 0: 'remote' },
+  tree: { 0: 'remote' },
+  download: { 0: 'remote', 1: 'local' },
+  dl: { 0: 'remote', 1: 'local' },
+  get: { 0: 'remote', 1: 'local' },
+};
+
+/**
+ * Defines resolution specifications for write-based NetStorage commands.
+ *
+ * Each command maps its positional arguments to how they should be resolved:
+ * - 'local': argument should resolve to a local path.
+ * - 'remote': argument should resolve to a remote path.
+ * - 'passthrough': argument is preserved as-is without resolution.
+ */
+export const PutCommands: CommandArgResolutionSpec = {
+  sync: { 0: 'local', 1: 'remote' },
+  upload: { 0: 'local', 1: 'remote' },
+  up: { 0: 'local', 1: 'remote' },
+  put: { 0: 'local', 1: 'remote' },
+  rm: { 0: 'remote' },
+  symlink: { 0: 'remote', 1: 'remote' },
+  mtime: { 0: 'remote', 1: 'passthrough' },
+  rename: { 0: 'remote', 1: 'remote' },
+  mv: { 0: 'remote', 1: 'remote' },
+  mkdir: { 0: 'remote' },
+  rmdir: { 0: 'remote' },
+};
+
+/**
+ * Combined resolution specification for all supported CLI commands.
+ *
+ * Merges `GetCommands` and `PutCommands` to support tab completion and
+ * argument resolution logic for the interactive REPL shell.
+ */
+export const CLICommands: CommandArgResolutionSpec = {
+  ...GetCommands,
+  ...PutCommands,
+  config: {
+    0: 'passthrough',
+    1: 'passthrough',
+  },
+};
+
+/**
+ * List of internal REPL commands handled directly by the REPL shell. These
+ * commands do not invoke the main CLI parser.
+ */
+export const REPLCommands = ['cd', 'ls', 'll', 'pwd', 'clear', 'exit'] as const;
+
+/**
  * Interface representing the remote context for the interactive NetStorage
  * shell. Provides methods for managing the current remote path, caching
  * directory entries, and retrieving/updating directory contents.
@@ -53,7 +112,9 @@ export interface RemoteContext {
  * @returns A RemoteContext object providing access to path and entries
  * management.
  */
-function createRemoteContext(config: NetStorageClientConfig): RemoteContext {
+export function createRemoteContext(
+  config: NetStorageClientConfig,
+): RemoteContext {
   let remoteWorkingDir = config.lastReplPath || '/';
   const cache = createRemoteDirectoryCache();
 
@@ -125,7 +186,7 @@ function createRemoteContext(config: NetStorageClientConfig): RemoteContext {
  *
  * @returns An object with methods to get, set, and clear cached entries.
  */
-function createRemoteDirectoryCache() {
+export function createRemoteDirectoryCache() {
   let cachedPath = '';
   let cachedEntries: NetStorageFile[] = [];
 
@@ -169,7 +230,7 @@ function createRemoteDirectoryCache() {
  * @param logger - Logger for outputting warnings and errors.
  * @returns Promise that resolves when the operation is complete.
  */
-async function handleCdCommand(
+export async function handleCdCommand(
   target: string | undefined,
   ctx: RemoteContext,
   logger: winston.Logger,
@@ -203,7 +264,7 @@ async function handleCdCommand(
  * @param target - Optional target path to list.
  * @returns Promise that resolves when the command finishes.
  */
-async function handleLsCommand(
+export async function handleLsCommand(
   detailed: boolean,
   ctx: RemoteContext,
   target?: string,
@@ -230,6 +291,16 @@ async function handleLsCommand(
 }
 
 /**
+ * Refreshes the completer function with the latest entries from the remote context.
+ *
+ * @param {RemoteContext} context - The remote context to retrieve entries from.
+ * @return {function} A synchronous tab-completion function for the REPL.
+ */
+export async function refreshCompleter(context: RemoteContext) {
+  return createCompleterSync(await context.getEntries());
+}
+
+/**
  * Creates a synchronous tab-completion function for the REPL. Provides
  * command-aware completion for REPL and CLI commands, suggesting appropriate
  * entries or commands.
@@ -238,7 +309,7 @@ async function handleLsCommand(
  * suggestions.
  * @returns A function compatible with the REPL completer API.
  */
-function createCompleterSync(
+export function createCompleterSync(
   entries: NetStorageFile[],
 ): (line: string) => [string[], string] {
   const remoteEntries = entries.map((e) => e.name).sort();
@@ -288,6 +359,90 @@ function createCompleterSync(
 }
 
 /**
+ * Resumes the interactive shell by updating the prompt and requesting user input.
+ *
+ * @returns {void} No return value.
+ */
+export function resumeShell(context: RemoteContext, shell: REPLServer): void {
+  shell.setPrompt(`nst:${chalk.cyan(context.getPath())}> `);
+  shell.prompt();
+}
+
+/**
+ * Handles internal REPL commands, such as `cd`, `ls`, and `pwd`.
+ *
+ * @param command - The command to handle.
+ * @param args - The arguments for the command.
+ * @param options - The options for the command.
+ */
+export const runReplCommand = async (
+  config: NetStorageClientConfig,
+  context: RemoteContext,
+  command: string,
+  args: string[],
+  options: string[],
+): Promise<void> => {
+  switch (command) {
+    case 'cd':
+      await handleCdCommand(args[0], context, logger);
+      break;
+    case 'ls':
+      await handleLsCommand(options.includes('-l'), context, args[0]);
+      break;
+    case 'll':
+      await handleLsCommand(true, context, args[0]);
+      break;
+    case 'pwd':
+      process.stdout.write(`${config.uri(context.getPath())}\n`);
+      break;
+    case 'clear':
+      process.stdout.write('\x1Bc');
+      break;
+    case 'exit':
+      process.exit(0);
+      break;
+    default: {
+      break;
+    }
+  }
+};
+
+/**
+ * Handles CLI commands.
+ *
+ * @param config - The NetStorage client configuration.
+ * @param context - The remote context for the REPL.
+ * @param command - The command to handle.
+ * @param args - The arguments for the command.
+ * @param options - The options for the command.
+ */
+export const runClICommand = async (
+  config: NetStorageClientConfig,
+  context: RemoteContext,
+  command: string,
+  args: string[],
+  options: string[],
+) => {
+  if (!(command in CLICommands)) return;
+  const resolutionSpec = CLICommands[command];
+  const resolvedArgs = resolveCliArgs(args, resolutionSpec, context.getPath());
+  await program
+    .exitOverride()
+    .parseAsync([command, ...resolvedArgs, ...options], {
+      from: 'user',
+    });
+  if (command === 'config' && ['set', 'clear'].includes(args[0])) {
+    config = await loadClientConfig();
+    assertReplConfig(config);
+    context = createRemoteContext(config);
+  }
+  if (command in PutCommands) {
+    context.clearCache();
+    context.getEntries();
+  }
+};
+
+/**
  * Constructs the `repl` command for the NetStorage CLI. Launches an interactive
  * shell that accepts NetStorage CLI commands and routes them through Commander.
  *
@@ -302,104 +457,9 @@ export function createReplCommand(): Command {
         assertReplConfig(config);
         const spinner = getSpinner(config);
         const context = createRemoteContext(config);
-        let entries: NetStorageFile[] = [];
 
         // Current tab completion function used by the REPL to suggest completions.
         let completer = createCompleterSync([]);
-
-        // Refreshes the tab completion list with the latest directory entries.
-        const refreshCompleter = async () => {
-          entries = await context.getEntries();
-          completer = createCompleterSync(entries);
-        };
-
-        /**
-         * Helper to resume shell prompt with updated prompt string.
-         */
-        const resumeShell = () => {
-          shell.setPrompt(`nst:${chalk.cyan(context.getPath())}> `);
-          shell.prompt();
-        };
-
-        /**
-         * Handles internal REPL commands, such as `cd`, `ls`, and `pwd`.
-         *
-         * @param command - The command to handle.
-         * @param args - The arguments for the command.
-         * @param options - The options for the command.
-         */
-        const handleInternalReplCommands = async (
-          command: string,
-          args: string[],
-          options: string[],
-        ): Promise<void> => {
-          switch (command) {
-            case 'cd':
-              await handleCdCommand(args[0], context, logger);
-              await refreshCompleter();
-              break;
-            case 'ls':
-              await handleLsCommand(options.includes('-l'), context, args[0]);
-              await refreshCompleter();
-              break;
-            case 'll':
-              await handleLsCommand(true, context, args[0]);
-              await refreshCompleter();
-              break;
-            case 'pwd':
-              process.stdout.write(`${config.uri(context.getPath())}\n`);
-              break;
-            case 'clear':
-              process.stdout.write('\x1Bc');
-              break;
-            case 'exit':
-              process.exit(0);
-              break;
-            default: {
-              break;
-            }
-          }
-        };
-
-        /**
-         * Handles CLI commands.
-         *
-         * @param config - The NetStorage client configuration.
-         * @param context - The remote context for the REPL.
-         * @param command - The command to handle.
-         * @param args - The arguments for the command.
-         * @param options - The options for the command.
-         */
-        const handleCLICommands = async (
-          config: NetStorageClientConfig,
-          context: RemoteContext,
-          command: string,
-          args: string[],
-          options: string[],
-        ) => {
-          if (!(command in CLICommands)) return;
-          const resolutionSpec = CLICommands[command];
-          const resolvedArgs = resolveCliArgs(
-            args,
-            resolutionSpec,
-            context.getPath(),
-          );
-          await program
-            .exitOverride()
-            .parseAsync([command, ...resolvedArgs, ...options], {
-              from: 'user',
-            });
-          if (command === 'config' && ['set', 'clear'].includes(args[0])) {
-            config = await loadClientConfig();
-            assertReplConfig(config);
-            context = createRemoteContext(config);
-            await refreshCompleter();
-          }
-          if (command in PutCommands) {
-            context.clearCache();
-            context.getEntries();
-          }
-        };
 
         // The REPL instance started for the interactive shell session.
         const shell = repl.start({
@@ -410,13 +470,14 @@ export function createReplCommand(): Command {
             const { command, args, options } = parseReplInput(input);
             try {
               spinner?.start();
-              await handleCLICommands(config, context, command, args, options);
-              await handleInternalReplCommands(command, args, options);
+              await runClICommand(config, context, command, args, options);
+              await runReplCommand(config, context, command, args, options);
+              completer = await refreshCompleter(context);
             } catch (err) {
               logger.error(err);
             } finally {
               spinner?.stop();
-              resumeShell();
+              resumeShell(context, shell);
               callback(null, undefined);
             }
           },
@@ -430,62 +491,3 @@ export function createReplCommand(): Command {
       }
     });
 }
-
-/**
- * Defines resolution specifications for read-based NetStorage commands.
- *
- * Each command maps its positional arguments to how they should be resolved:
- * - 'remote': argument should resolve to a remote path.
- */
-const GetCommands: CommandArgResolutionSpec = {
-  stat: { 0: 'remote' },
-  dir: { 0: 'remote' },
-  du: { 0: 'remote' },
-  tree: { 0: 'remote' },
-  download: { 0: 'remote', 1: 'local' },
-  dl: { 0: 'remote', 1: 'local' },
-  get: { 0: 'remote', 1: 'local' },
-};
-
-/**
- * Defines resolution specifications for write-based NetStorage commands.
- *
- * Each command maps its positional arguments to how they should be resolved:
- * - 'local': argument should resolve to a local path.
- * - 'remote': argument should resolve to a remote path.
- * - 'passthrough': argument is preserved as-is without resolution.
- */
-const PutCommands: CommandArgResolutionSpec = {
-  sync: { 0: 'local', 1: 'remote' },
-  upload: { 0: 'local', 1: 'remote' },
-  up: { 0: 'local', 1: 'remote' },
-  put: { 0: 'local', 1: 'remote' },
-  rm: { 0: 'remote' },
-  symlink: { 0: 'remote', 1: 'remote' },
-  mtime: { 0: 'remote', 1: 'passthrough' },
-  rename: { 0: 'remote', 1: 'remote' },
-  mv: { 0: 'remote', 1: 'remote' },
-  mkdir: { 0: 'remote' },
-  rmdir: { 0: 'remote' },
-};
-
-/**
- * Combined resolution specification for all supported CLI commands.
- *
- * Merges `GetCommands` and `PutCommands` to support tab completion and
- * argument resolution logic for the interactive REPL shell.
- */
-const CLICommands: CommandArgResolutionSpec = {
-  ...GetCommands,
-  ...PutCommands,
-  config: {
-    0: 'passthrough',
-    1: 'passthrough',
-  },
-};
-
-/**
- * List of internal REPL commands handled directly by the REPL shell. These
- * commands do not invoke the main CLI parser.
- */
-const REPLCommands = ['cd', 'ls', 'll', 'pwd', 'clear', 'exit'] as const;
