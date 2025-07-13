@@ -88,12 +88,12 @@ npx netstorage config set --host akamai.example.com --key-name my-key --key abc1
 
 Options:
 
-- `-h, --host <host>` – Akamai NetStorage host (e.g., `example-nsu.akamaihd.net`)
-- `-k, --key <key>` – Akamai access key
-- `-n, --key-name <keyName>` – Akamai key name
-- `-c, --cp-code <cpCode>` – Optional CP code used for path resolution
-- `-l, --log-level <level>` – Logging level (e.g., `info`, `debug`)
-- `-t, --timeout <ms>` – Request timeout in milliseconds
+- `-h, --host <host>` - Akamai NetStorage host (e.g., `example-nsu.akamaihd.net`)
+- `-k, --key <key>` - Akamai access key
+- `-n, --key-name <keyName>` - Akamai key name
+- `-c, --cp-code <cpCode>` - Optional CP code used for path resolution
+- `-l, --log-level <level>` - Logging level (e.g., `info`, `debug`)
+- `-t, --timeout <ms>` - Request timeout in milliseconds
 
 ### `config show`
 
@@ -111,7 +111,7 @@ Remove all or specific saved configuration values.
 npx netstorage config clear [key]
 ```
 
-- `key` (optional) – The specific configuration key to remove. If omitted, all configuration values will be cleared.
+- `key` (optional) - The specific configuration key to remove. If omitted, all configuration values will be cleared.
 
 Examples:
 
@@ -133,10 +133,10 @@ npx netstorage config path
 
 Every CLI command uses a unified configuration loader that resolves the active config using the following priority order:
 
-1. **CLI flags** – Highest priority, passed directly to the command (e.g. `--host`, `--key`)
-2. **Environment variables** – `NETSTORAGE_HOST`, `NETSTORAGE_API_KEY`, etc.
-3. **Project-level config file** – `netstorage.json` in the current working directory
-4. **Persistent config file** – Saved via `nst config set`, located at `~/.config/netstorage/.netstorage.json`
+1. **CLI flags** - Highest priority, passed directly to the command (e.g. `--host`, `--key`)
+2. **Environment variables** - `NETSTORAGE_HOST`, `NETSTORAGE_API_KEY`, etc.
+3. **Project-level config file** - `netstorage.json` in the current working directory
+4. **Persistent config file** - Saved via `nst config set`, located at `~/.config/netstorage/.netstorage.json`
 
 ## `dir`
 
@@ -146,16 +146,16 @@ List the contents of a remote directory.
 npx netstorage dir [remotePath]
 ```
 
-- `remotePath` (optional) – Path to the remote directory. Defaults to `/` if omitted.
+`remotePath` (optional) - Path to the remote directory. Defaults to `/` if omitted.
 
 Options:
 
-- `-c, --cancel-after <ms>` – Abort the request after a timeout delay
-- `-d, --dry-run` – Print the planned operation without executing
-- `-l, --log-level <level>` – Override the log level (e.g., `debug`)
-- `-p, --pretty` – Pretty-print the JSON output
-- `-t, --timeout <ms>` – Request timeout in milliseconds
-- `-v, --verbose` – Enable verbose logging
+- `-c, --cancel-after <ms>` - Abort the request after a timeout delay
+- `-d, --dry-run` - Print the planned operation without executing
+- `-l, --log-level <level>` - Override the log level (e.g., `debug`)
+- `-p, --pretty` - Pretty-print the JSON output
+- `-t, --timeout <ms>` - Request timeout in milliseconds
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 
@@ -172,19 +172,19 @@ Download a file or directory from NetStorage to the local filesystem.
 npx netstorage download <remotePath> [localPath]
 ```
 
-- `remotePath` – The path to the remote file or directory in NetStorage.
-- `localPath` (optional) – Local destination path. Defaults to a file or folder in the current directory using the remote name.
+`remotePath` - The path to the remote file or directory in NetStorage.
+`localPath` (optional) - Local destination path. Defaults to a file or folder in the current directory using the remote name.
 
 Options:
 
-- `-c, --cancel-after <ms>` – Abort the request after a timeout delay
-- `-d, --dry-run` – Simulate the operation without downloading
-- `-l, --log-level <level>` – Override the log level
-- `-m, --max-concurrency <number>` – Max concurrent downloads for directories
-- `-o, --overwrite` – Overwrite existing local files
-- `-p, --pretty` – Pretty-print the JSON output
-- `-t, --timeout <ms>` – Set the request timeout in milliseconds
-- `-v, --verbose` – Enable verbose logging
+- `-c, --cancel-after <ms>` - Abort the request after a timeout delay
+- `-d, --dry-run` - Simulate the operation without downloading
+- `-l, --log-level <level>` - Override the log level
+- `-m, --max-concurrency <number>` - Max concurrent downloads for directories
+- `-o, --overwrite` - Overwrite existing local files
+- `-p, --pretty` - Pretty-print the JSON output
+- `-t, --timeout <ms>` - Set the request timeout in milliseconds
+- `-v, --verbose` - Enable verbose logging
 
 ## `du`
 
@@ -194,16 +194,16 @@ Get the total size (in bytes) of a remote directory and its contents.
 npx netstorage du [remotePath]
 ```
 
-- `remotePath` (optional) – Path to the remote directory. Defaults to `/` if omitted.
+`remotePath` (optional) - Path to the remote directory. Defaults to `/` if omitted.
 
 Options:
 
-- `-c, --cancel-after <ms>` – Abort the request after a timeout delay
-- `-d, --dry-run` – Print the planned operation without executing
-- `-l, --log-level <level>` – Override the log level (e.g., `debug`)
-- `-p, --pretty` – Pretty-print the JSON output
-- `-t, --timeout <ms>` – Request timeout in milliseconds
-- `-v, --verbose` – Enable verbose logging
+- `-c, --cancel-after <ms>` - Abort the request after a timeout delay
+- `-d, --dry-run` - Print the planned operation without executing
+- `-l, --log-level <level>` - Override the log level (e.g., `debug`)
+- `-p, --pretty` - Pretty-print the JSON output
+- `-t, --timeout <ms>` - Request timeout in milliseconds
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 
@@ -220,22 +220,22 @@ Recursively search a remote NetStorage directory for files and folders matching 
 npx netstorage find [path] -n <pattern>
 ```
 
-- `path` (optional) – Remote root path to search from. Defaults to `/`.
+`path` (optional) - Remote root path to search from. Defaults to `/`.
 
 Options:
 
-- `-i, --ignore-case` – Enable case-insensitive matching (micromatch `nocase`)
-- `-l, --log-level <level>` – Override the log level
-- `-m, --max-depth <number>` – Limit recursion depth (default: full depth)
-- `-n, --name <pattern>` – Glob pattern to match entry names (micromatch-compatible)
-- `--match-base` – Match against the basename if the pattern does not contain a slash
-- `--match-dot` – Allow patterns to match dotfiles
-- `--meta` – Include full metadata in results
-- `--no-braces` – Disable brace expansion in glob patterns
-- `--no-extglob` – Disable support for extended glob patterns
-- `-p, --pretty` – Pretty-print the JSON output
-- `-q, --quiet` – Suppress standard output
-- `-v, --verbose` – Enable verbose logging
+- `-i, --ignore-case` - Enable case-insensitive matching (micromatch `nocase`)
+- `-l, --log-level <level>` - Override the log level
+- `-m, --max-depth <number>` - Limit recursion depth (default: full depth)
+- `-n, --name <pattern>` - Glob pattern to match entry names (micromatch-compatible)
+- `--match-base` - Match against the basename if the pattern does not contain a slash
+- `--match-dot` - Allow patterns to match dotfiles
+- `--meta` - Include full metadata in results
+- `--no-braces` - Disable brace expansion in glob patterns
+- `--no-extglob` - Disable support for extended glob patterns
+- `-p, --pretty` - Pretty-print the JSON output
+- `-q, --quiet` - Suppress standard output
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 
@@ -255,17 +255,17 @@ Set the modification time (mtime) for a remote file or directory.
 npx netstorage mtime <remotePath> <date>
 ```
 
-- `remotePath` – The remote file or directory whose modification time should be updated.
-- `date` – The modification time in ISO 8601 format (e.g. `2024-01-01T12:00:00Z`)
+`remotePath` - The remote file or directory whose modification time should be updated.
+`date` - The modification time in ISO 8601 format (e.g. `2024-01-01T12:00:00Z`)
 
 Options:
 
-- `-c, --cancel-after <ms>` – Abort the request after a timeout delay
-- `-d, --dry-run` – Print the planned operation without executing
-- `-l, --log-level <level>` – Override the log level
-- `-p, --pretty` – Pretty-print the JSON output
-- `-t, --timeout <ms>` – Set the request timeout in milliseconds
-- `-v, --verbose` – Enable verbose logging
+- `-c, --cancel-after <ms>` - Abort the request after a timeout delay
+- `-d, --dry-run` - Print the planned operation without executing
+- `-l, --log-level <level>` - Override the log level
+- `-p, --pretty` - Pretty-print the JSON output
+- `-t, --timeout <ms>` - Set the request timeout in milliseconds
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 
@@ -282,16 +282,16 @@ Create a directory on NetStorage at the specified remote path.
 npx netstorage mkdir <remotePath>
 ```
 
-- `remotePath` – The full remote path to create, including any parent directories that should exist.
+`remotePath` - The full remote path to create, including any parent directories that should exist.
 
 Options:
 
-- `-c, --cancel-after <ms>` – Abort the request after a timeout delay
-- `-d, --dry-run` – Print the planned operation without executing
-- `-l, --log-level <level>` – Override the log level (e.g., `debug`)
-- `-p, --pretty` – Pretty-print the JSON output
-- `-t, --timeout <ms>` – Request timeout in milliseconds
-- `-v, --verbose` – Enable verbose logging
+- `-c, --cancel-after <ms>` - Abort the request after a timeout delay
+- `-d, --dry-run` - Print the planned operation without executing
+- `-l, --log-level <level>` - Override the log level (e.g., `debug`)
+- `-p, --pretty` - Pretty-print the JSON output
+- `-t, --timeout <ms>` - Request timeout in milliseconds
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 
@@ -308,17 +308,17 @@ Rename a file or directory in NetStorage.
 npx netstorage rename <from> [to]
 ```
 
-- `from` – The current path of the file or directory to rename.
-- `to` (optional) – The new path for the file or directory. If omitted, the filename will be inferred from the source.
+`from` - The current path of the file or directory to rename.
+`to` (optional) - The new path for the file or directory. If omitted, the filename will be inferred from the source.
 
 Options:
 
-- `-c, --cancel-after <ms>` – Abort the request after a timeout delay
-- `-d, --dry-run` – Print the planned operation without executing
-- `-l, --log-level <level>` – Override the log level
-- `-p, --pretty` – Pretty-print the JSON output
-- `-t, --timeout <ms>` – Set the request timeout in milliseconds
-- `-v, --verbose` – Enable verbose logging
+- `-c, --cancel-after <ms>` - Abort the request after a timeout delay
+- `-d, --dry-run` - Print the planned operation without executing
+- `-l, --log-level <level>` - Override the log level
+- `-p, --pretty` - Pretty-print the JSON output
+- `-t, --timeout <ms>` - Set the request timeout in milliseconds
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 
@@ -337,17 +337,17 @@ Remove a file or directory from NetStorage.
 npx netstorage rm <remotePath>
 ```
 
-- `remotePath` – The file or directory path to remove from NetStorage.
+`remotePath` - The file or directory path to remove from NetStorage.
 
 Options:
 
-- `-c, --cancel-after <ms>` – Abort the request after a timeout delay
-- `-d, --dry-run` – Simulate the operation without deleting
-- `-l, --log-level <level>` – Override the log level
-- `-p, --pretty` – Pretty-print the JSON output
-- `-r, --recursive` – Required to remove directories and their contents
-- `-t, --timeout <ms>` – Request timeout in milliseconds
-- `-v, --verbose` – Enable verbose logging
+- `-c, --cancel-after <ms>` - Abort the request after a timeout delay
+- `-d, --dry-run` - Simulate the operation without deleting
+- `-l, --log-level <level>` - Override the log level
+- `-p, --pretty` - Pretty-print the JSON output
+- `-r, --recursive` - Required to remove directories and their contents
+- `-t, --timeout <ms>` - Request timeout in milliseconds
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 
@@ -364,16 +364,16 @@ Remove an empty directory from NetStorage.
 npx netstorage rmdir <remotePath>
 ```
 
-- `remotePath` – Path to the remote directory that should be removed. The directory must be empty.
+`remotePath` - Path to the remote directory that should be removed. The directory must be empty.
 
 Options:
 
-- `-c, --cancel-after <ms>` – Abort the request after a timeout delay
-- `-d, --dry-run` – Print the planned operation without executing
-- `-l, --log-level <level>` – Override the log level (e.g., `debug`)
-- `-p, --pretty` – Pretty-print the JSON output
-- `-t, --timeout <ms>` – Request timeout in milliseconds
-- `-v, --verbose` – Enable verbose logging
+- `-c, --cancel-after <ms>` - Abort the request after a timeout delay
+- `-d, --dry-run` - Print the planned operation without executing
+- `-l, --log-level <level>` - Override the log level (e.g., `debug`)
+- `-p, --pretty` - Pretty-print the JSON output
+- `-t, --timeout <ms>` - Request timeout in milliseconds
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 
@@ -392,16 +392,16 @@ Inspect metadata about a remote file or directory.
 npx netstorage stat [remotePath]
 ```
 
-- `remotePath` (optional) – Path to the remote file or directory. Defaults to `/` if omitted.
+`remotePath` (optional) - Path to the remote file or directory. Defaults to `/` if omitted.
 
 Options:
 
-- `-c, --cancel-after <ms>` – Abort the request after a timeout delay
-- `-d, --dry-run` – Print the planned operation without executing
-- `-l, --log-level <level>` – Override the log level (e.g., `debug`)
-- `-p, --pretty` – Pretty-print the JSON output
-- `-t, --timeout <ms>` – Request timeout in milliseconds
-- `-v, --verbose` – Enable verbose logging
+- `-c, --cancel-after <ms>` - Abort the request after a timeout delay
+- `-d, --dry-run` - Print the planned operation without executing
+- `-l, --log-level <level>` - Override the log level (e.g., `debug`)
+- `-p, --pretty` - Pretty-print the JSON output
+- `-t, --timeout <ms>` - Request timeout in milliseconds
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 
@@ -421,17 +421,17 @@ Create a symbolic link in NetStorage pointing to a remote file.
 npx netstorage symlink <target> [symlinkPath]
 ```
 
-- `target` – The remote file the symlink should point to.
-- `symlinkPath` (optional) – The path to create the symbolic link. If omitted, it will be inferred from the basename of the target path.
+`target` - The remote file the symlink should point to.
+`symlinkPath` (optional) - The path to create the symbolic link. If omitted, it will be inferred from the basename of the target path.
 
 Options:
 
-- `-c, --cancel-after <ms>` – Abort the request after a timeout delay
-- `-d, --dry-run` – Print the planned operation without executing
-- `-l, --log-level <level>` – Override the log level (e.g., `debug`)
-- `-p, --pretty` – Pretty-print the JSON output
-- `-t, --timeout <ms>` – Request timeout in milliseconds
-- `-v, --verbose` – Enable verbose logging
+- `-c, --cancel-after <ms>` - Abort the request after a timeout delay
+- `-d, --dry-run` - Print the planned operation without executing
+- `-l, --log-level <level>` - Override the log level (e.g., `debug`)
+- `-p, --pretty` - Pretty-print the JSON output
+- `-t, --timeout <ms>` - Request timeout in milliseconds
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 
@@ -450,20 +450,20 @@ Synchronize a local file or directory with a remote path in NetStorage.
 npx netstorage sync <localPath> [remotePath]
 ```
 
-- `localPath` – The local file or directory to sync.
-- `remotePath` (optional) – The NetStorage path to sync with. If omitted, it defaults to the basename of the local path.
+`localPath` - The local file or directory to sync.
+`remotePath` (optional) - The NetStorage path to sync with. If omitted, it defaults to the basename of the local path.
 
 Options:
 
-- `-c, --conflict-resolution <mode>` – Strategy for resolving conflicts: `preferLocal`, `preferRemote`, or `manual`
-- `-C, --max-concurrency <number>` – Max concurrent operations (default: 5)
-- `-d, --dry-run` – Print the planned sync operation without executing
-- `-l, --log-level <level>` – Override the log level
-- `-m, --mode <upload|download|both>` – Sync direction (default: `both`)
-- `-p, --prune <scope>` – Remove extraneous files: `remote`, `local`, `both`, or `none`
-- `--pretty` – Pretty-print JSON output
-- `-s, --strategy <mode>` – Comparison strategy: `size`, `mtime`, `checksum`, or `exists`
-- `-v, --verbose` – Enable verbose logging
+- `-c, --conflict-resolution <mode>` - Strategy for resolving conflicts: `preferLocal`, `preferRemote`, or `manual`
+- `-C, --max-concurrency <number>` - Max concurrent operations (default: 5)
+- `-d, --dry-run` - Print the planned sync operation without executing
+- `-l, --log-level <level>` - Override the log level
+- `-m, --mode <upload|download|both>` - Sync direction (default: `both`)
+- `-p, --prune <scope>` - Remove extraneous files: `remote`, `local`, `both`, or `none`
+- `--pretty` - Pretty-print JSON output
+- `-s, --strategy <mode>` - Comparison strategy: `size`, `mtime`, `checksum`, or `exists`
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 
@@ -483,20 +483,20 @@ Render a directory tree of a remote path in NetStorage.
 npx netstorage tree [path]
 ```
 
-- `path` (optional) – Remote path to walk. Defaults to `/` if omitted.
+`path` (optional) - Remote path to walk. Defaults to `/` if omitted.
 
 Options:
 
-- `-a, --show-absolute-path` – Display full absolute path
-- `-c, --show-checksum` – Display MD5 checksums if available
-- `-l, --log-level <level>` – Override the log level
-- `-m, --max-depth <n>` – Maximum traversal depth
-- `-M, --show-mtime` – Display last modified timestamps
-- `-p, --show-relative-path` – Display relative path instead of name
-- `-r, --recursive` – Recursively walk the full directory tree (sets max-depth to null)
-- `-s, --show-size` – Display file or aggregated directory sizes
-- `-t, --show-symlink-target` – Display symlink targets
-- `-v, --verbose` – Enable verbose logging
+- `-a, --show-absolute-path` - Display full absolute path
+- `-c, --show-checksum` - Display MD5 checksums if available
+- `-l, --log-level <level>` - Override the log level
+- `-m, --max-depth <n>` - Maximum traversal depth
+- `-M, --show-mtime` - Display last modified timestamps
+- `-p, --show-relative-path` - Display relative path instead of name
+- `-r, --recursive` - Recursively walk the full directory tree (sets max-depth to null)
+- `-s, --show-size` - Display file or aggregated directory sizes
+- `-t, --show-symlink-target` - Display symlink targets
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 
@@ -515,21 +515,21 @@ Upload a local file or directory to a specified path in NetStorage.
 npx netstorage upload <fromLocal> [toRemote]
 ```
 
-- `fromLocal` – Path to the local file or directory to upload.
-- `toRemote` (optional) – Destination path in NetStorage. Defaults to the basename of the local path.
+`fromLocal` - Path to the local file or directory to upload.
+`toRemote` (optional) - Destination path in NetStorage. Defaults to the basename of the local path.
 
 Options:
 
-- `-c, --cancel-after <ms>` – Abort the request after a timeout delay
-- `-d, --dry-run` – Print the planned upload operation without executing
-- `-f, --follow-symlinks` – Follow symlinks when uploading directories (default: false)
-- `-i, --ignore <patterns...>` – Glob patterns to exclude (e.g., `"**/*.log"`)
-- `--log-level <level>` – Override the log level
-- `-m, --max-concurrency <number>` – Maximum concurrent uploads (default: 5)
-- `-n, --no-overwrite` – Skip upload if remote file already exists
-- `-p, --pretty` – Pretty-print the JSON output
-- `-t, --timeout <ms>` – Request timeout in milliseconds
-- `-v, --verbose` – Enable verbose logging
+- `-c, --cancel-after <ms>` - Abort the request after a timeout delay
+- `-d, --dry-run` - Print the planned upload operation without executing
+- `-f, --follow-symlinks` - Follow symlinks when uploading directories (default: false)
+- `-i, --ignore <patterns...>` - Glob patterns to exclude (e.g., `"**/*.log"`)
+- `--log-level <level>` - Override the log level
+- `-m, --max-concurrency <number>` - Maximum concurrent uploads (default: 5)
+- `-n, --no-overwrite` - Skip upload if remote file already exists
+- `-p, --pretty` - Pretty-print the JSON output
+- `-t, --timeout <ms>` - Request timeout in milliseconds
+- `-v, --verbose` - Enable verbose logging
 
 Examples:
 

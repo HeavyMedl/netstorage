@@ -468,9 +468,9 @@ Uploads all files from a local directory to a remote NetStorage path, preserving
 
 A Promise resolving to an array of upload result objects:
 
-- `localPath` – Path to the source file.
-- `remotePath` – Destination path on NetStorage.
-- `status.code` – HTTP status code.
+- `localPath`: Path to the source file.
+- `remotePath`: Destination path on NetStorage.
+- `status.code`: HTTP status code.
 
 ### Example
 
@@ -509,9 +509,9 @@ Downloads all files from a remote NetStorage directory to a local directory, pre
 
 A Promise resolving to an array of download result objects:
 
-- `remotePath` – Source path on NetStorage.
-- `localPath` – Destination path on local filesystem.
-- `status.code` – HTTP status code returned from download.
+- `remotePath`: Source path on NetStorage.
+- `localPath`: Destination path on local filesystem.
+- `status.code`: HTTP status code returned from download.
 
 ### Example
 
@@ -646,8 +646,8 @@ Recursively removes a remote NetStorage directory and its contents.
 
 A Promise resolving to an array of result objects:
 
-- `remotePath` – The full path of the removed file or directory.
-- `status.code` – HTTP status code (e.g., 200 if removed successfully).
+- `remotePath`: The full path of the removed file or directory.
+- `status.code`: HTTP status code (e.g., 200 if removed successfully).
 
 ### Example
 

@@ -23,7 +23,7 @@ A TypeScript API and CLI for the [Akamai NetStorage REST interface](https://tech
 npm i netstorage -g
 ```
 
-Alternatively, you can run any command with `npx netstorage`—no global install needed.
+Alternatively, you can run any command with `npx netstorage` without a global install.
 
 ## Getting Started
 
