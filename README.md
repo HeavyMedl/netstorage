@@ -78,7 +78,7 @@ nst:/media> get remote-folder -v
 ### API Usage
 
 ```ts
-import { createConfig, uploadDirectory, tree } from 'netstorage';
+import { createConfig, uploadDirectory } from 'netstorage';
 
 const config = createConfig({
   key: process.env.NETSTORAGE_API_KEY!,
